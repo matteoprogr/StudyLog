@@ -100,9 +100,10 @@ main#app {
     border: none;
     padding: 0.6rem;
 }
-#subject{
+#ricerca-materie{
  padding: 0.6rem;
 }
+
 #minutes-value{
     text-align: center;
     font-size: 1.5rem;
@@ -201,4 +202,30 @@ main#app {
 .month-picker input[type="month"]:focus {
   border-color: #4a90e2;
   box-shadow: 0 0 5px rgba(74, 144, 226, 0.5);
+}
+
+.categorie-cards {
+  display: flex;
+  overflow-x: auto;
+  padding-bottom: 0.7rem;
+  justify-content: flex-start;
+}
+
+.selected{
+    opacity: 0.6;
+}
+
+.cat {
+  display: flex;
+  flex-direction: column;
+  padding: 0.2rem;
+  font-weight: bold;
+  background: linear-gradient(135deg, rgba(236, 244, 251, 0.4), #FFFFFF);
+  border-radius: 6px;
+  box-sizing: border-box;
+  position: relative;
+  margin: 0.5rem 0.2rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }

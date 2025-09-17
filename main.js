@@ -13,13 +13,12 @@ if ('serviceWorker' in navigator) {
 
 
 const form = document.getElementById("study-form");
-const subjectInput = document.getElementById("subject");
+const materiaInput = document.getElementById("ricerca-materie");
 const minutesSlider = document.getElementById("minutes");
 const minutesValue = document.getElementById("minutes-value");
 const timerContainer = document.getElementById("timer-container");
 const timerDisplay = document.getElementById("timer-display");
 const stopBtn = document.getElementById("stop-btn");
-const datalist = document.getElementById("materie-list");
 const monthSelect = document.getElementById('month-select');
 const prevBtn = document.getElementById("prev-month");
 const nextBtn = document.getElementById("next-month");
@@ -29,8 +28,8 @@ const myChart = echarts.init(chartDom);
 document.addEventListener("DOMContentLoaded", async() => {
     const links = document.querySelectorAll(".nav-links a");
     const sections = document.querySelectorAll(".page-section");
+    document.getElementById("ricerca-materie").addEventListener("input", materieCreateComponent);
 
-    // Inizializza le icone
     lucide.createIcons();
 
     // --- Navigation ---
@@ -92,15 +91,15 @@ nextBtn.addEventListener("click", () => changeMonth(1));
     let countdown;
     let remainingTime;
     const materie = await getAllMaterie();
-    populateSubjects(materie);
+    materieCreateComponent(materie)
 
     form.addEventListener("submit", (e) => {
         e.preventDefault();
 
-        const subject = subjectInput.value.trim();
+        const materia = materiaInput.value.trim();
         const minutes = parseInt(minutesValue.innerText, 10);
 
-        if (!subject || minutes <= 0) return;
+        if (!materia || minutes <= 0) return;
 
         remainingTime = minutes * 60;
         updateDisplay();
@@ -114,7 +113,7 @@ nextBtn.addEventListener("click", () => changeMonth(1));
 
             if (remainingTime <= 0) {
                 clearInterval(countdown);
-                saveLog(subject, minutes);
+                saveLog(materia, minutes);
                 minutesValue.textContent = 60;
                 resetForm();
             }
@@ -134,13 +133,14 @@ nextBtn.addEventListener("click", () => changeMonth(1));
     }
 
 async function getTime(minutes){
+minutes = 140;
     return minutes / 60;
 }
 
-async function saveLog(subject, minutes) {
+async function saveLog(materiaIns, minutes) {
     const today = new Date().toISOString().split("T")[0];
     const time = await getTime(minutes);
-    const materiaCap = capitalizeFirstLetter(subject);
+    const materiaCap = capitalizeFirstLetter(materiaIns);
 
     const log = {
         data: today,
@@ -150,8 +150,14 @@ async function saveLog(subject, minutes) {
     const materia ={
         nome: materiaCap
     }
+    let matExist = false;
+    for(const mat of materie){
+        if(mat.nome === materiaCap){
+            matExist = true;
+        }
+    }
+    if(!matExist) await saveMateria(materiaCap);
 
-    await saveMateria(materia);
     await saveStudyLog(log);
 }
 function capitalizeFirstLetter(str) {
@@ -166,45 +172,36 @@ function capitalizeFirstLetter(str) {
         timerDisplay.textContent = "00:00";
     }
 
-    function populateSubjects(materie) {
-        datalist.innerHTML = "";
-        materie.forEach(materia => {
-            const option = document.createElement("option");
-            option.value = materia.nome;
-            datalist.appendChild(option);
-        });
-        if(!datalistSupported){
-            setSelect();
+    async function materieCreateComponent(materie) {
+        const catInput = document.getElementById("ricerca-materie").value;
+        const materieList = document.getElementById('categorieCardsEntrata');
+        materieList.innerHTML = "";
+        for(const materia of materie){
+            const nodo = await materiaComponent(materia.nome);
+            materieList.appendChild(nodo);
         }
     }
 
-    function datalistSupported() {
-      return !!(document.createElement('datalist') && window.HTMLDataListElement);
+    async function materiaComponent(materia) {
+        const container = document.createElement("div");
+
+        container.classList.add("cat");
+
+        container.innerHTML = `
+          <div class="cat-header">
+            <span>${materia}</span>
+          </div>
+        `;
+
+            container.addEventListener("click", () => {
+                const materiaEl = container.querySelector("span");
+                const materiaInput = document.getElementById("ricerca-materie");
+                materiaInput.value = materiaEl.innerText;
+
+            });
+
+        return container;
     }
-
-    function setSelect(){
-        if (!datalistSupported()) {
-          const input = document.getElementById('subject');
-          const datalist = document.getElementById('materie-list');
-
-          const select = document.createElement('select');
-          select.id = input.id;
-          select.name = input.name;
-          select.required = input.required;
-
-          // prendi le option già inserite nel datalist
-          datalist.querySelectorAll('option').forEach(opt => {
-            const option = document.createElement('option');
-            option.value = opt.value;
-            select.appendChild(option);
-          });
-
-          input.parentNode.replaceChild(select, input);
-          datalist.remove();
-        }
-    }
-
-
 
     function formatOreMin(oreDecimal) {
         const h = Math.floor(oreDecimal);

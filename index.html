@@ -27,8 +27,8 @@
         <h2>Timer Studio</h2>
 
         <form id="study-form">
-            <input list="materie-list" id="subject" placeholder="Inserisci o selziona materia" maxlength="15" required>
-            <datalist id="materie-list"></datalist>
+            <input  type="text" id="ricerca-materie" maxlength="25"  placeholder="Cerca fra le tue categorie">
+            <div class="categorie-cards" id="categorieCardsEntrata"></div>
 
             <label for="minutes" id="minutes-value">60</label>
             <input type="range" id="minutes" min="1" max="180" value="60" required>

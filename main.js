@@ -133,7 +133,6 @@ nextBtn.addEventListener("click", () => changeMonth(1));
     }
 
 async function getTime(minutes){
-minutes = 140;
     return minutes / 60;
 }
 
@@ -197,7 +196,6 @@ function capitalizeFirstLetter(str) {
                 const materiaEl = container.querySelector("span");
                 const materiaInput = document.getElementById("ricerca-materie");
                 materiaInput.value = materiaEl.innerText;
-
             });
 
         return container;

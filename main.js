@@ -1,0 +1,257 @@
+import { saveStudyLog, getAllStudyLogs, saveMateria, getAllMaterie, getStudyLogsByMonth } from "./query.js";
+
+
+/////////  SERVICE WORKER ////////////////
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('Service Worker registered:', reg))
+      .catch(err => console.log('Service Worker registration failed:', err));
+  });
+}
+
+
+
+const form = document.getElementById("study-form");
+const subjectInput = document.getElementById("subject");
+const minutesSlider = document.getElementById("minutes");
+const minutesValue = document.getElementById("minutes-value");
+const timerContainer = document.getElementById("timer-container");
+const timerDisplay = document.getElementById("timer-display");
+const stopBtn = document.getElementById("stop-btn");
+const datalist = document.getElementById("materie-list");
+const monthSelect = document.getElementById('month-select');
+const chartDom = document.getElementById('myChart');
+const myChart = echarts.init(chartDom);
+
+document.addEventListener("DOMContentLoaded", async() => {
+    const links = document.querySelectorAll(".nav-links a");
+    const sections = document.querySelectorAll(".page-section");
+
+    // Inizializza le icone
+    lucide.createIcons();
+
+    // --- Navigation ---
+    links.forEach(link => {
+        link.addEventListener("click", async (e) => {
+            e.preventDefault();
+            links.forEach(l => l.classList.remove("active"));
+            link.classList.add("active");
+
+            const targetId = link.getAttribute("data-target");
+            if(targetId === "grafici"){
+                await setDate();
+                drawChart();
+            }
+
+            sections.forEach(section => {
+                section.classList.remove("active");
+                if (section.id === targetId) section.classList.add("active");
+            });
+        });
+    });
+
+
+async function setDate(){
+        const oggi = new Date();
+        const anno = oggi.getFullYear();
+        const mese = String(oggi.getMonth() + 1).padStart(2, "0");
+        monthSelect.value = `${anno}-${mese}`;
+}
+
+
+    minutesSlider.addEventListener("input", () => {
+        minutesValue.textContent = minutesSlider.value;
+    });
+    monthSelect.addEventListener('change', drawChart);
+
+    let countdown;
+    let remainingTime;
+    const materie = await getAllMaterie();
+    populateSubjects(materie);
+
+    form.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        const subject = subjectInput.value.trim();
+        const minutes = parseInt(minutesValue.innerText, 10);
+
+        if (!subject || minutes <= 0) return;
+
+        remainingTime = minutes * 60;
+        updateDisplay();
+
+        timerContainer.classList.remove("hidden");
+        form.classList.add("hidden");
+
+        countdown = setInterval(() => {
+            remainingTime--;
+            updateDisplay();
+
+            if (remainingTime <= 0) {
+                clearInterval(countdown);
+                saveLog(subject, minutes);
+                minutesValue.textContent = 60;
+                resetForm();
+            }
+        }, 1000);
+    });
+
+    stopBtn.addEventListener("click", () => {
+        clearInterval(countdown);
+        resetForm();
+    });
+
+    function updateDisplay() {
+        const mins = Math.floor(remainingTime / 60);
+        const secs = remainingTime % 60;
+        timerDisplay.textContent =
+            `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+    }
+
+async function getTime(minutes){
+    minutes = 130;
+    return minutes / 60;
+}
+
+async function saveLog(subject, minutes) {
+    const today = new Date().toISOString().split("T")[0];
+    const time = await getTime(minutes);
+    const materiaCap = capitalizeFirstLetter(subject);
+
+    const log = {
+        data: today,
+        materia: materiaCap,
+        ore: time
+    };
+    const materia ={
+        nome: materiaCap
+    }
+
+    await saveMateria(materia);
+    await saveStudyLog(log);
+}
+function capitalizeFirstLetter(str) {
+  if (!str) return str;
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
+
+    function resetForm() {
+        form.reset();
+        form.classList.remove("hidden");
+        timerContainer.classList.add("hidden");
+        timerDisplay.textContent = "00:00";
+    }
+
+    function populateSubjects(materie) {
+        datalist.innerHTML = "";
+        materie.forEach(materia => {
+            const option = document.createElement("option");
+            option.value = materia.nome;
+            datalist.appendChild(option);
+        });
+    }
+
+    function formatOreMin(oreDecimal) {
+        const h = Math.floor(oreDecimal);
+        const min = Math.round((oreDecimal - h) * 60);
+        return `${h}h ${min}min`;
+    }
+
+async function drawChart() {
+    const selectedMonth = monthSelect.value;
+    const nomeMese = await capitalizeFirstLetter(await getNomeMeseItaliano(selectedMonth));
+    const logs = await getStudyLogsByMonth(selectedMonth);
+    const materie = await getAllMaterie();
+    const nomeMaterie = materie.map(m => m.nome);
+
+    const filteredLogs = logs.filter(l => l.data.startsWith(selectedMonth));
+
+    const year = parseInt(selectedMonth.split('-')[0]);
+    const month = parseInt(selectedMonth.split('-')[1]) - 1;
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const giorniDelMese = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+
+    const datiMaterie = {};
+    nomeMaterie.forEach(m => {
+        datiMaterie[m] = Array(daysInMonth).fill(0);
+    });
+
+    filteredLogs.forEach(log => {
+        const giorno = new Date(log.data).getDate();
+        const idx = giorno - 1;
+        const val = parseFloat(log.ore) || 0;
+        datiMaterie[log.materia][idx] = (datiMaterie[log.materia][idx] || 0) + val;
+    });
+
+    const materieConDati = nomeMaterie.filter(m =>
+        datiMaterie[m].some(val => val > 0)
+    );
+
+    const series = nomeMaterie.map(m => ({
+        name: m,
+        type: 'bar',
+        stack: 'total',
+        label: {
+            show: true,
+            position: 'insideRight',
+            formatter: params => params.value > 0 ? formatOreMin(params.value) : ''
+        },
+        emphasis: { focus: 'series' },
+        data: datiMaterie[m]
+    }));
+
+    // Configurazione grafico
+    const option = {
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: { type: 'shadow' },
+            formatter: params => {
+                let str = `${params[0].axisValue}<br/>`;
+                params.forEach(p => {
+                if(p.value !== 0){
+                    str += `${p.seriesName}: ${formatOreMin(p.value)}<br/>`;
+                }
+
+                });
+                return str;
+            }
+        },
+        legend: {
+            data: nomeMaterie,
+            orient: 'vertical',
+            right: 1,
+            top: 'top'
+        },
+
+        xAxis: {
+            type: 'value',
+            min: 0,
+            max: 12,
+            interval: 1,
+            axisLabel: {
+                formatter: val => `${val}h`
+            }
+        },
+        yAxis: {
+            type: 'category',
+            data: giorniDelMese.map(g => `${g}`),
+            name: nomeMese,
+            inverse: true
+        },
+        series: series
+    };
+
+    myChart.setOption(option);
+
+}
+
+    function getNomeMeseItaliano(ym) {
+        const [year, month] = ym.split('-').map(Number);
+        const date = new Date(year, month - 1);
+        return date.toLocaleString('it-IT', { month: 'long' });
+    }
+
+});
+
+

@@ -1,0 +1,160 @@
+/* Reset base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    font-family: system-ui, sans-serif;
+    background-color: #f5f5f5;
+    color: #222;
+}
+h2{
+    text-align: center;
+}
+
+main#app {
+    padding-bottom: 60px; /* spazio per la nav */
+}
+
+/* Sezioni */
+.page-section {
+    display: none;
+    padding: 1.5rem;
+    animation: fadeIn 0.3s ease;
+}
+
+.page-section.active {
+    display: block;
+}
+
+/* Effetto transizione */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Bottom Nav */
+.mobile-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: #333;
+    display: flex;
+    justify-content: center;
+    border-top: 1px solid #444;
+    z-index: 1000;
+}
+
+.nav-links {
+    display: flex;
+    width: 100%;
+    max-width: 500px;
+    justify-content: space-around;
+    padding: 0.5rem 0;
+}
+
+.nav-links a {
+    color: #aaa;
+    text-decoration: none;
+    font-size: 0.8rem;
+    font-weight: 500;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    transition: color 0.3s ease;
+}
+
+.nav-links a i {
+    width: 24px;
+    height: 24px;
+}
+
+.nav-links a.active,
+.nav-links a:hover {
+    color: #fff;
+}
+
+/* Form */
+#study-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    margin-top: 1rem;
+}
+
+#study-form input, #study-form button {
+    font-size: 1rem;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+#study-form button {
+    background: #333;
+    color: white;
+    cursor: pointer;
+    border: none;
+    padding: 0.6rem;
+}
+#subject{
+ padding: 0.6rem;
+}
+#minutes-value{
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+#study-form button:hover {
+    background: #555;
+}
+
+#minutes {
+    width: 100%;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    accent-color: #333;
+}
+
+
+/* Timer */
+#timer-container {
+    margin-top: 2rem;
+    text-align: center;
+}
+
+#timer-display {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+}
+
+#stop-btn {
+    padding: 0.6rem 1rem;
+    font-size: 1rem;
+    border-radius: 6px;
+    border: none;
+    background: #c0392b;
+    color: white;
+    cursor: pointer;
+}
+
+#stop-btn:hover {
+    background: #e74c3c;
+}
+
+
+.hidden {
+    display: none;
+}
+
+.chart {
+  width: 100%;
+  height: 90%;
+  max-width: 100%;
+  margin: 0 auto;
+}

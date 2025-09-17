@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>StudyLog</title>
+    <link rel="stylesheet" href="css/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#333333">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+
+    <!-- Per iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-orientation" content="portrait">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+</head>
+<body>
+
+<main id="app">
+    <!-- Pagina Registra -->
+    <section id="registra" class="page-section active">
+        <h2>Timer Studio</h2>
+
+        <form id="study-form">
+            <input list="materie-list" id="subject" placeholder="Inserisci o selziona materia" required>
+            <datalist id="materie-list"></datalist>
+
+            <label for="minutes" id="minutes-value">60</label>
+            <input type="range" id="minutes" min="1" max="180" value="60" required>
+
+            <button type="submit">Avvia Cronometro</button>
+        </form>
+
+        <div id="timer-container" class="hidden">
+            <h2 id="timer-display">00:00</h2>
+            <button id="stop-btn">Interrompi</button>
+        </div>
+
+    </section>
+
+    <!-- Pagina Grafici -->
+    <section id="grafici" class="page-section">
+        <h2>Grafico</h2>
+
+        <!-- Container per il grafico -->
+        <div id="myChart" class="chart" style="width: 50vh; height: 80vh;"></div>
+
+        <!-- Selezione mese -->
+        <label for="month-select">Seleziona mese:</label>
+        <input type="month" id="month-select">
+    </section>
+
+    <!-- Pagina Impostazioni -->
+    <section id="settings" class="page-section">
+        <h1>Impostazioni</h1>
+        <p>Configura preferenze, backup e altro.</p>
+    </section>
+</main>
+
+
+
+<!-- Navbar -->
+<nav class="mobile-nav">
+    <div class="nav-links">
+        <a href="#" data-target="registra" class="active">
+            <i data-lucide="book-open"></i>
+        </a>
+        <a href="#" data-target="grafici">
+            <i data-lucide="bar-chart-2"></i>
+        </a>
+        <a href="#" data-target="settings">
+            <i data-lucide="settings"></i>
+        </a>
+    </div>
+</nav>
+
+
+<script type="module" src="main.js"></script>
+
+</body>
+</html>

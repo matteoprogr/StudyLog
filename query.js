@@ -57,6 +57,26 @@ export async function saveMateria(materia) {
     }
 }
 
+export async function deleteDatabase() {
+  const request = indexedDB.deleteDatabase(DB_NAME);
+
+  request.onsuccess = () => {
+  //todo aggiungere showToast
+    alert("Database eliminato con successo!");
+    location.reload();
+  };
+
+  request.onerror = (event) => {
+  //todo aggiungere showToast
+    alert("Errore durante l'eliminazione del database: " + event.target.error);
+  };
+
+  request.onblocked = () => {
+    //todo aggiungere showToast
+    alert("Chiusura di tutte le schede necessaria per completare l'eliminazione.");
+  };
+}
+
 // Legge tutti i log
 async function getAllStudyLogs() {
     const db = await openDB();

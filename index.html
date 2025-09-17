@@ -24,10 +24,10 @@
 <main id="app">
     <!-- Pagina Registra -->
     <section id="registra" class="page-section active">
-        <h2>Timer Studio</h2>
+        <h2>Timer</h2>
 
         <form id="study-form">
-            <input  type="text" id="ricerca-materie" maxlength="25"  placeholder="Cerca fra le tue categorie">
+            <input  type="text" id="ricerca-materie" maxlength="25"  placeholder="Cerca fra le tue categorie" required>
             <div class="categorie-cards" id="categorieCardsEntrata"></div>
 
             <label for="minutes" id="minutes-value">60</label>
@@ -57,9 +57,27 @@
 
     <!-- Pagina Impostazioni -->
     <section id="settings" class="page-section">
-        <h1>Impostazioni</h1>
-        <p>Configura preferenze, backup e altro.</p>
+        <h2>Impostazioni</h2>
+
+        <div class="btn">
+            <h3>Cancella dati</h3>
+            <button id="delete-db-btn">Cancella tutti i dati</button>
+        </div>
+
+
+        <!-- Modale di conferma -->
+        <div id="confirm-modal" class="modal hidden">
+            <div class="modal-content">
+                <h2>Sei sicuro?</h2>
+                <p>Tutti i dati verranno eliminati in modo permanente.</p>
+                <div class="modal-actions">
+                    <button id="confirm-delete">Sì, elimina</button>
+                    <button id="cancel-delete">Annulla</button>
+                </div>
+            </div>
+        </div>
     </section>
+
 </main>
 
 

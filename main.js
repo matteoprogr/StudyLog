@@ -1,4 +1,4 @@
-import { saveStudyLog, getAllStudyLogs, saveMateria, getAllMaterie, getStudyLogsByMonth } from "./query.js";
+import { saveStudyLog, getAllStudyLogs, saveMateria, getAllMaterie, getStudyLogsByMonth, deleteDatabase } from "./query.js";
 
 
 /////////  SERVICE WORKER ////////////////
@@ -24,6 +24,10 @@ const prevBtn = document.getElementById("prev-month");
 const nextBtn = document.getElementById("next-month");
 const chartDom = document.getElementById('myChart');
 const myChart = echarts.init(chartDom);
+const deleteBtn = document.getElementById("delete-db-btn");
+const modal = document.getElementById("confirm-modal");
+const confirmDelete = document.getElementById("confirm-delete");
+const cancelDelete = document.getElementById("cancel-delete");
 
 document.addEventListener("DOMContentLoaded", async() => {
     const links = document.querySelectorAll(".nav-links a");
@@ -155,10 +159,26 @@ async function saveLog(materiaIns, minutes) {
             matExist = true;
         }
     }
-    if(!matExist) await saveMateria(materiaCap);
+    if(!matExist) await saveMateria(materia);
 
     await saveStudyLog(log);
 }
+
+
+deleteBtn.addEventListener("click", () => {
+  modal.classList.remove("hidden");
+});
+
+cancelDelete.addEventListener("click", () => {
+  modal.classList.add("hidden");
+});
+
+confirmDelete.addEventListener("click", () => {
+  modal.classList.add("hidden");
+  deleteDatabase();
+});
+
+
 function capitalizeFirstLetter(str) {
   if (!str) return str;
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();

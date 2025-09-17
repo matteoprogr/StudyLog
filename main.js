@@ -134,7 +134,6 @@ nextBtn.addEventListener("click", () => changeMonth(1));
     }
 
 async function getTime(minutes){
-    minutes = 130;
     return minutes / 60;
 }
 
@@ -174,7 +173,38 @@ function capitalizeFirstLetter(str) {
             option.value = materia.nome;
             datalist.appendChild(option);
         });
+        if(!datalistSupported){
+            setSelect();
+        }
     }
+
+    function datalistSupported() {
+      return !!(document.createElement('datalist') && window.HTMLDataListElement);
+    }
+
+    function setSelect(){
+        if (!datalistSupported()) {
+          const input = document.getElementById('subject');
+          const datalist = document.getElementById('materie-list');
+
+          const select = document.createElement('select');
+          select.id = input.id;
+          select.name = input.name;
+          select.required = input.required;
+
+          // prendi le option già inserite nel datalist
+          datalist.querySelectorAll('option').forEach(opt => {
+            const option = document.createElement('option');
+            option.value = opt.value;
+            select.appendChild(option);
+          });
+
+          input.parentNode.replaceChild(select, input);
+          datalist.remove();
+        }
+    }
+
+
 
     function formatOreMin(oreDecimal) {
         const h = Math.floor(oreDecimal);

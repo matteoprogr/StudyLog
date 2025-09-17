@@ -27,7 +27,7 @@
         <h2>Timer Studio</h2>
 
         <form id="study-form">
-            <input list="materie-list" id="subject" placeholder="Inserisci o selziona materia" required>
+            <input list="materie-list" id="subject" placeholder="Inserisci o selziona materia" maxlength="15" required>
             <datalist id="materie-list"></datalist>
 
             <label for="minutes" id="minutes-value">60</label>
@@ -46,13 +46,13 @@
     <!-- Pagina Grafici -->
     <section id="grafici" class="page-section">
         <h2>Grafico</h2>
+        <div id="myChart"></div>
+        <div class="month-picker">
+            <button id="prev-month">‹</button>
+            <input type="month" id="month-select">
+            <button id="next-month">›</button>
+        </div>
 
-        <!-- Container per il grafico -->
-        <div id="myChart" class="chart" style="width: 50vh; height: 80vh;"></div>
-
-        <!-- Selezione mese -->
-        <label for="month-select">Seleziona mese:</label>
-        <input type="month" id="month-select">
     </section>
 
     <!-- Pagina Impostazioni -->

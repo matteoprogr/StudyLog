@@ -21,6 +21,8 @@ const timerDisplay = document.getElementById("timer-display");
 const stopBtn = document.getElementById("stop-btn");
 const datalist = document.getElementById("materie-list");
 const monthSelect = document.getElementById('month-select');
+const prevBtn = document.getElementById("prev-month");
+const nextBtn = document.getElementById("next-month");
 const chartDom = document.getElementById('myChart');
 const myChart = echarts.init(chartDom);
 
@@ -59,6 +61,28 @@ async function setDate(){
         monthSelect.value = `${anno}-${mese}`;
 }
 
+function changeMonth(offset) {
+try{
+    let [year, month] = monthSelect.value.split("-").map(Number);
+    if(month === 12 || month === 1){
+        if(offset < 0 && month === 1){
+            year = year + offset;
+        }
+        if(offset > 0 && month === 12){
+            year = year + offset;
+        }
+    }
+    const newAnno = year;
+    const newMese = String(month + offset).padStart(2, "0");
+    monthSelect.value = `${newAnno}-${newMese}`;
+    drawChart();
+    }catch(err){
+        console.log(err)
+    }
+}
+
+prevBtn.addEventListener("click", () => changeMonth(-1));
+nextBtn.addEventListener("click", () => changeMonth(1));
 
     minutesSlider.addEventListener("input", () => {
         minutesValue.textContent = minutesSlider.value;
@@ -158,12 +182,26 @@ function capitalizeFirstLetter(str) {
         return `${h}h ${min}min`;
     }
 
+    async function getMax(logs){
+        let sum = 0.0;
+        const minValue = 8;
+        logs.forEach( log => {
+        sum += log.ore
+        })
+        if(sum > 8){
+            return Math.ceil(sum);
+        }else{
+            return minValue;
+        }
+    }
+
 async function drawChart() {
     const selectedMonth = monthSelect.value;
     const nomeMese = await capitalizeFirstLetter(await getNomeMeseItaliano(selectedMonth));
-    const logs = await getStudyLogsByMonth(selectedMonth);
+    let logs = await getStudyLogsByMonth(selectedMonth);
     const materie = await getAllMaterie();
     const nomeMaterie = materie.map(m => m.nome);
+    const mavValue = await getMax(logs);
 
     const filteredLogs = logs.filter(l => l.data.startsWith(selectedMonth));
 
@@ -192,11 +230,6 @@ async function drawChart() {
         name: m,
         type: 'bar',
         stack: 'total',
-        label: {
-            show: true,
-            position: 'insideRight',
-            formatter: params => params.value > 0 ? formatOreMin(params.value) : ''
-        },
         emphasis: { focus: 'series' },
         data: datiMaterie[m]
     }));
@@ -219,15 +252,20 @@ async function drawChart() {
         },
         legend: {
             data: nomeMaterie,
-            orient: 'vertical',
-            right: 1,
-            top: 'top'
+            orient: 'horizontal',
+            type: 'scroll',
+            right: 10,
+            top: 10,
+            pageButtonGap: 5,
+            pageIconColor: '#2f4554',
+            pageIconInactiveColor: '#aaa',
+            pageTextStyle: { color: '#333' }
         },
 
         xAxis: {
             type: 'value',
             min: 0,
-            max: 12,
+            max: mavValue,
             interval: 1,
             axisLabel: {
                 formatter: val => `${val}h`
@@ -237,7 +275,7 @@ async function drawChart() {
             type: 'category',
             data: giorniDelMese.map(g => `${g}`),
             name: nomeMese,
-            inverse: true
+            nameGap: 5
         },
         series: series
     };

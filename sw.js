@@ -1,11 +1,14 @@
-const CACHE_NAME = 'studylog-cache-v10';
+const CACHE_NAME = 'studylog-cache-v11';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/styles.css?v=10',
-  '/main.js?v=10',
+  '/styles.css?v=11',
+  '/main.js?v=11',
   '/icons/icon-192.png',
-  '/icons/icon-512.png'
+  '/icons/icon-512.png',
+  '/libs/dexie.mjs',
+  '/libs/lucide.js',
+  '/libs/echarts.min.js'
 ];
 
 self.addEventListener('install', event => {
@@ -19,32 +22,25 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(
-        keys.map(key => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
-        })
-      )
+      Promise.all(keys.map(key => {
+        if (key !== CACHE_NAME) return caches.delete(key);
+      }))
     ).then(() => self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', event => {
-  if (!event.request.url.startsWith(self.location.origin)) return;
-
   event.respondWith(
-    caches.open(CACHE_NAME).then(cache =>
-      cache.match(event.request).then(response => {
-        const fetchPromise = fetch(event.request).then(networkResponse => {
-          if (networkResponse.ok) {
+    caches.match(event.request).then(response => {
+      return response || fetch(event.request).then(networkResponse => {
+        if (networkResponse && networkResponse.ok) {
+          return caches.open(CACHE_NAME).then(cache => {
             cache.put(event.request, networkResponse.clone());
-          }
-          return networkResponse;
-        }).catch(() => null);
-
-        return response || fetchPromise;
-      })
-    )
+            return networkResponse;
+          });
+        }
+        return networkResponse;
+      }).catch(() => response);
+    })
   );
 });

@@ -1,4 +1,4 @@
-import Dexie from 'https://unpkg.com/dexie/dist/modern/dexie.mjs';
+import Dexie from './libs/dexie.mjs';
 
 const DB_NAME = "StudyDB";
 const DB_VERSION = 1;

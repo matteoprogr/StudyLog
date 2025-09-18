@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>StudyLog</title>
-    <link rel="stylesheet" href="css/style.css?v=18">
+    <link rel="stylesheet" href="css/style.css?v=19">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="./libs/lucide.js"></script>
     <script src="./libs/echarts.min.js"></script>
@@ -54,11 +54,21 @@
 
     <!-- Pagina Impostazioni -->
     <section id="settings" class="page-section">
-        <h2>Impostazioni</h2>
-
         <div class="btn">
             <h3>Cancella dati</h3>
             <button id="delete-db-btn">Cancella tutti i dati</button>
+        </div>
+        <div id="spinnerOverlay" class="spinner-overlay">
+            <div class="spinner"></div>
+        </div>
+        <div class="btn">
+            <h3>Esporta dati</h3>
+            <button id="btnExportDB">Esporta</button>
+        </div>
+        <div class="btn">
+            <h3>Importa dati</h3>
+            <input type="file" id="fileImport" name="file" accept=".json,application/json" required/>
+            <button id="btnImportDB">Importa</button>
         </div>
 
 
@@ -95,7 +105,7 @@
 </nav>
 
 
-<script type="module" src="main.js?v=18"></script>
+<script type="module" src="main.js?v=19"></script>
 
 </body>
 </html>

@@ -1,4 +1,4 @@
-import { saveStudyLog, getAllStudyLogs, saveMateria, getAllMaterie, getStudyLogsByMonth, deleteDatabase } from "./query.js";
+import { saveStudyLog, getAllStudyLogs, saveMateria, getAllMaterie, getStudyLogsByMonth, deleteDatabase, updateMateria } from "./query.js";
 
 
 /////////  SERVICE WORKER ////////////////
@@ -140,12 +140,11 @@ function updateInfiniteTimer() {
 }
 
 async function stopTimer() {
-  clearInterval(timerInterval);
-  startTime = null;
-  durationMs = 0;
-  updateTimerDisplay(0);
-  minutesValue.textContent = 0;
-  if(minutes === 0){
+    clearInterval(timerInterval);
+    startTime = null;
+    durationMs = 0;
+    updateTimerDisplay(0);
+    minutesValue.textContent = 0;
     const audio = new Audio("assets/sounds/alarm.mp3");
     audio.play().catch(err => console.log("Errore audio:", err));
     const minutiPassati = time / (1000 * 60);
@@ -155,13 +154,13 @@ async function stopTimer() {
     timerContainer.classList.add("hidden");
     materie = await getAllMaterie();
     materieCreateComponent(materie);
-  }
 }
 
 
 async function updateTimer() {
   const elapsed = Date.now() - startTime;
   const remaining = durationMs - elapsed;
+  time = elapsed;
 
   if (remaining <= 0) {
     clearInterval(timerInterval);
@@ -247,7 +246,7 @@ async function saveLog(materiaIns, minutes) {
     await saveStudyLog(log);
 }
 
-function capitalizeFirstLetter(str) {
+export function capitalizeFirstLetter(str) {
   if (!str) return str;
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }
@@ -269,22 +268,67 @@ async function materieCreateComponent(mats) {
 }
 
 async function materiaComponent(materia) {
-        const container = document.createElement("div");
-        container.classList.add("cat");
-        container.innerHTML = `
-          <div class="cat-header">
-            <span>${materia}</span>
-          </div>
-        `;
+    const container = document.createElement("div");
+    container.classList.add("cat");
+    let pressTimer;
+    container.innerHTML = `
+      <div class="cat-header">
+        <span class="mat-name">${materia}</span>
+      </div>
+    `;
 
-            container.addEventListener("click", () => {
-                const materiaEl = container.querySelector("span");
-                const materiaInput = document.getElementById("ricerca-materie");
-                materiaInput.value = materiaEl.innerText;
-            });
+    container.addEventListener("click", () => {
+        const materiaEl = container.querySelector("span");
+        const materiaInput = document.getElementById("ricerca-materie");
+        materiaInput.value = materiaEl.innerText;
+    });
 
-        return container;
-    }
+    const span = container.querySelector('.mat-name');
+    container.addEventListener("touchstart", () => {
+    pressTimer = setTimeout(() => {
+        const input = document.createElement("input");
+        input.type = "text";
+        const oldValue = span.textContent.trim();
+        input.value = oldValue
+        input.maxLength = 25;
+        input.classList.add("cat-input");
+
+        span.replaceWith(input);
+        input.focus();
+
+        const confirm = async () => {
+            const newValue = input.value.trim() || materia;
+            span.textContent = newValue;
+            try{ input.replaceWith(span); }catch{}
+            if (oldValue !== newValue) {
+                await updateMateria(oldValue, newValue,false, false);
+            }
+            materie = await getAllMaterie();
+            materieCreateComponent(materie);
+
+        };
+
+        const notConfirm = async () => {
+            span.textContent = oldValue;
+            try{ input.replaceWith(span); }catch{}
+        };
+
+        input.addEventListener("blur", notConfirm, { once: true });
+        input.addEventListener("keydown", (ev) => {
+            if (ev.key === "Enter") {
+                confirm();
+            }
+        });
+    }, 600);
+});
+
+    container.addEventListener("touchend", () => {
+        clearTimeout(pressTimer);
+    });
+
+    return container;
+}
+
 
 function formatOreMin(oreDecimal) {
     const h = Math.floor(oreDecimal);
@@ -393,8 +437,8 @@ async function drawChart() {
 
 }
 
-    function getNomeMeseItaliano(ym) {
-        const [year, month] = ym.split('-').map(Number);
-        const date = new Date(year, month - 1);
-        return date.toLocaleString('it-IT', { month: 'long' });
-    }
+function getNomeMeseItaliano(ym) {
+    const [year, month] = ym.split('-').map(Number);
+    const date = new Date(year, month - 1);
+    return date.toLocaleString('it-IT', { month: 'long' });
+}

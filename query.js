@@ -1,4 +1,5 @@
 import Dexie from './libs/dexie.mjs';
+import { capitalizeFirstLetter } from "./main.js";
 
 const DB_NAME = "StudyDB";
 const DB_VERSION = 1;
@@ -13,7 +14,7 @@ export function openDB() {
 
   // Definizione versioni e store
   db.version(DB_VERSION).stores({
-    [STORE_NAME]: '++id',
+    [STORE_NAME]: '++id, materia',
     [MATERIE]: 'nome'
   });
 
@@ -82,6 +83,20 @@ export async function getAllStudyLogs() {
   }
 }
 
+async function getLogsByNome(nomeValue) {
+  try {
+    const db = await openDB();
+    const logs = await db.studyLogs
+      .where('materia')
+      .equals(nomeValue)
+      .toArray();
+    return logs;
+  } catch (err) {
+    console.error("Errore recupero logs per nome:", err);
+    throw err;
+  }
+}
+
 export async function getStudyLogsByMonth(month) {
   try {
     const db = await openDB();
@@ -100,6 +115,56 @@ export async function getAllMaterie() {
   } catch (err) {
     console.error("Errore lettura Materie:", err);
     throw err;
+  }
+}
+
+export async function updateMateria(oldMat, newMat) {
+    try{
+        const record = await db.materie.get(oldMat);
+        let recordNew;
+        if(isValid(newMat)){
+            recordNew = await db.materie.get(newMat);
+            newMat = capitalizeFirstLetter(newMat);
+        }
+
+        if (oldMat === newMat) return;
+        if (!isValid(record)) return;
+        await db.materie.delete(oldMat);
+        if (!isValid(recordNew)) await db.materie.put({ nome: newMat });
+        updateMatInLogs(oldMat, newMat);
+
+    }catch(err){
+        showErrorToast("Errore durante l'update","error")
+    }
+}
+
+export function isValid(value) {
+    return value != null && !Number.isNaN(value) && value !== "" && value != undefined;
+}
+
+async function updateMatInLogs(oldMat, newMat){
+    const logs = await getLogsByNome(oldMat)
+    if(logs.length !== 0){
+        for(const log of logs){
+            log.nome = newMat;
+            await updateLogsByNome(oldMat,{materia: newMat});
+        }
+    }
+}
+
+async function updateLogsByNome(nomeValue, changes) {
+  try {
+    const db = await openDB();
+    const count = await db.studyLogs
+      .where('materia')
+      .equals(nomeValue)
+      .modify(changes);
+    return count;
+  } catch (err) {
+    console.error("Errore aggiornamento logs per nome:", err);
+    throw err;
+  } finally{
+    showToast("Materia modificata con successo", "success");
   }
 }
 
@@ -129,3 +194,77 @@ export function showErrorToast(message,type = "error") {
   }, 3000);
 }
 
+document.getElementById('btnExportDB').addEventListener('click', esportaDB);
+
+async function esportaDB() {
+  const overlaySpinner = document.getElementById('spinnerOverlay');
+  try {
+    overlaySpinner.style.display = 'flex';
+    const db = await openDB();
+    const studyLogs = await db.studyLogs.toArray();
+    const materie = await db.materie.toArray();
+
+    const result = {
+      studyLogs: studyLogs,
+      materie: materie,
+      exportDate: new Date().toISOString()
+    };
+
+    const blob = new Blob([JSON.stringify(result, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "studylog_export.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    showToast("Esportazione completata con successo", "success");
+  } catch (err) {
+    console.error("Errore esportazione DB:", err);
+    showErrorToast("Errore nell'esportazione dei dati", "error");
+  } finally {
+    overlaySpinner.style.display = 'none';
+  }
+}
+
+
+
+const fileInput = document.getElementById('fileImport');
+const btnImport = document.getElementById('btnImportDB');
+
+fileInput.addEventListener('change', () => {
+  btnImport.disabled = fileInput.files.length === 0;
+});
+
+btnImport.addEventListener('click', () => {
+  const file = fileInput.files[0];
+  if (file) {
+    importaDB(file);
+    fileInput.value = "";
+  }
+});
+
+async function importaDB(file) {
+  const overlaySpinner = document.getElementById('spinnerOverlay');
+  try {
+    overlaySpinner.style.display = 'flex';
+
+    const text = await file.text();
+    const data = JSON.parse(text);
+    const db = await openDB();
+    await db.studyLogs.clear();
+    await db.materie.clear();
+
+    if (data.studyLogs) await db.studyLogs.bulkAdd(data.studyLogs);
+    if (data.materie) await db.materie.bulkAdd(data.materie);
+
+    showToast("Importazione completata con successo", "success");
+  } catch (err) {
+    console.error("Errore importazione DB:", err);
+    showErrorToast("Errore nell'importazione dei dati", "error");
+  } finally {
+    overlaySpinner.style.display = 'none';
+  }
+}

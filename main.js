@@ -144,6 +144,7 @@ async function stopTimer() {
   startTime = null;
   durationMs = 0;
   updateTimerDisplay(0);
+  minutesValue.textContent = 0;
   if(minutes === 0){
     const audio = new Audio("assets/sounds/alarm.mp3");
     audio.play().catch(err => console.log("Errore audio:", err));

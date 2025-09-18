@@ -34,6 +34,7 @@ let timerInterval = null;
 let materia;
 let minutes;
 let materie;
+let time;
 
 
     const links = document.querySelectorAll(".nav-links a");
@@ -79,21 +80,22 @@ nextBtn.addEventListener("click", () => changeMonth(1));
     materie = await getAllMaterie();
     materieCreateComponent(materie);
 
-
-
     form.addEventListener("submit", (e) => {
       e.preventDefault();
-      startTimer();
+      minutes = parseInt(minutesValue.innerText, 10);
+      if(minutes === 0){
+        startInfiniteTimer();
+      }else{
+        startTimer();
+      }
+
       form.classList.add("hidden");
       timerContainer.classList.remove("hidden");
       materia = materiaInput.value.trim();
-      minutes = parseInt(minutesValue.innerText, 10);
     });
 
-
-    stopBtn.addEventListener("click", () => {
-      stopTimer();
-      minutesValue.textContent = 60;
+    stopBtn.addEventListener("click", async () => {
+      await stopTimer();
       resetForm();
       form.classList.remove("hidden");
       timerContainer.classList.add("hidden");
@@ -125,12 +127,36 @@ function startTimer() {
   updateTimer();
 }
 
-function stopTimer() {
+function startInfiniteTimer() {
+  startTime = Date.now();
+  timerInterval = setInterval(updateInfiniteTimer, 1000);
+  updateInfiniteTimer();
+}
+
+function updateInfiniteTimer() {
+  const elapsed = Date.now() - startTime;
+  updateTimerDisplay(elapsed);
+  time = elapsed;
+}
+
+async function stopTimer() {
   clearInterval(timerInterval);
   startTime = null;
   durationMs = 0;
   updateTimerDisplay(0);
+  if(minutes === 0){
+    const audio = new Audio("assets/sounds/alarm.mp3");
+    audio.play().catch(err => console.log("Errore audio:", err));
+    const minutiPassati = time / (1000 * 60);
+    await saveLog(materia, minutiPassati);
+    minutesValue.textContent = 0;
+    form.classList.remove("hidden");
+    timerContainer.classList.add("hidden");
+    materie = await getAllMaterie();
+    materieCreateComponent(materie);
+  }
 }
+
 
 async function updateTimer() {
   const elapsed = Date.now() - startTime;
@@ -142,7 +168,7 @@ async function updateTimer() {
     const audio = new Audio("assets/sounds/alarm.mp3");
     audio.play().catch(err => console.log("Errore audio:", err));
     await saveLog(materia,minutes);
-    minutesValue.textContent = 60;
+    minutesValue.textContent = 0;
     resetForm();
     form.classList.remove("hidden");
     timerContainer.classList.add("hidden");

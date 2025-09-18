@@ -1,113 +1,106 @@
-// Nome del DB e dello store
+import Dexie from 'https://unpkg.com/dexie/dist/modern/dexie.mjs';
+
 const DB_NAME = "StudyDB";
 const DB_VERSION = 1;
 const STORE_NAME = "studyLogs";
 const MATERIE = "materie";
 
-// Inizializza DB
-function openDB() {
-    return new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
+let db; // variabile globale per il database
 
-        request.onupgradeneeded = (event) => {
-            const db = event.target.result;
-            if (!db.objectStoreNames.contains(STORE_NAME)) {
-                db.createObjectStore(STORE_NAME, { keyPath: "id", autoIncrement: true });
-            }
-             if (!db.objectStoreNames.contains(MATERIE)) {
-                db.createObjectStore(MATERIE, { keyPath: "nome" });
-            }
-        };
+// Inizializza il DB con Dexie
+export function openDB() {
+  db = new Dexie(DB_NAME);
 
-        request.onsuccess = (event) => resolve(event.target.result);
-        request.onerror = (event) => reject(event.target.error);
+  // Definizione versioni e store
+  db.version(DB_VERSION).stores({
+    [STORE_NAME]: '++id',
+    [MATERIE]: 'nome'
+  });
+
+  return db.open()
+    .then(() => db)
+    .catch((err) => {
+      console.error("Errore apertura DB:", err);
+      throw err;
     });
 }
 
-async function saveStudyLog(log) {
-    try {
-        const db = await openDB();
-        const tx = db.transaction(STORE_NAME, "readwrite");
-        const store = tx.objectStore(STORE_NAME);
-        store.add(log);
 
-        return new Promise((resolve, reject) => {
-            tx.oncomplete = () => resolve(true);
-            tx.onerror = (event) => reject(event.target.error);
-        });
-    } catch (err) {
-        console.error("Errore salvataggio:", err);
-    }
+export async function saveStudyLog(log) {
+  try {
+    const db = await openDB();
+    await db.studyLogs.add(log);
+    return true;
+  } catch (err) {
+    showErrorToast("Errore salvataggio","error")
+    console.error("Errore salvataggio StudyLog:", err);
+    throw err;
+  }
 }
+
 
 // Salva un oggetto
 export async function saveMateria(materia) {
-    try {
-        const db = await openDB();
-        const tx = db.transaction(MATERIE, "readwrite");
-        const store = tx.objectStore(MATERIE);
-        store.add(materia);
-
-        return new Promise((resolve, reject) => {
-            tx.oncomplete = () => resolve(true);
-            tx.onerror = (event) => reject(event.target.error);
-        });
-    } catch (err) {
-        console.error("Errore salvataggio:", err);
-    }
+  try {
+    const db = await openDB();
+    await db.materie.add(materia);
+    return true;
+  } catch (err) {
+    showErrorToast("Errore salvataggio","error")
+    console.error("Errore salvataggio Materia:", err);
+    throw err;
+  }
 }
+
+
 
 export async function deleteDatabase() {
-  const request = await indexedDB.deleteDatabase(DB_NAME);
+  try {
+    await db.delete();
+    db = null;
+    const esiste = await Dexie.exists(DB_NAME);
 
-  request.onsuccess = () => {
-    showToast("Database eliminato con successo!","success");
-  };
-
-  request.onerror = (event) => {
-    showErrorToast("Errore durante l'eliminazione del database","error");
-  };
+    if (!esiste) {
+      showToast("Database eliminato con successo!");
+    } else {
+      showErrorToast("Attenzione: il database non è stato eliminato correttamente!", "error");
+    }
+  } catch (error) {
+    showErrorToast("Errore durante l'eliminazione del database", "error");
+  }
 }
 
-// Legge tutti i log
-async function getAllStudyLogs() {
-    const db = await openDB();
-    const tx = db.transaction(STORE_NAME, "readonly");
-    const store = tx.objectStore(STORE_NAME);
 
-    return new Promise((resolve, reject) => {
-        const request = store.getAll();
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = (event) => reject(event.target.error);
-    });
+// Legge tutti i log
+export async function getAllStudyLogs() {
+  try {
+    const db = await openDB();
+    return await db.studyLogs.toArray();
+  } catch (err) {
+    console.error("Errore lettura StudyLogs:", err);
+    throw err;
+  }
 }
 
 export async function getStudyLogsByMonth(month) {
+  try {
     const db = await openDB();
-    const tx = db.transaction(STORE_NAME, "readonly");
-    const store = tx.objectStore(STORE_NAME);
-
-    return new Promise((resolve, reject) => {
-        const request = store.getAll();
-        request.onsuccess = () => {
-            const filteredLogs = request.result.filter(log => log.data.startsWith(month));
-            resolve(filteredLogs);
-        };
-        request.onerror = (event) => reject(event.target.error);
-    });
+    const allLogs = await db.studyLogs.toArray();
+    return allLogs.filter(log => log.data.startsWith(month));
+  } catch (err) {
+    console.error("Errore lettura StudyLogs per mese:", err);
+    throw err;
+  }
 }
 
-
 export async function getAllMaterie() {
+  try {
     const db = await openDB();
-    const tx = db.transaction(MATERIE, "readonly");
-    const store = tx.objectStore(MATERIE);
-
-    return new Promise((resolve, reject) => {
-        const request = store.getAll();
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = (event) => reject(event.target.error);
-    });
+    return await db.materie.toArray();
+  } catch (err) {
+    console.error("Errore lettura Materie:", err);
+    throw err;
+  }
 }
 
 export function showToast(message, type = "success") {
@@ -136,5 +129,3 @@ export function showErrorToast(message,type = "error") {
   }, 3000);
 }
 
-// Export (se usi moduli)
-export { saveStudyLog, getAllStudyLogs };

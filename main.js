@@ -11,7 +11,7 @@ if ('serviceWorker' in navigator) {
 }
 
 
-
+/////////////  VARIABILi GLOBALI ///////////////////
 const form = document.getElementById("study-form");
 const materiaInput = document.getElementById("ricerca-materie");
 const minutesSlider = document.getElementById("minutes");
@@ -22,17 +22,22 @@ const stopBtn = document.getElementById("stop-btn");
 const monthSelect = document.getElementById('month-select');
 const prevBtn = document.getElementById("prev-month");
 const nextBtn = document.getElementById("next-month");
-const chartDom = document.getElementById('myChart');
-const myChart = echarts.init(chartDom);
 const deleteBtn = document.getElementById("delete-db-btn");
 const modal = document.getElementById("confirm-modal");
 const confirmDelete = document.getElementById("confirm-delete");
 const cancelDelete = document.getElementById("cancel-delete");
+let countdown;
+let remainingTime;
+let startTime = null;
+let durationMs = 0;
+let timerInterval = null;
+let materia;
+let minutes;
+let materie;
 
-document.addEventListener("DOMContentLoaded", async() => {
+
     const links = document.querySelectorAll(".nav-links a");
     const sections = document.querySelectorAll(".page-section");
-    document.getElementById("ricerca-materie").addEventListener("input", materieCreateComponent);
 
     lucide.createIcons();
 
@@ -49,7 +54,7 @@ document.addEventListener("DOMContentLoaded", async() => {
                 drawChart();
             }
             if(targetId === "registra"){
-                const materie = await getAllMaterie();
+                materie = await getAllMaterie();
                 materieCreateComponent(materie);
             }
 
@@ -61,12 +66,106 @@ document.addEventListener("DOMContentLoaded", async() => {
     });
 
 
-async function setDate(){
-        const oggi = new Date();
-        const anno = oggi.getFullYear();
-        const mese = String(oggi.getMonth() + 1).padStart(2, "0");
-        monthSelect.value = `${anno}-${mese}`;
+
+document.addEventListener("DOMContentLoaded", async() => {
+
+prevBtn.addEventListener("click", () => changeMonth(-1));
+nextBtn.addEventListener("click", () => changeMonth(1));
+
+    minutesSlider.addEventListener("input", () => {
+        minutesValue.textContent = minutesSlider.value;
+    });
+    monthSelect.addEventListener('change', drawChart);
+    materie = await getAllMaterie();
+    materieCreateComponent(materie);
+
+
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      startTimer();
+      form.classList.add("hidden");
+      timerContainer.classList.remove("hidden");
+      materia = materiaInput.value.trim();
+      minutes = parseInt(minutesValue.innerText, 10);
+    });
+
+
+    stopBtn.addEventListener("click", () => {
+      stopTimer();
+      minutesValue.textContent = 60;
+      resetForm();
+      form.classList.remove("hidden");
+      timerContainer.classList.add("hidden");
+    });
+
+deleteBtn.addEventListener("click", () => {
+  modal.classList.remove("hidden");
+});
+
+cancelDelete.addEventListener("click", () => {
+  modal.classList.add("hidden");
+});
+
+confirmDelete.addEventListener("click", () => {
+  modal.classList.add("hidden");
+  deleteDatabase();
+});
+
+});
+
+
+///////////  FUNZIONI //////////////////////
+
+function startTimer() {
+  const minutes = parseInt(minutesSlider.value, 10);
+  durationMs = minutes * 60 * 1000;
+  startTime = Date.now();
+  timerInterval = setInterval(updateTimer, 1000);
+  updateTimer();
 }
+
+function stopTimer() {
+  clearInterval(timerInterval);
+  startTime = null;
+  durationMs = 0;
+  updateTimerDisplay(0);
+}
+
+async function updateTimer() {
+  const elapsed = Date.now() - startTime;
+  const remaining = durationMs - elapsed;
+
+  if (remaining <= 0) {
+    clearInterval(timerInterval);
+    updateTimerDisplay(0);
+    const audio = new Audio("assets/sounds/alarm.mp3");
+    audio.play().catch(err => console.log("Errore audio:", err));
+    await saveLog(materia,minutes);
+    minutesValue.textContent = 60;
+    resetForm();
+    form.classList.remove("hidden");
+    timerContainer.classList.add("hidden");
+    materie = await getAllMaterie();
+    materieCreateComponent(materie);
+    return;
+  }
+  updateTimerDisplay(remaining);
+}
+
+function updateTimerDisplay(ms) {
+  const totalSeconds = Math.floor(ms / 1000);
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  timerDisplay.textContent =
+    `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+}
+
+async function getTime(minutes){
+    return minutes / 60;
+}
+
 
 function changeMonth(offset) {
 try{
@@ -90,89 +189,11 @@ try{
     }
 }
 
-prevBtn.addEventListener("click", () => changeMonth(-1));
-nextBtn.addEventListener("click", () => changeMonth(1));
-
-    minutesSlider.addEventListener("input", () => {
-        minutesValue.textContent = minutesSlider.value;
-    });
-    monthSelect.addEventListener('change', drawChart);
-
-    let countdown;
-    let remainingTime;
-    let startTime = null;
-    let durationMs = 0;
-    let timerInterval = null;
-    const materie = await getAllMaterie();
-    materieCreateComponent(materie);
-    let materia;
-    let minutes;
-
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-      startTimer();
-      form.classList.add("hidden");
-      timerContainer.classList.remove("hidden");
-      materia = materiaInput.value.trim();
-      minutes = parseInt(minutesValue.innerText, 10);
-    });
-
-
-    stopBtn.addEventListener("click", () => {
-      stopTimer();
-      minutesValue.textContent = 60;
-      resetForm();
-      form.classList.remove("hidden");
-      timerContainer.classList.add("hidden");
-    });
-
-    function startTimer() {
-      const minutes = parseInt(minutesSlider.value, 10);
-      durationMs = minutes * 60 * 1000;
-      startTime = Date.now();
-      timerInterval = setInterval(updateTimer, 1000);
-      updateTimer();
-    }
-
-    function stopTimer() {
-      clearInterval(timerInterval);
-      startTime = null;
-      durationMs = 0;
-      updateTimerDisplay(0);
-    }
-
-    async function updateTimer() {
-      const elapsed = Date.now() - startTime;
-      const remaining = durationMs - elapsed;
-
-      if (remaining <= 0) {
-        clearInterval(timerInterval);
-        updateTimerDisplay(0);
-        const audio = new Audio("assets/sounds/alarm.mp3");
-        audio.play().catch(err => console.log("Errore audio:", err));
-        await saveLog(materia,minutes);
-        minutesValue.textContent = 60;
-        resetForm();
-        form.classList.remove("hidden");
-        timerContainer.classList.add("hidden");
-        const materie = await getAllMaterie();
-        materieCreateComponent(materie);
-        return;
-      }
-      updateTimerDisplay(remaining);
-    }
-
-    function updateTimerDisplay(ms) {
-      const totalSeconds = Math.floor(ms / 1000);
-      const h = Math.floor(totalSeconds / 3600);
-      const m = Math.floor((totalSeconds % 3600) / 60);
-      const s = totalSeconds % 60;
-      timerDisplay.textContent =
-        `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-    }
-
-async function getTime(minutes){
-    return minutes / 60;
+async function setDate(){
+        const oggi = new Date();
+        const anno = oggi.getFullYear();
+        const mese = String(oggi.getMonth() + 1).padStart(2, "0");
+        monthSelect.value = `${anno}-${mese}`;
 }
 
 async function saveLog(materiaIns, minutes) {
@@ -199,44 +220,28 @@ async function saveLog(materiaIns, minutes) {
     await saveStudyLog(log);
 }
 
-
-deleteBtn.addEventListener("click", () => {
-  modal.classList.remove("hidden");
-});
-
-cancelDelete.addEventListener("click", () => {
-  modal.classList.add("hidden");
-});
-
-confirmDelete.addEventListener("click", () => {
-  modal.classList.add("hidden");
-  deleteDatabase();
-});
-
-
 function capitalizeFirstLetter(str) {
   if (!str) return str;
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }
 
-    function resetForm() {
-        form.reset();
-        form.classList.remove("hidden");
-        timerContainer.classList.add("hidden");
-        timerDisplay.textContent = "00:00";
-    }
+function resetForm() {
+    form.reset();
+    form.classList.remove("hidden");
+    timerContainer.classList.add("hidden");
+    timerDisplay.textContent = "00:00";
+}
 
-    async function materieCreateComponent(materie) {
-        const catInput = document.getElementById("ricerca-materie").value;
-        const materieList = document.getElementById('categorieCardsEntrata');
-        materieList.innerHTML = "";
-        for(const materia of materie){
-            const nodo = await materiaComponent(materia.nome);
-            materieList.appendChild(nodo);
-        }
+async function materieCreateComponent(mats) {
+    const materieList = document.getElementById('categorieCardsEntrata');
+    materieList.innerHTML = "";
+    for(const materia of mats){
+        const nodo = await materiaComponent(materia.nome);
+        materieList.appendChild(nodo);
     }
+}
 
-    async function materiaComponent(materia) {
+async function materiaComponent(materia) {
         const container = document.createElement("div");
         container.classList.add("cat");
         container.innerHTML = `
@@ -254,30 +259,32 @@ function capitalizeFirstLetter(str) {
         return container;
     }
 
-    function formatOreMin(oreDecimal) {
-        const h = Math.floor(oreDecimal);
-        const min = Math.round((oreDecimal - h) * 60);
-        return `${h}h ${min}min`;
-    }
+function formatOreMin(oreDecimal) {
+    const h = Math.floor(oreDecimal);
+    const min = Math.round((oreDecimal - h) * 60);
+    return `${h}h ${min}min`;
+}
 
-    async function getMax(logs){
-        let sum = 0.0;
-        const minValue = 6;
-        logs.forEach( log => {
-        sum += log.ore
-        })
-        if(sum > minValue){
-            return Math.ceil(sum);
-        }else{
-            return minValue;
-        }
+async function getMax(logs){
+    let sum = 0.0;
+    const minValue = 6;
+    logs.forEach( log => {
+    sum += log.ore
+    })
+    if(sum > minValue){
+        return Math.ceil(sum);
+    }else{
+        return minValue;
     }
+}
 
 async function drawChart() {
+    const echarts = window.echarts;
+    const chart = echarts.init(document.getElementById('myChart'));
     const selectedMonth = monthSelect.value;
     const nomeMese = await capitalizeFirstLetter(await getNomeMeseItaliano(selectedMonth));
     let logs = await getStudyLogsByMonth(selectedMonth);
-    const materie = await getAllMaterie();
+    materie = await getAllMaterie();
     const nomeMaterie = materie.map(m => m.nome);
     const maxValue = await getMax(logs);
 
@@ -358,7 +365,7 @@ async function drawChart() {
         series: series
     };
 
-    myChart.setOption(option);
+    chart.setOption(option);
 
 }
 
@@ -367,7 +374,3 @@ async function drawChart() {
         const date = new Date(year, month - 1);
         return date.toLocaleString('it-IT', { month: 'long' });
     }
-
-});
-
-

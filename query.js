@@ -58,22 +58,14 @@ export async function saveMateria(materia) {
 }
 
 export async function deleteDatabase() {
-  const request = indexedDB.deleteDatabase(DB_NAME);
+  const request = await indexedDB.deleteDatabase(DB_NAME);
 
   request.onsuccess = () => {
-  //todo aggiungere showToast
-    alert("Database eliminato con successo!");
-    location.reload();
+    showToast("Database eliminato con successo!","success");
   };
 
   request.onerror = (event) => {
-  //todo aggiungere showToast
-    alert("Errore durante l'eliminazione del database: " + event.target.error);
-  };
-
-  request.onblocked = () => {
-    //todo aggiungere showToast
-    alert("Chiusura di tutte le schede necessaria per completare l'eliminazione.");
+    showErrorToast("Errore durante l'eliminazione del database","error");
   };
 }
 
@@ -118,7 +110,31 @@ export async function getAllMaterie() {
     });
 }
 
+export function showToast(message, type = "success") {
+  const toast = document.createElement("div");
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
 
+  setTimeout(() => toast.classList.add("show"), 100);
+  setTimeout(() => {
+    toast.classList.remove("show");
+    setTimeout(() => toast.remove(), 400);
+  }, 3000);
+}
+
+export function showErrorToast(message,type = "error") {
+  const toast = document.createElement("div");
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+
+  setTimeout(() => toast.classList.add("show"), 100);
+  setTimeout(() => {
+    toast.classList.remove("show");
+    setTimeout(() => toast.remove(), 400);
+  }, 3000);
+}
 
 // Export (se usi moduli)
 export { saveStudyLog, getAllStudyLogs };

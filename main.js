@@ -48,6 +48,10 @@ document.addEventListener("DOMContentLoaded", async() => {
                 await setDate();
                 drawChart();
             }
+            if(targetId === "registra"){
+                const materie = await getAllMaterie();
+                materieCreateComponent(materie);
+            }
 
             sections.forEach(section => {
                 section.classList.remove("active");
@@ -69,13 +73,15 @@ try{
     let [year, month] = monthSelect.value.split("-").map(Number);
     if(month === 12 || month === 1){
         if(offset < 0 && month === 1){
-            year = year + offset;
+            year += offset;
+            month = 13;
         }
         if(offset > 0 && month === 12){
-            year = year + offset;
+            year += offset;
+            month = 0;
         }
     }
-    const newAnno = year;
+    const newAnno =  year;
     const newMese = String(month + offset).padStart(2, "0");
     monthSelect.value = `${newAnno}-${newMese}`;
     drawChart();
@@ -94,46 +100,75 @@ nextBtn.addEventListener("click", () => changeMonth(1));
 
     let countdown;
     let remainingTime;
+    let startTime = null;
+    let durationMs = 0;
+    let timerInterval = null;
     const materie = await getAllMaterie();
-    materieCreateComponent(materie)
+    materieCreateComponent(materie);
+    let materia;
+    let minutes;
 
     form.addEventListener("submit", (e) => {
-        e.preventDefault();
-
-        const materia = materiaInput.value.trim();
-        const minutes = parseInt(minutesValue.innerText, 10);
-
-        if (!materia || minutes <= 0) return;
-
-        remainingTime = minutes * 60;
-        updateDisplay();
-
-        timerContainer.classList.remove("hidden");
-        form.classList.add("hidden");
-
-        countdown = setInterval(() => {
-            remainingTime--;
-            updateDisplay();
-
-            if (remainingTime <= 0) {
-                clearInterval(countdown);
-                saveLog(materia, minutes);
-                minutesValue.textContent = 60;
-                resetForm();
-            }
-        }, 1000);
+      e.preventDefault();
+      startTimer();
+      form.classList.add("hidden");
+      timerContainer.classList.remove("hidden");
+      materia = materiaInput.value.trim();
+      minutes = parseInt(minutesValue.innerText, 10);
     });
+
 
     stopBtn.addEventListener("click", () => {
-        clearInterval(countdown);
-        resetForm();
+      stopTimer();
+      minutesValue.textContent = 60;
+      resetForm();
+      form.classList.remove("hidden");
+      timerContainer.classList.add("hidden");
     });
 
-    function updateDisplay() {
-        const mins = Math.floor(remainingTime / 60);
-        const secs = remainingTime % 60;
-        timerDisplay.textContent =
-            `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+    function startTimer() {
+      const minutes = parseInt(minutesSlider.value, 10);
+      durationMs = minutes * 60 * 1000;
+      startTime = Date.now();
+      timerInterval = setInterval(updateTimer, 1000);
+      updateTimer();
+    }
+
+    function stopTimer() {
+      clearInterval(timerInterval);
+      startTime = null;
+      durationMs = 0;
+      updateTimerDisplay(0);
+    }
+
+    async function updateTimer() {
+      const elapsed = Date.now() - startTime;
+      const remaining = durationMs - elapsed;
+
+      if (remaining <= 0) {
+        clearInterval(timerInterval);
+        updateTimerDisplay(0);
+        const audio = new Audio("assets/sounds/alarm.mp3");
+        audio.play().catch(err => console.log("Errore audio:", err));
+        await saveLog(materia,minutes);
+        minutesValue.textContent = 60;
+        resetForm();
+        form.classList.remove("hidden");
+        timerContainer.classList.add("hidden");
+        const materie = await getAllMaterie();
+        materieCreateComponent(materie);
+        return;
+      }
+      updateTimerDisplay(remaining);
+    }
+
+    function updateTimerDisplay(ms) {
+      const totalSeconds = Math.floor(ms / 1000);
+      const h = Math.floor(totalSeconds / 3600);
+      const m = Math.floor((totalSeconds % 3600) / 60);
+      const s = totalSeconds % 60;
+      timerDisplay.textContent =
+        `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
     }
 
 async function getTime(minutes){
@@ -203,9 +238,7 @@ function capitalizeFirstLetter(str) {
 
     async function materiaComponent(materia) {
         const container = document.createElement("div");
-
         container.classList.add("cat");
-
         container.innerHTML = `
           <div class="cat-header">
             <span>${materia}</span>
@@ -229,11 +262,11 @@ function capitalizeFirstLetter(str) {
 
     async function getMax(logs){
         let sum = 0.0;
-        const minValue = 8;
+        const minValue = 6;
         logs.forEach( log => {
         sum += log.ore
         })
-        if(sum > 8){
+        if(sum > minValue){
             return Math.ceil(sum);
         }else{
             return minValue;
@@ -246,7 +279,7 @@ async function drawChart() {
     let logs = await getStudyLogsByMonth(selectedMonth);
     const materie = await getAllMaterie();
     const nomeMaterie = materie.map(m => m.nome);
-    const mavValue = await getMax(logs);
+    const maxValue = await getMax(logs);
 
     const filteredLogs = logs.filter(l => l.data.startsWith(selectedMonth));
 
@@ -310,7 +343,7 @@ async function drawChart() {
         xAxis: {
             type: 'value',
             min: 0,
-            max: mavValue,
+            max: maxValue,
             interval: 1,
             axisLabel: {
                 formatter: val => `${val}h`

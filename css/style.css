@@ -15,9 +15,7 @@ h2{
     text-align: center;
 }
 
-main#app {
-    padding-bottom: 60px;
-}
+
 
 /* Sezioni */
 .page-section {
@@ -155,7 +153,7 @@ main#app {
 #myChart {
   margin: 0 auto;
   width:  90vw;
-  height: 80vh;
+  height: 85vh;
 }
 
 .month-picker {

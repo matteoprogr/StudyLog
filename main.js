@@ -361,7 +361,7 @@ async function drawChart() {
         },
         series: series
     };
-
+    chart.clear();
     chart.setOption(option);
 
 }

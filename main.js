@@ -287,9 +287,6 @@ async function drawChart() {
     materie = await getAllMaterie();
     const nomeMaterie = materie.map(m => m.nome);
     const maxValue = await getMax(logs);
-
-    const filteredLogs = logs.filter(l => l.data.startsWith(selectedMonth));
-
     const year = parseInt(selectedMonth.split('-')[0]);
     const month = parseInt(selectedMonth.split('-')[1]) - 1;
     const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -300,7 +297,7 @@ async function drawChart() {
         datiMaterie[m] = Array(daysInMonth).fill(0);
     });
 
-    filteredLogs.forEach(log => {
+    logs.forEach(log => {
         const giorno = new Date(log.data).getDate();
         const idx = giorno - 1;
         const val = parseFloat(log.ore) || 0;

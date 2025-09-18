@@ -130,7 +130,7 @@ export async function updateMateria(oldMat, newMat) {
         if (oldMat === newMat) return;
         if (!isValid(record)) return;
         await db.materie.delete(oldMat);
-        if (!isValid(recordNew)) await db.materie.put({ nome: newMat });
+        if (!isValid(recordNew)) await db.materie.put({ ...record, nome: newMat});
         updateMatInLogs(oldMat, newMat);
 
     }catch(err){
@@ -146,19 +146,22 @@ async function updateMatInLogs(oldMat, newMat){
     const logs = await getLogsByNome(oldMat)
     if(logs.length !== 0){
         for(const log of logs){
-            log.nome = newMat;
-            await updateLogsByNome(oldMat,{materia: newMat});
+            log.materia = newMat;
+            await updateLogsByNome(log);
         }
     }
 }
 
-async function updateLogsByNome(nomeValue, changes) {
+async function updateLogsByNome(log) {
   try {
     const db = await openDB();
-    const count = await db.studyLogs
-      .where('materia')
-      .equals(nomeValue)
-      .modify(changes);
+    const data = {
+          data: log.data,
+          materia: log.materia,
+          ore: log.ore,
+          id: log.id
+        };
+    const count = await db.studyLogs.put(data);
     return count;
   } catch (err) {
     console.error("Errore aggiornamento logs per nome:", err);

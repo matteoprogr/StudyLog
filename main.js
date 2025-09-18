@@ -223,12 +223,16 @@ async function setDate(){
 }
 
 async function saveLog(materiaIns, minutes) {
-    const today = new Date().toISOString().split("T")[0];
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const formatted = `${yyyy}-${mm}-${dd}`;
     const time = await getTime(minutes);
     const materiaCap = capitalizeFirstLetter(materiaIns);
 
     const log = {
-        data: today,
+        data: formatted,
         materia: materiaCap,
         ore: time
     };
@@ -301,7 +305,7 @@ async function materiaComponent(materia) {
             span.textContent = newValue;
             try{ input.replaceWith(span); }catch{}
             if (oldValue !== newValue) {
-                await updateMateria(oldValue, newValue,false, false);
+                await updateMateria(oldValue, newValue);
             }
             materie = await getAllMaterie();
             materieCreateComponent(materie);

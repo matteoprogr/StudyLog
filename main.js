@@ -1,5 +1,5 @@
 import { saveStudyLog, getAllStudyLogs, saveMateria, getAllMaterie, getStudyLogsByMonth, deleteDatabase,
-updateMateria, deleteMaterie, isValid, updateOreInLogs } from "./query.js";
+updateMateria, deleteMaterie, isValid, updateOreInLogs, getStudyLogsByDay } from "./query.js";
 
 
 /////////  SERVICE WORKER ////////////////
@@ -20,6 +20,7 @@ const minutesValue = document.getElementById("minutes-value");
 const timerContainer = document.getElementById("timer-container");
 const timerDisplay = document.getElementById("timer-display");
 const stopBtn = document.getElementById("stop-btn");
+const daySelect = document.getElementById('day-select');
 const monthSelect = document.getElementById('month-select');
 const prevBtn = document.getElementById("prev-month");
 const nextBtn = document.getElementById("next-month");
@@ -59,6 +60,7 @@ let time;
             if(targetId === "registra"){
                 materie = await getAllMaterie();
                 materieCreateComponent(materie);
+                drawDayChart();
             }
 
             sections.forEach(section => {
@@ -70,15 +72,18 @@ let time;
 
 
 
-document.addEventListener("DOMContentLoaded", async() => {
+document.addEventListener("DOMContentLoaded", async () => {
 
 prevBtn.addEventListener("click", () => changeMonth(-1));
 nextBtn.addEventListener("click", () => changeMonth(1));
+await setDay();
+
 
     minutesSlider.addEventListener("input", () => {
         minutesValue.textContent = minutesSlider.value;
     });
     monthSelect.addEventListener('change', drawChart);
+    daySelect.addEventListener('change', drawDayChart);
     materie = await getAllMaterie();
     materieCreateComponent(materie);
 
@@ -127,12 +132,16 @@ function startTimer() {
   startTime = Date.now();
   timerInterval = setInterval(updateTimer, 1000);
   updateTimer();
+  dayChart.classList.add('hidden');
+  daySelect.classList.add("hidden");
 }
 
 function startInfiniteTimer() {
   startTime = Date.now();
   timerInterval = setInterval(updateInfiniteTimer, 1000);
   updateInfiniteTimer();
+  dayChart.classList.add('hidden');
+  daySelect.classList.add("hidden");
 }
 
 function updateInfiniteTimer() {
@@ -156,6 +165,8 @@ async function stopTimer() {
     timerContainer.classList.add("hidden");
     materie = await getAllMaterie();
     materieCreateComponent(materie);
+    daySelect.classList.remove("hidden");
+    drawDayChart();
 }
 
 
@@ -176,6 +187,8 @@ async function updateTimer() {
     timerContainer.classList.add("hidden");
     materie = await getAllMaterie();
     materieCreateComponent(materie);
+    daySelect.classList.remove("hidden");
+    drawDayChart();
     return;
   }
   updateTimerDisplay(remaining);
@@ -222,6 +235,16 @@ async function setDate(){
         const anno = oggi.getFullYear();
         const mese = String(oggi.getMonth() + 1).padStart(2, "0");
         monthSelect.value = `${anno}-${mese}`;
+}
+
+async function setDay(){
+        const today = new Date();
+        const y = today.getFullYear();
+        const m = String(today.getMonth() +1).padStart(2,'0');
+        const d = String(today.getDate()).padStart(2,'0');
+        const formatted = `${y}-${m}-${d}`;
+        daySelect.value = formatted;
+        drawDayChart();
 }
 
 async function saveLog(materiaIns, minutes) {
@@ -296,7 +319,7 @@ async function materiaComponent(materia) {
         input.type = "text";
         const oldValue = span.textContent.trim();
         input.value = oldValue
-        input.maxLength = 25;
+        input.maxLength = 15;
         input.id = "updateMat";
         btnDelete.textContent = "❌";
         btnDelete.id = "delMat";
@@ -362,7 +385,7 @@ function formatOreMin(oreDecimal) {
 
 async function getMax(logs){
     let sum = 0.0;
-    const minValue = 6;
+    const minValue = 4;
     logs.forEach( log => {
     sum += log.ore
     })
@@ -460,6 +483,84 @@ async function drawChart() {
     chart.setOption(option);
 
 }
+
+
+async function drawDayChart() {
+    const echarts = window.echarts;
+    const chart = echarts.init(document.getElementById('dayChart'));
+    const selectedDay = daySelect.value;
+    let logs = await getStudyLogsByDay(selectedDay);
+    materie = await getAllMaterie();
+    const nomeMaterie = materie.map(m => m.nome);
+    const maxValue = await getMax(logs);
+
+    const dati = nomeMaterie.reduce((acc, m) => {
+        acc[m] = 0;
+        return acc;
+    }, {});
+
+    logs.forEach(log => {
+       const val = parseFloat(log.ore) || 0;
+       if(dati[log.materia] !== undefined){
+        dati[log.materia] += val;
+       } else{
+        dati[log.materia] = val;
+       }
+    });
+
+    const colorPalette  = [
+    '#5470C6', '#91CC75', '#EE6666', '#73C0DE', '#FAC858',
+        '#3BA272', '#FC8452', '#9A60B4', '#EA7CCC'
+    ];
+
+    const filteredMaterie = nomeMaterie.filter(m => dati[m] > 0);
+    const series = [{
+        name: '',
+        type: 'bar',
+        data: filteredMaterie.map((m, idx) => {
+            const valueForMateria = dati[m] || 0;
+            return{
+                value: valueForMateria,
+                itemStyle: {
+                    color: colorPalette [idx % colorPalette .length]
+                }
+            }
+        }),
+        label: {
+            show: true,
+            position: 'right',
+            formatter: params => formatOreMin(params.value)
+        }
+    }];
+
+    // Configurazione grafico
+    const option = {
+        tooltip: {
+            trigger: 'item',
+            formatter: params => `${params.name}: ${formatOreMin(params.value)}`
+        },
+
+        xAxis: {
+            type: 'value',
+            min: 0,
+            max: maxValue,
+            axisLabel: {
+                formatter: val => `${val}h`
+            }
+        },
+        yAxis: {
+            type: 'category',
+            data: filteredMaterie,
+            axisLabel: { show: false }
+        },
+        grid: { left: '5%', right: '5%', top: '0%', bottom: '20%'},
+        series: series
+    };
+    chart.clear();
+    chart.setOption(option);
+    dayChart.classList.remove('hidden');
+}
+
 
 function getNomeMeseItaliano(ym) {
     const [year, month] = ym.split('-').map(Number);

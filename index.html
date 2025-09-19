@@ -26,7 +26,7 @@
     <section id="registra" class="page-section active">
         <h4>Timer</h4>
         <form id="study-form">
-            <input  type="text"  class="inputMateria" id="ricerca-materie" maxlength="25"  placeholder="Es. Matematica" required>
+            <input  type="text"  class="inputMateria" id="ricerca-materie" maxlength="15"  placeholder="Es. Matematica" required>
             <div class="categorie-cards" id="categorieCardsEntrata"></div>
 
             <label for="minutes" id="minutes-value">0</label>
@@ -40,6 +40,10 @@
             <button id="stop-btn">Interrompi</button>
         </div>
 
+        <div id="dayChart"></div>
+        <div class="date-picker">
+        <input type="date" id="day-select">
+        </div>
     </section>
 
     <!-- Pagina Grafici -->

@@ -122,6 +122,16 @@ export async function getStudyLogsByMonth(month) {
     throw err;
   }
 }
+export async function getStudyLogsByDay(day) {
+  try {
+    const db = await openDB();
+    const allLogs = await db.studyLogs.toArray();
+    return allLogs.filter(log => log.data === day);
+  } catch (err) {
+    console.error("Errore lettura StudyLogs per giorno:", err);
+    throw err;
+  }
+}
 
 export async function getAllMaterie() {
   try {

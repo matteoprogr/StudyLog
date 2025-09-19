@@ -14,7 +14,7 @@ export function openDB() {
 
   // Definizione versioni e store
   db.version(DB_VERSION).stores({
-    [STORE_NAME]: '++id, materia',
+    [STORE_NAME]: '++id, materia, data, [materia+data]',
     [MATERIE]: 'nome'
   });
 
@@ -83,7 +83,7 @@ export async function getAllStudyLogs() {
   }
 }
 
-async function getLogsByNome(nomeValue) {
+async function getLogsByMateria(nomeValue) {
   try {
     const db = await openDB();
     const logs = await db.studyLogs
@@ -96,6 +96,21 @@ async function getLogsByNome(nomeValue) {
     throw err;
   }
 }
+
+async function getLogsByMateriaData(nomeValue, dataValue) {
+  try {
+    const db = await openDB();
+    const logs = await db.studyLogs
+      .where('[materia+data]')
+      .equals([nomeValue, dataValue])
+      .toArray();
+    return logs;
+  } catch (err) {
+    console.error("Errore recupero logs per materia e data:", err);
+    throw err;
+  }
+}
+
 
 export async function getStudyLogsByMonth(month) {
   try {
@@ -143,14 +158,30 @@ export function isValid(value) {
 }
 
 async function updateMatInLogs(oldMat, newMat){
-    const logs = await getLogsByNome(oldMat)
+    const logs = await getLogsByMateria(oldMat)
     if(logs.length !== 0){
         for(const log of logs){
             log.materia = newMat;
-            await updateLogsByNome(log);
+            await updateLogs(log);
         }
     }
 }
+
+export async function updateOreInLogs(ore,data, materia){
+    const logs = await getLogsByMateriaData(materia,data)
+    if(logs.length !== 0){
+        for(const log of logs){
+            log.ore += ore;
+            await updateLogs(log);
+        }
+        return true;
+    }else{
+        return false;
+    }
+}
+
+
+
 
 export async function deleteMaterie(materia) {
     await db.materie
@@ -171,7 +202,7 @@ export async function deleteLogsByMateria(materia) {
     return;
 }
 
-async function updateLogsByNome(log) {
+async function updateLogs(log) {
   try {
     const db = await openDB();
     const data = {
@@ -185,8 +216,6 @@ async function updateLogsByNome(log) {
   } catch (err) {
     console.error("Errore aggiornamento logs per nome:", err);
     throw err;
-  } finally{
-    showToast("Materia modificata con successo", "success");
   }
 }
 

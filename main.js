@@ -1,5 +1,5 @@
 import { saveStudyLog, getAllStudyLogs, saveMateria, getAllMaterie, getStudyLogsByMonth, deleteDatabase,
-updateMateria, deleteMaterie, isValid } from "./query.js";
+updateMateria, deleteMaterie, isValid, updateOreInLogs } from "./query.js";
 
 
 /////////  SERVICE WORKER ////////////////
@@ -27,7 +27,6 @@ const deleteBtn = document.getElementById("delete-db-btn");
 const modal = document.getElementById("confirm-modal");
 const confirmDelete = document.getElementById("confirm-delete");
 const cancelDelete = document.getElementById("cancel-delete");
-const explainCard = document.getElementById("explainCard");
 const audioFile = new Audio("assets/sounds/alarm.mp3");
 let countdown;
 let remainingTime;
@@ -128,14 +127,12 @@ function startTimer() {
   startTime = Date.now();
   timerInterval = setInterval(updateTimer, 1000);
   updateTimer();
-  explainCard.classList.add("hidden");
 }
 
 function startInfiniteTimer() {
   startTime = Date.now();
   timerInterval = setInterval(updateInfiniteTimer, 1000);
   updateInfiniteTimer();
-  explainCard.classList.add("hidden");
 }
 
 function updateInfiniteTimer() {
@@ -159,7 +156,6 @@ async function stopTimer() {
     timerContainer.classList.add("hidden");
     materie = await getAllMaterie();
     materieCreateComponent(materie);
-    explainCard.classList.remove("hidden");
 }
 
 
@@ -180,7 +176,6 @@ async function updateTimer() {
     timerContainer.classList.add("hidden");
     materie = await getAllMaterie();
     materieCreateComponent(materie);
-    explainCard.classList.remove("hidden");
     return;
   }
   updateTimerDisplay(remaining);
@@ -237,24 +232,25 @@ async function saveLog(materiaIns, minutes) {
     const formatted = `${yyyy}-${mm}-${dd}`;
     const time = await getTime(minutes);
     const materiaCap = capitalizeFirstLetter(materiaIns);
-
-    const log = {
-        data: formatted,
-        materia: materiaCap,
-        ore: time
-    };
-    const materia ={
-        nome: materiaCap
-    }
-    let matExist = false;
-    for(const mat of materie){
-        if(mat.nome === materiaCap){
-            matExist = true;
+    const existLog = await updateOreInLogs(time, formatted, materiaCap)
+    if(!existLog){
+        const log = {
+            data: formatted,
+            materia: materiaCap,
+            ore: time
+        };
+        const materia ={
+            nome: materiaCap
         }
+        let matExist = false;
+        for(const mat of materie){
+            if(mat.nome === materiaCap){
+                matExist = true;
+            }
+        }
+        if(!matExist) await saveMateria(materia);
+        await saveStudyLog(log);
     }
-    if(!matExist) await saveMateria(materia);
-
-    await saveStudyLog(log);
 }
 
 export function capitalizeFirstLetter(str) {

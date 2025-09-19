@@ -152,6 +152,25 @@ async function updateMatInLogs(oldMat, newMat){
     }
 }
 
+export async function deleteMaterie(materia) {
+    await db.materie
+        .where('nome')
+        .anyOfIgnoreCase(materia)
+        .delete();
+
+    deleteLogsByMateria(materia);
+    return;
+}
+
+export async function deleteLogsByMateria(materia) {
+    await db.studyLogs
+        .where('materia')
+        .anyOfIgnoreCase(materia)
+        .delete();
+
+    return;
+}
+
 async function updateLogsByNome(log) {
   try {
     const db = await openDB();

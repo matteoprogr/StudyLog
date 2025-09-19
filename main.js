@@ -1,4 +1,5 @@
-import { saveStudyLog, getAllStudyLogs, saveMateria, getAllMaterie, getStudyLogsByMonth, deleteDatabase, updateMateria } from "./query.js";
+import { saveStudyLog, getAllStudyLogs, saveMateria, getAllMaterie, getStudyLogsByMonth, deleteDatabase,
+updateMateria, deleteMaterie, isValid } from "./query.js";
 
 
 /////////  SERVICE WORKER ////////////////
@@ -26,6 +27,7 @@ const deleteBtn = document.getElementById("delete-db-btn");
 const modal = document.getElementById("confirm-modal");
 const confirmDelete = document.getElementById("confirm-delete");
 const cancelDelete = document.getElementById("cancel-delete");
+const explainCard = document.getElementById("explainCard");
 let countdown;
 let remainingTime;
 let startTime = null;
@@ -125,12 +127,14 @@ function startTimer() {
   startTime = Date.now();
   timerInterval = setInterval(updateTimer, 1000);
   updateTimer();
+  explainCard.classList.add("hidden");
 }
 
 function startInfiniteTimer() {
   startTime = Date.now();
   timerInterval = setInterval(updateInfiniteTimer, 1000);
   updateInfiniteTimer();
+  explainCard.classList.add("hidden");
 }
 
 function updateInfiniteTimer() {
@@ -154,6 +158,7 @@ async function stopTimer() {
     timerContainer.classList.add("hidden");
     materie = await getAllMaterie();
     materieCreateComponent(materie);
+    explainCard.classList.remove("hidden");
 }
 
 
@@ -174,6 +179,7 @@ async function updateTimer() {
     timerContainer.classList.add("hidden");
     materie = await getAllMaterie();
     materieCreateComponent(materie);
+    explainCard.classList.remove("hidden");
     return;
   }
   updateTimerDisplay(remaining);
@@ -276,26 +282,38 @@ async function materiaComponent(materia) {
     container.classList.add("cat");
     let pressTimer;
     container.innerHTML = `
-      <div class="cat-header">
         <span class="mat-name">${materia}</span>
-      </div>
     `;
 
     container.addEventListener("click", () => {
         const materiaEl = container.querySelector("span");
         const materiaInput = document.getElementById("ricerca-materie");
-        materiaInput.value = materiaEl.innerText;
+        if(isValid(materiaEl)) materiaInput.value = materiaEl.innerText;
     });
 
     const span = container.querySelector('.mat-name');
     container.addEventListener("touchstart", () => {
     pressTimer = setTimeout(() => {
         const input = document.createElement("input");
+        const btnDelete = document.createElement("button");
         input.type = "text";
         const oldValue = span.textContent.trim();
         input.value = oldValue
         input.maxLength = 25;
-        input.classList.add("cat-input");
+        input.id = "updateMat";
+        btnDelete.textContent = "❌";
+        btnDelete.id = "delMat";
+        btnDelete.classList.add("btn-delete");
+        btnDelete.setAttribute("tabindex", "-1");
+        if (!container.querySelector(".btn-delete")) {
+          container.appendChild(btnDelete);
+          btnDelete.addEventListener("click",async () => {
+            container.remove();
+            deleteMaterie(oldValue);
+            materie = await getAllMaterie();
+            materieCreateComponent(materie);
+          });
+        }
 
         span.replaceWith(input);
         input.focus();
@@ -312,12 +330,17 @@ async function materiaComponent(materia) {
 
         };
 
+
         const notConfirm = async () => {
+            btnDelete.remove();
             span.textContent = oldValue;
             try{ input.replaceWith(span); }catch{}
         };
 
-        input.addEventListener("blur", notConfirm, { once: true });
+        input.addEventListener("blur",(ev) => {
+          if (ev.relatedTarget === btnDelete) return;
+          notConfirm(); },{ once: true } );
+
         input.addEventListener("keydown", (ev) => {
             if (ev.key === "Enter") {
                 confirm();

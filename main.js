@@ -28,6 +28,7 @@ const modal = document.getElementById("confirm-modal");
 const confirmDelete = document.getElementById("confirm-delete");
 const cancelDelete = document.getElementById("cancel-delete");
 const explainCard = document.getElementById("explainCard");
+const audioFile = new Audio("assets/sounds/alarm.mp3");
 let countdown;
 let remainingTime;
 let startTime = null;
@@ -149,7 +150,7 @@ async function stopTimer() {
     durationMs = 0;
     updateTimerDisplay(0);
     minutesValue.textContent = 0;
-    const audio = new Audio("assets/sounds/alarm.mp3");
+    const audio = audioFile;
     audio.play().catch(err => console.log("Errore audio:", err));
     const minutiPassati = time / (1000 * 60);
     await saveLog(materia, minutiPassati);
@@ -170,7 +171,7 @@ async function updateTimer() {
   if (remaining <= 0) {
     clearInterval(timerInterval);
     updateTimerDisplay(0);
-    const audio = new Audio("assets/sounds/alarm.mp3");
+    const audio = audioFile;
     audio.play().catch(err => console.log("Errore audio:", err));
     await saveLog(materia,minutes);
     minutesValue.textContent = 0;

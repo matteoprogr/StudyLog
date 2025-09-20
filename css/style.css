@@ -506,9 +506,19 @@ input[type="file"] {
   text-align: center;
 }
 
-/* Input e pulsanti */
+/* Input e pulsanti
 input, button {
   width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 16px;
+}*/
+
+
+#nuoveOre, #nuoviMinuti{
+  width: 40%;
   padding: 10px;
   margin: 10px 0;
   border: 1px solid #ccc;
@@ -520,12 +530,24 @@ input, button {
 #saveBtn {
   background: #555;
   color: white;
+    width: 100%;
+    padding: 0.5rem;
+    margin: 0.5rem 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
 }
 
 /* Pulsante di annullamento */
 #cancelBtn {
   background:  #c0392b;
   color: white;
+    width: 100%;
+    padding: 0.5rem;
+    margin: 0.5rem 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
 }
 
 /* Nascondi il modulo di default */

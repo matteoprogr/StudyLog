@@ -407,14 +407,21 @@ async function getMaxMonth(logs){
 
 async function getMaxDay(logs){
     const minValue = 4;
-    let min = 0.0;
+    let max = 0.0;
     logs.forEach( log => {
-        if(log.ore > minValue){
-            min = log.ore;
+    const mat = log.materia;
+        let sum = 0.0;
+        for(const l of logs){
+            if(mat === l.materia){
+                sum += l.ore;
+            }
+        }
+        if(sum > max){
+            max = sum;
         }
     })
-    if(min > minValue){
-        return Math.ceil(min);
+    if(max > minValue){
+        return Math.ceil(max);
     }else{
         return minValue;
     }
@@ -586,7 +593,7 @@ async function drawDayChart() {
 
 
 let pressTimer;
-const pressDuration = 700; // Durata della pressione in millisecondi
+const pressDuration = 1000;
 
 chart.on('mousedown', function(params) {
   pressTimer = setTimeout(() => {
@@ -620,6 +627,7 @@ chart.on('mousedown', function(params) {
         }
      });
     }, pressDuration);
+
     chart.on('mouseup', function() {
       clearTimeout(pressTimer);
     });

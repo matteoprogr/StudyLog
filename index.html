@@ -44,6 +44,20 @@
         <div class="date-picker">
         <input type="date" id="day-select">
         </div>
+
+        <div id="editform" class="hidden">
+            <div class="overlay">
+                <div class="form-container">
+                    <h4>Modifica ore</h4>
+                    <p id="materiaDisplay"></p>
+                    <p id="giornoDisplay"></p>
+                    <input type="number" id="nuoveOre" placeholder="ore" step="1" min="0" max="23">
+                    <input type="number" id="nuoviMinuti" placeholder="minuti" step="1" min="0" max="59">
+                    <button id="saveBtn">Salva</button>
+                    <button id="cancelBtn">Annulla</button>
+                    </div>
+            </div>
+        </div>
     </section>
 
     <!-- Pagina Grafici -->

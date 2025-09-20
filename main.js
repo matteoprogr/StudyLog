@@ -1,5 +1,5 @@
 import { saveStudyLog, getAllStudyLogs, saveMateria, getAllMaterie, getStudyLogsByMonth, deleteDatabase,
-updateMateria, deleteMaterie, isValid, updateOreInLogs, getStudyLogsByDay } from "./query.js";
+updateMateria, deleteMaterie, isValid, updateOreInLogs, getStudyLogsByDay, showErrorToast } from "./query.js";
 
 
 /////////  SERVICE WORKER ////////////////
@@ -384,13 +384,15 @@ function formatOreMin(oreDecimal) {
 }
 
 async function getMax(logs){
-    let sum = 0.0;
     const minValue = 4;
+    let min = 0.0;
     logs.forEach( log => {
-    sum += log.ore
+        if(log.ore > minValue){
+            min = log.ore;
+        }
     })
-    if(sum > minValue){
-        return Math.ceil(sum);
+    if(min > minValue){
+        return Math.ceil(min);
     }else{
         return minValue;
     }
@@ -553,12 +555,57 @@ async function drawDayChart() {
             data: filteredMaterie,
             axisLabel: { show: false }
         },
-        grid: { left: '5%', right: '5%', top: '0%', bottom: '20%'},
+        grid: { left: '5%', right: '5%', top: '0%', bottom: '10%'},
         series: series
     };
     chart.clear();
     chart.setOption(option);
     dayChart.classList.remove('hidden');
+
+
+let pressTimer;
+const pressDuration = 700; // Durata della pressione in millisecondi
+
+chart.on('mousedown', function(params) {
+  pressTimer = setTimeout(() => {
+        const materia = params.name;
+        const giorno = selectedDay;
+        const valoreAttuale = params.value;
+        const ore = Math.floor(valoreAttuale);
+        const minuti = Math.round((valoreAttuale - ore) * 60);
+        document.getElementById('materiaDisplay').textContent = `Materia: ${materia}`;
+        document.getElementById('giornoDisplay').textContent = `Giorno: ${giorno}`;
+        document.getElementById('nuoveOre').value = ore;
+        document.getElementById('nuoviMinuti').value = minuti;
+
+        const form = document.getElementById('editform');
+        form.classList.remove('hidden')
+        document.getElementById('saveBtn').onclick = async function() {
+        const nuoveOre = parseFloat(document.getElementById('nuoveOre').value);
+        const nuoviMinuti = parseFloat(document.getElementById('nuoviMinuti').value) / 60;
+        const oreDecimale = nuoveOre + nuoviMinuti;
+            if(isValid(nuoveOre) && nuoviMinuti < 0.999 && nuoveOre < 24){
+                await updateOreInLogs(oreDecimale - valoreAttuale, giorno, materia);
+                drawDayChart();
+            }else{
+                showErrorToast('Valore inserito non valido','error')
+            }
+            form.classList.add('hidden');
+        }
+
+        document.getElementById('cancelBtn').onclick = function() {
+            form.classList.add('hidden');
+        }
+     });
+    }, pressDuration);
+    chart.on('mouseup', function() {
+      clearTimeout(pressTimer);
+    });
+
+    chart.on('mouseleave', function() {
+      clearTimeout(pressTimer);
+    });
+
 }
 
 

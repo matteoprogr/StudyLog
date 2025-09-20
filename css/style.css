@@ -192,7 +192,8 @@ h4{
 }
 
 #dayChart{
-  margin-top: 2rem;
+  margin-top: 3rem;
+  margin-bottom: 3rem;
   width:  85vw;
   height: 35vh;
 }
@@ -505,16 +506,6 @@ input[type="file"] {
   width: 13rem;
   text-align: center;
 }
-
-/* Input e pulsanti
-input, button {
-  width: 100%;
-  padding: 10px;
-  margin: 10px 0;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 16px;
-}*/
 
 
 #nuoveOre, #nuoviMinuti{

@@ -584,7 +584,7 @@ async function drawDayChart() {
             data: filteredMaterie,
             axisLabel: { show: false }
         },
-        grid: { left: '5%', right: '5%', top: '0%', bottom: '10%'},
+        grid: { left: '5%', right: '5%', top: '0%', bottom: '5%'},
         series: series
     };
     chart.clear();
@@ -593,7 +593,7 @@ async function drawDayChart() {
 
 
 let pressTimer;
-const pressDuration = 1000;
+const pressDuration = 700;
 
 chart.on('mousedown', function(params) {
   pressTimer = setTimeout(() => {
@@ -625,8 +625,8 @@ chart.on('mousedown', function(params) {
         document.getElementById('cancelBtn').onclick = function() {
             form.classList.add('hidden');
         }
-     });
-    }, pressDuration);
+     }, pressDuration);
+    });
 
     chart.on('mouseup', function() {
       clearTimeout(pressTimer);

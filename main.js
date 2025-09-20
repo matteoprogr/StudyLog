@@ -383,7 +383,29 @@ function formatOreMin(oreDecimal) {
     return `${h}h ${min}min`;
 }
 
-async function getMax(logs){
+async function getMaxMonth(logs){
+    const minValue = 4;
+    let max = 0.0;
+    logs.forEach( log => {
+        const date = log.data;
+        let sum = 0.0;
+        for(const l of logs){
+            if(date === l.data){
+                sum += l.ore;
+            }
+        }
+        if(sum > max){
+            max = sum;
+        }
+    })
+    if(max > minValue){
+        return Math.ceil(max);
+    }else{
+        return minValue;
+    }
+}
+
+async function getMaxDay(logs){
     const minValue = 4;
     let min = 0.0;
     logs.forEach( log => {
@@ -406,7 +428,7 @@ async function drawChart() {
     let logs = await getStudyLogsByMonth(selectedMonth);
     materie = await getAllMaterie();
     const nomeMaterie = materie.map(m => m.nome);
-    const maxValue = await getMax(logs);
+    const maxValue = await getMaxMonth(logs);
     const year = parseInt(selectedMonth.split('-')[0]);
     const month = parseInt(selectedMonth.split('-')[1]) - 1;
     const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -494,7 +516,7 @@ async function drawDayChart() {
     let logs = await getStudyLogsByDay(selectedDay);
     materie = await getAllMaterie();
     const nomeMaterie = materie.map(m => m.nome);
-    const maxValue = await getMax(logs);
+    const maxValue = await getMaxDay(logs);
 
     const dati = nomeMaterie.reduce((acc, m) => {
         acc[m] = 0;

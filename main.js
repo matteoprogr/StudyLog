@@ -135,7 +135,8 @@ confirmDelete.addEventListener("click", () => {
 async function deleteEsami(){
     const selectedCards = document.querySelectorAll(".selected");
     if(selectedCards.length === 0){
-        showErrorToast("Selezionare almeno un esame", "error")
+        showErrorToast("Selezionare almeno un esame", "error");
+        return;
     }
 
     for(const card of selectedCards){

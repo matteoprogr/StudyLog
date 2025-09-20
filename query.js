@@ -17,7 +17,7 @@ export function openDB() {
   db.version(DB_VERSION).stores({
     [STORE_NAME]: '++id, materia, data, [materia+data]',
     [MATERIE]: 'nome',
-    [ESAMI]: '++id, materia, voto, data'
+    [ESAMI]: '++id, materia, voto, crediti, data'
   });
 
   return db.open()
@@ -270,6 +270,7 @@ export async function updateEsami(esame) {
           materia: esame.materia,
           data: esame.data,
           voto: esame.voto,
+          crediti: esame.crediti,
           id: esame.id
         };
     const count = await db.esami.put(data);

@@ -1,7 +1,7 @@
 import { saveStudyLog, getAllStudyLogs, saveMateria, getAllMaterie, getStudyLogsByMonth, deleteDatabase,
 updateMateria, deleteMaterie, isValid, updateOreInLogs, getStudyLogsByDay, showErrorToast, getAllEsami, deleteEsame } from "./query.js";
 
-import { creaEsameComponent, creaCardInsEsame } from "./card.js";
+import { creaEsameComponent, creaCardInsEsame, mediaComponent } from "./card.js";
 
 /////////  SERVICE WORKER ////////////////
 if ('serviceWorker' in navigator) {
@@ -407,8 +407,12 @@ async function materiaComponent(materia) {
 export async function creaEsamiPage(){
     const newCardDiv = document.getElementById('newEsamiCard');
     const esamiCards = document.getElementById('esamiCards');
+    const mediaDiv = document.getElementById('media');
+    let prodottoVotiCrediti = 0;
+    let totCrediti = 0;
     newCardDiv.innerHTML = "";
     esamiCards.innerHTML = "";
+    media.innerHTML = "";
 
     const newCardComp = await creaCardInsEsame();
     newCardDiv.appendChild(newCardComp);
@@ -417,7 +421,19 @@ export async function creaEsamiPage(){
     cards.forEach(card => {
         const esame = creaEsameComponent(card);
         esamiCards.appendChild(esame);
+        const creditiParse = parseInt(card.crediti, 10);
+        prodottoVotiCrediti += (parseInt(card.voto, 10) * creditiParse);
+        totCrediti += creditiParse;
     });
+    if(cards.length !== 0){
+        const media = prodottoVotiCrediti / totCrediti;
+        const mediaComp = mediaComponent(" Media ", media.toFixed(2));
+        mediaDiv.appendChild(mediaComp);
+    }else{
+        const mediaComp = mediaComponent("Nessun esame inserito","");
+        mediaDiv.appendChild(mediaComp);
+    }
+
 
 }
 
@@ -658,8 +674,8 @@ chart.on('mousedown', function(params) {
         const valoreAttuale = params.value;
         const ore = Math.floor(valoreAttuale);
         const minuti = Math.round((valoreAttuale - ore) * 60);
-        document.getElementById('materiaDisplay').textContent = `Materia: ${materia}`;
-        document.getElementById('giornoDisplay').textContent = `Giorno: ${giorno}`;
+        document.getElementById('materiaDisplay').textContent = `${materia}`;
+        document.getElementById('giornoDisplay').textContent = `${giorno}`;
         document.getElementById('nuoveOre').value = ore;
         document.getElementById('nuoviMinuti').value = minuti;
 

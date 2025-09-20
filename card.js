@@ -13,7 +13,10 @@ export function creaEsameComponent(esame) {
          <div class="esame-card">
             <div class="esame-content">
                  <div class="esame-body">
-                   <span class="materiaEsame">${esame.materia}</span>
+                      <div class="voto-data">
+                          <span class="materiaEsame">${esame.materia}</span>
+                          <small class="crediti">Crediti ${esame.crediti}</small>
+                      </div>
                        <div class="voto-data">
                            <span class="voto">${esame.voto}</span>
                            <small class="data">${esame.data}</small>
@@ -58,7 +61,10 @@ export async function creaCardInsEsame() {
     btn.addEventListener("click", async () => {
         container.innerHTML = `
             <form class="esame-card form-esame">
-                <input type="text" maxlength="15" placeholder="Materia" class="input-materia" required/>
+                 <div class="row">
+                    <input type="text" maxlength="15" placeholder="Esame"  class="input-materia" required/>
+                    <input type="number" placeholder="Crediti" class="input-crediti" min="0" max="30" required/>
+                  </div>
 
                 <div class="row">
                     <input type="date" class="input-data" id="dataEsami" required/>
@@ -83,9 +89,10 @@ export async function creaCardInsEsame() {
             const materia = container.querySelector(".input-materia").value;
             const data = container.querySelector(".input-data").value;
             const voto = container.querySelector(".input-voto").value;
+            const crediti = container.querySelector(".input-crediti").value;
 
             if (materia && data && voto && voto < 31 && voto > 0) {
-                const nuovoEsame = { materia, data, voto };
+                const nuovoEsame = { materia, data, voto, crediti };
                 await saveEsame(nuovoEsame);
                 await creaEsamiPage();
             }
@@ -102,6 +109,18 @@ export async function creaCardInsEsame() {
     return container;
 }
 
+export function mediaComponent(mediaText, media) {
+        const container = document.createElement("div");
+        container.classList.add("mediaComp");
+           container.innerHTML = `
+             <div class="mediaDiv">
+                <span>${mediaText}</span> <span class="media">${media} </span>
+             </div>
+           `;
+
+               return container;
+}
+
 
 export async function updateCardEsame(esame, esameValue) {
     const container = document.createElement("div");
@@ -110,7 +129,10 @@ export async function updateCardEsame(esame, esameValue) {
 
         container.innerHTML = `
             <form class="esame-card form-esame">
-                <input type="text" maxlength="15" placeholder="Materia" value="${esameValue.materia}" class="input-materia" required/>
+             <div class="row">
+                <input type="text" maxlength="15" placeholder="Esame" value="${esameValue.materia}" class="input-materia" required/>
+                <input type="number" placeholder="Crediti" value="${esameValue.crediti}" class="input-crediti" min="0" max="30" required/>
+              </div>
 
                 <div class="row">
                     <input type="date" class="input-data"  value="${dataValue}" required/>
@@ -133,11 +155,12 @@ export async function updateCardEsame(esame, esameValue) {
             const materia = container.querySelector(".input-materia").value;
             const data = container.querySelector(".input-data").value;
             const voto = container.querySelector(".input-voto").value;
+            const crediti = container.querySelector(".input-crediti").value;
             const id = esameValue.id;
 
 
             if (materia && data && voto && voto < 31 && voto > 0) {
-                const updatedEsame = { materia, data, voto, id };
+                const updatedEsame = { materia, data, voto, crediti,id };
                 await updateEsami(updatedEsame);
                 await creaEsamiPage();
             }else{

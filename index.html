@@ -48,9 +48,8 @@
         <div id="editform" class="hidden">
             <div class="overlay">
                 <div class="form-container">
-                    <h4>Modifica ore</h4>
-                    <p id="materiaDisplay"></p>
-                    <p id="giornoDisplay"></p>
+                    <p id="materiaDisplay" class="fontBold1Rem"></p>
+                    <p id="giornoDisplay" class="fontBold1Rem"></p>
                     <input type="number" id="nuoveOre" placeholder="ore" step="1" min="0" max="23">
                     <input type="number" id="nuoviMinuti" placeholder="minuti" step="1" min="0" max="59">
                     <button id="saveBtn">Salva</button>
@@ -75,6 +74,7 @@
     <section id="esami" class="page-section">
         <h4>Esami</h4>
         <div class="esami-container">
+            <div id="media"></div>
             <div id="esamiCards"></div>
             <div class="btn-container">
                 <div id="newEsamiCard"></div>

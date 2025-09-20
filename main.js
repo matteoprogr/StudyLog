@@ -584,7 +584,7 @@ async function drawDayChart() {
             data: filteredMaterie,
             axisLabel: { show: false }
         },
-        grid: { left: '5%', right: '5%', top: '0%', bottom: '5%'},
+        grid: { left: '5%', right: '5%', top: '0%', bottom: '12%'},
         series: series
     };
     chart.clear();

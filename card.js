@@ -1,5 +1,5 @@
 import { saveEsame, showErrorToast, updateEsami} from './query.js'
-import { creaEsamiPage } from './main.js'
+import { creaEsamiPage, setDateEsami } from './main.js'
 
 export function creaEsameComponent(esame) {
 
@@ -55,13 +55,13 @@ export async function creaCardInsEsame() {
     `;
 
     const btn = container.querySelector(".add-btn");
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", async () => {
         container.innerHTML = `
             <form class="esame-card form-esame">
                 <input type="text" maxlength="15" placeholder="Materia" class="input-materia" required/>
 
                 <div class="row">
-                    <input type="date" class="input-data" required/>
+                    <input type="date" class="input-data" id="dataEsami" required/>
                     <input type="number" placeholder="Voto" class="input-voto" min="0" max="30" required/>
                 </div>
 
@@ -72,6 +72,8 @@ export async function creaCardInsEsame() {
             </form>
         `;
 
+        const esamiData = document.getElementById('dataEsami');
+        await setDateEsami(esamiData);
         const saveBtn = container.querySelector(".save-btn");
         const cancelBtn = container.querySelector(".cancel-btn");
 

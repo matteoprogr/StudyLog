@@ -266,6 +266,15 @@ async function setDay(){
         drawDayChart();
 }
 
+export async function setDateEsami(dataEsami){
+        const today = new Date();
+        const y = today.getFullYear();
+        const m = String(today.getMonth() +1).padStart(2,'0');
+        const d = String(today.getDate()).padStart(2,'0');
+        const formatted = `${y}-${m}-${d}`;
+        dataEsami.value = formatted;
+}
+
 async function saveLog(materiaIns, minutes) {
     const today = new Date();
     const yyyy = today.getFullYear();

@@ -315,10 +315,12 @@ async function esportaDB() {
     const db = await openDB();
     const studyLogs = await db.studyLogs.toArray();
     const materie = await db.materie.toArray();
+    const esami = await db.esami.toArray();
 
     const result = {
       studyLogs: studyLogs,
       materie: materie,
+      esami: esami,
       exportDate: new Date().toISOString()
     };
 
@@ -368,9 +370,11 @@ async function importaDB(file) {
     const db = await openDB();
     await db.studyLogs.clear();
     await db.materie.clear();
+    await db.esami.clear();
 
     if (data.studyLogs) await db.studyLogs.bulkAdd(data.studyLogs);
     if (data.materie) await db.materie.bulkAdd(data.materie);
+    if (data.esami) await db.esami.bulkAdd(data.esami);
 
     showToast("Importazione completata con successo", "success");
   } catch (err) {

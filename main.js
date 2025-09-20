@@ -142,9 +142,7 @@ async function deleteEsami(){
     for(const card of selectedCards){
          await deleteEsame(parseInt(card.id,10));
     }
-
     await creaEsamiPage()
-
 }
 
 function startTimer() {

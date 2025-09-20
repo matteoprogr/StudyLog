@@ -63,13 +63,24 @@
     <!-- Pagina Grafici -->
     <section id="grafici" class="page-section">
         <h4>Report</h4>
-        <div id="myChart"></div>
-        <div class="month-picker">
-            <button id="prev-month">‹</button>
-            <input type="month" id="month-select">
-            <button id="next-month">›</button>
-        </div>
+            <div id="myChart"></div>
+            <div class="month-picker">
+                <button id="prev-month">‹</button>
+                <input type="month" id="month-select">
+                <button id="next-month">›</button>
+            </div>
+    </section>
 
+    <!-- ESAMI ------------------------------ -->
+    <section id="esami" class="page-section">
+        <h4>Esami</h4>
+        <div class="esami-container">
+            <div id="esamiCards"></div>
+            <div class="btn-container">
+                <div id="newEsamiCard"></div>
+                <button id="deleteEsami" class="elimina-btn">-</button>
+            </div>
+        </div>
     </section>
 
     <!-- Pagina Impostazioni -->
@@ -100,6 +111,8 @@
                 Al termine il tempo viene salvato e sarà visibile nel grafico.</li>
             <li><strong>Materie:</strong> tieni premuta una card per rinominare una materia. Con la ❌ puoi rimuovere la materia e i relativi tempi registrati.</li>
             <li><strong>Dati:</strong> puoi esportare o importare i dati, oppure eliminare tutti i dati inseriti.</li>
+            <li><strong>Grafico:</strong> nella home puoi modificare le ore di una sessione già registrata tenendo premuta la barra corrispondente.</li>
+            <li><strong>Esami:</strong> nella sezione Esami puoi modificare un esame tenendo premuta la card corrispondente.</li>
         </div>
 
 
@@ -128,6 +141,9 @@
         </a>
         <a href="#" data-target="grafici">
             <i data-lucide="bar-chart-2"></i>
+        </a>
+        <a href="#" data-target="esami">
+            <i data-lucide="clipboard"></i>
         </a>
         <a href="#" data-target="settings">
             <i data-lucide="settings"></i>

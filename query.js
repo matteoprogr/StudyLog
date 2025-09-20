@@ -5,6 +5,7 @@ const DB_NAME = "StudyDB";
 const DB_VERSION = 1;
 const STORE_NAME = "studyLogs";
 const MATERIE = "materie";
+const ESAMI = "esami";
 
 let db; // variabile globale per il database
 
@@ -15,7 +16,8 @@ export function openDB() {
   // Definizione versioni e store
   db.version(DB_VERSION).stores({
     [STORE_NAME]: '++id, materia, data, [materia+data]',
-    [MATERIE]: 'nome'
+    [MATERIE]: 'nome',
+    [ESAMI]: '++id, materia, voto, data'
   });
 
   return db.open()
@@ -31,6 +33,18 @@ export async function saveStudyLog(log) {
   try {
     const db = await openDB();
     await db.studyLogs.add(log);
+    return true;
+  } catch (err) {
+    showErrorToast("Errore salvataggio","error")
+    console.error("Errore salvataggio StudyLog:", err);
+    throw err;
+  }
+}
+
+export async function saveEsame(esame) {
+  try {
+    const db = await openDB();
+    await db.esami.add(esame);
     return true;
   } catch (err) {
     showErrorToast("Errore salvataggio","error")
@@ -77,6 +91,16 @@ export async function getAllStudyLogs() {
   try {
     const db = await openDB();
     return await db.studyLogs.toArray();
+  } catch (err) {
+    console.error("Errore lettura StudyLogs:", err);
+    throw err;
+  }
+}
+
+export async function getAllEsami() {
+  try {
+    const db = await openDB();
+    return await db.esami.toArray();
   } catch (err) {
     console.error("Errore lettura StudyLogs:", err);
     throw err;
@@ -190,7 +214,17 @@ export async function updateOreInLogs(ore,data, materia){
     }
 }
 
-
+export async function deleteEsame(id) {
+  try {
+    const db = await openDB();
+    await db.esami.delete(id);
+    return true;
+  } catch (err) {
+    showErrorToast("Errore eliminazione", "error");
+    console.error("Errore eliminazione esame:", err);
+    throw err;
+  }
+}
 
 
 export async function deleteMaterie(materia) {
@@ -222,6 +256,23 @@ async function updateLogs(log) {
           id: log.id
         };
     const count = await db.studyLogs.put(data);
+    return count;
+  } catch (err) {
+    console.error("Errore aggiornamento logs per nome:", err);
+    throw err;
+  }
+}
+
+export async function updateEsami(esame) {
+  try {
+    const db = await openDB();
+    const data = {
+          materia: esame.materia,
+          data: esame.data,
+          voto: esame.voto,
+          id: esame.id
+        };
+    const count = await db.esami.put(data);
     return count;
   } catch (err) {
     console.error("Errore aggiornamento logs per nome:", err);

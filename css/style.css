@@ -519,8 +519,8 @@ input[type="file"] {
 
 /* Pulsante di salvataggio */
 #saveBtn {
-  background: #555;
-  color: white;
+    background: #555;
+    color: white;
     width: 100%;
     padding: 0.5rem;
     margin: 0.5rem 0;
@@ -545,3 +545,186 @@ input[type="file"] {
 .hidden {
   display: none;
 }
+
+
+.esame {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    width: 100%;
+    max-width: 100%;
+    padding-left: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-radius: 0.425rem;
+    box-sizing: border-box;
+    position: relative;
+    margin: 0.5rem 0;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1),
+            0 1px 2px rgba(0, 0, 0, 0.06);
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    background: linear-gradient(135deg, rgba(236, 244, 251, 0.4), #FFFFFF);
+}
+
+.esame-header{
+    font-size: 0.90rem;
+    color: #5a6c7d;
+    font-weight: 750;
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+}
+.esame-body {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    border-radius: 0.425rem;
+    padding-right: 0.2rem;
+    padding-top: 0.2rem;
+    padding-bottom: 0.2rem;
+    color: #2c3e50;
+}
+.voto-data {
+    display: flex;
+    flex-direction: column;
+    text-align: right;
+}
+
+.esame-content{
+    flex-basis: 100%;
+    max-width:100%
+}
+#esamiCards{
+margin: 1rem;
+overflow-y: auto;
+height: 75vh;
+scrollbar-width: none;
+}
+
+.esami-container{
+height: 90vh;
+}
+
+.materiaEsame {
+  flex-basis: 65%;
+  max-width: 65%;
+  font-size: 1.25rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.add-btn{
+    background: #555;
+    color: white;
+    width: 100%;
+    padding: 0.5rem;
+    margin: 0.5rem 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+    z-index: 10;
+}
+.elimina-btn {
+  background:  #c0392b;
+  color: white;
+    width: 100%;
+    padding: 0.5rem;
+    margin: 0.5rem 0;
+    margin-top: 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+    z-index: 10;
+}
+.btn-container{
+    position: sticky;
+    bottom: 2%;
+}
+
+.voto {
+  font-size: 1.25rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow-x: auto;
+  margin-left: 0.2rem;
+  text-align: right;
+  scrollbar-width: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.data{
+    flex-basis: 35%;
+    text-align: right;
+    margin-right: 0.2rem;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.save-btn {
+    background: #555;
+    color: white;
+    width: 100%;
+    padding: 0.3rem;
+    margin: 0.2rem 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+/* Pulsante di annullamento */
+.cancel-btn {
+  background:  #c0392b;
+  color: white;
+    width: 100%;
+    padding: 0.3rem;
+    margin: 0.2rem 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.esame-card.form-esame {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    width: 100%;
+    background-color: #f9f9f9;
+}
+
+.esame-card.form-esame input {
+    padding: 6px 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.esame-card.form-esame .row {
+    display: flex;
+    gap: 10px;
+}
+
+.esame-card.form-esame .row input {
+    flex: 1; /* Dividono lo spazio in maniera uniforme */
+}
+.esame-card.form-esame .button-row {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end; /* Pulsanti a destra */
+}
+
+
+

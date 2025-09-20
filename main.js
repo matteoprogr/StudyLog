@@ -1,6 +1,7 @@
 import { saveStudyLog, getAllStudyLogs, saveMateria, getAllMaterie, getStudyLogsByMonth, deleteDatabase,
-updateMateria, deleteMaterie, isValid, updateOreInLogs, getStudyLogsByDay, showErrorToast } from "./query.js";
+updateMateria, deleteMaterie, isValid, updateOreInLogs, getStudyLogsByDay, showErrorToast, getAllEsami, deleteEsame } from "./query.js";
 
+import { creaEsameComponent, creaCardInsEsame } from "./card.js";
 
 /////////  SERVICE WORKER ////////////////
 if ('serviceWorker' in navigator) {
@@ -29,6 +30,7 @@ const modal = document.getElementById("confirm-modal");
 const confirmDelete = document.getElementById("confirm-delete");
 const cancelDelete = document.getElementById("cancel-delete");
 const audioFile = new Audio("assets/sounds/alarm.mp3");
+document.getElementById('deleteEsami').addEventListener('click', deleteEsami);
 let countdown;
 let remainingTime;
 let startTime = null;
@@ -61,6 +63,9 @@ let time;
                 materie = await getAllMaterie();
                 materieCreateComponent(materie);
                 drawDayChart();
+            }
+            if(targetId === "esami"){
+                creaEsamiPage();
             }
 
             sections.forEach(section => {
@@ -125,6 +130,21 @@ confirmDelete.addEventListener("click", () => {
 
 
 ///////////  FUNZIONI //////////////////////
+
+
+async function deleteEsami(){
+    const selectedCards = document.querySelectorAll(".selected");
+    if(selectedCards.length === 0){
+        showErrorToast("Selezionare almeno un esame", "error")
+    }
+
+    for(const card of selectedCards){
+         await deleteEsame(parseInt(card.id,10));
+    }
+
+    await creaEsamiPage()
+
+}
 
 function startTimer() {
   const minutes = parseInt(minutesSlider.value, 10);
@@ -376,6 +396,23 @@ async function materiaComponent(materia) {
     return container;
 }
 
+export async function creaEsamiPage(){
+    const newCardDiv = document.getElementById('newEsamiCard');
+    const esamiCards = document.getElementById('esamiCards');
+    newCardDiv.innerHTML = "";
+    esamiCards.innerHTML = "";
+
+    const newCardComp = await creaCardInsEsame();
+    newCardDiv.appendChild(newCardComp);
+
+    const cards = await getAllEsami();
+    cards.forEach(card => {
+        const esame = creaEsameComponent(card);
+        esamiCards.appendChild(esame);
+    });
+
+}
+
 
 function formatOreMin(oreDecimal) {
     const h = Math.floor(oreDecimal);
@@ -545,6 +582,8 @@ async function drawDayChart() {
     ];
 
     const filteredMaterie = nomeMaterie.filter(m => dati[m] > 0);
+    let zeroLog = '';
+    if(filteredMaterie.length === 0) zeroLog = 'Nessuna sessione registrata'
     const series = [{
         name: '',
         type: 'bar',
@@ -581,10 +620,19 @@ async function drawDayChart() {
         },
         yAxis: {
             type: 'category',
+            name: zeroLog,
+            nameLocation: 'middle',
+            nameRotate: 0,
+            nameGap: -250,
+            nameTextStyle: {
+                fontSize: 14,
+                fontWeight: 'bold',
+                color: '#333'
+            },
             data: filteredMaterie,
             axisLabel: { show: false }
         },
-        grid: { left: '5%', right: '5%', top: '0%', bottom: '12%'},
+        grid: { left: '5%', right: '5%', top: '10%', bottom: '12%'},
         series: series
     };
     chart.clear();

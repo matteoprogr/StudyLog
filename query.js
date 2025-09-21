@@ -242,8 +242,31 @@ export async function deleteLogsByMateria(materia) {
         .where('materia')
         .anyOfIgnoreCase(materia)
         .delete();
-
     return;
+}
+
+async function deleteLog(log) {
+  try {
+    const db = await openDB();
+    await db.studyLogs.delete(log.id);
+    return true;
+  } catch (err) {
+    showErrorToast("Errore eliminazione", "error");
+    console.error("Errore eliminazione esame:", err);
+    throw err;
+  }
+}
+
+export async function deleteLogByMateriaData(data, materia){
+    const logs = await getLogsByMateriaData(materia,data)
+    if(logs.length !== 0){
+        for(const log of logs){
+            await deleteLog(log);
+        }
+        return true;
+    }else{
+        return false;
+    }
 }
 
 async function updateLogs(log) {

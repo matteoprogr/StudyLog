@@ -1,5 +1,5 @@
 import { saveStudyLog, getAllStudyLogs, saveMateria, getAllMaterie, getStudyLogsByMonth, deleteDatabase,
-updateMateria, deleteMaterie, isValid, updateOreInLogs, getStudyLogsByDay, showErrorToast, getAllEsami, deleteEsame } from "./query.js";
+updateMateria, deleteMaterie, isValid, updateOreInLogs, getStudyLogsByDay, showErrorToast, getAllEsami, deleteEsame, deleteLogByMateriaData } from "./query.js";
 
 import { creaEsameComponent, creaCardInsEsame, mediaComponent } from "./card.js";
 
@@ -15,6 +15,7 @@ if ('serviceWorker' in navigator) {
 
 /////////////  VARIABILi GLOBALI ///////////////////
 const form = document.getElementById("study-form");
+document.getElementById("addReg").addEventListener('click', aggiungiRegistrazione);
 const materiaInput = document.getElementById("ricerca-materie");
 const minutesSlider = document.getElementById("minutes");
 const minutesValue = document.getElementById("minutes-value");
@@ -131,6 +132,20 @@ confirmDelete.addEventListener("click", () => {
 
 ///////////  FUNZIONI //////////////////////
 
+async function aggiungiRegistrazione(){
+    const minutes = parseInt(minutesSlider.value, 10);
+    materia = materiaInput.value.trim();
+    if(minutes !== 0 && isValid(materia) && isValid(daySelect.value)){
+         await saveLog(materia,minutes,daySelect.value);
+         resetForm();
+         drawDayChart();
+         minutesValue.textContent = 0;
+    }else{
+        showErrorToast("Valori non validi","error");
+        return;
+    }
+    return;
+}
 
 async function deleteEsami(){
     const selectedCards = document.querySelectorAll(".selected");
@@ -275,12 +290,18 @@ export async function setDateEsami(dataEsami){
         dataEsami.value = formatted;
 }
 
-async function saveLog(materiaIns, minutes) {
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const dd = String(today.getDate()).padStart(2, '0');
-    const formatted = `${yyyy}-${mm}-${dd}`;
+async function saveLog(materiaIns, minutes, data) {
+    let formatted;
+    if(!isValid(data)){
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        formatted = `${yyyy}-${mm}-${dd}`;
+    }else{
+        formatted = data;
+    }
+
     const time = await getTime(minutes);
     const materiaCap = capitalizeFirstLetter(materiaIns);
     const existLog = await updateOreInLogs(time, formatted, materiaCap)
@@ -656,7 +677,7 @@ async function drawDayChart() {
             data: filteredMaterie,
             axisLabel: { show: false }
         },
-        grid: { left: '5%', right: '5%', top: '10%', bottom: '12%'},
+        grid: { left: '2.5%', right: '2.5%', top: '10%', bottom: '9%'},
         series: series
     };
     chart.clear();
@@ -695,6 +716,11 @@ chart.on('mousedown', function(params) {
         }
 
         document.getElementById('cancelBtn').onclick = function() {
+            form.classList.add('hidden');
+        }
+        document.getElementById('deleteBtn').onclick = async function() {
+            await deleteLogByMateriaData(giorno, materia);
+            await drawDayChart();
             form.classList.add('hidden');
         }
      }, pressDuration);

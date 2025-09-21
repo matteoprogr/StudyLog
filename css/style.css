@@ -101,6 +101,16 @@ h4{
     border: none;
     padding: 0.6rem;
 }
+.width100{
+    width: 100%;
+}
+
+#avvia{
+ width: 80%;
+}
+#addReg{
+width: 18%;
+}
 
 .info-list {
   list-style: none;
@@ -138,10 +148,6 @@ h4{
     text-align: center;
     font-size: 1.5rem;
     font-weight: bold;
-}
-
-#study-form button:hover {
-    background: #555;
 }
 
 #minutes {
@@ -191,10 +197,10 @@ h4{
 }
 
 #dayChart{
-  margin-top: 3rem;
-  margin-bottom: 3rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
   width:  85vw;
-  height: 35vh;
+  height: 40vh;
 }
 
 .month-picker {
@@ -519,7 +525,7 @@ input[type="file"] {
 
 /* Pulsante di salvataggio */
 #saveBtn {
-    background: #555;
+    background: #333;
     color: white;
     width: 100%;
     padding: 0.5rem;
@@ -529,22 +535,31 @@ input[type="file"] {
     font-size: 16px;
 }
 
-/* Pulsante di annullamento */
-#cancelBtn {
-  background:  #c0392b;
-  color: white;
-    width: 100%;
-    padding: 0.5rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 16px;
-}
 
 /* Nascondi il modulo di default */
 .hidden {
   display: none;
 }
 
+#cancelBtn {
+    position: absolute;
+    background: none;
+    font-size: 1.1rem;
+    border: none;
+    margin-right:0.5rem;
+    top: 0;
+    right: 0;
+}
+
+#deleteBtn {
+    background:  #c0392b;
+    color: white;
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+}
 
 .esame {
     display: flex;
@@ -680,7 +695,7 @@ height: 90vh;
     margin: 0.2rem 0;
     border: 1px solid #ccc;
     border-radius: 4px;
-    font-size: 16px;
+    font-size: 1rem;
 }
 
 /* Pulsante di annullamento */

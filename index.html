@@ -31,8 +31,10 @@
 
             <label for="minutes" id="minutes-value">0</label>
             <input type="range" id="minutes" min="0" max="180" value="0" required>
-
-            <button type="submit">Avvia Cronometro</button>
+            <div class="row width100">
+                <button type="submit" id="avvia">Avvia Cronometro</button>
+                <button  type="button" id="addReg">+</button>
+            </div>
         </form>
 
         <div id="timer-container" class="hidden">
@@ -48,12 +50,15 @@
         <div id="editform" class="hidden">
             <div class="overlay">
                 <div class="form-container">
-                    <p id="materiaDisplay" class="fontBold1Rem"></p>
-                    <p id="giornoDisplay" class="fontBold1Rem"></p>
+                    <div>
+                        <button id="cancelBtn">x</button>
+                        <p id="materiaDisplay" class="fontBold1Rem"></p>
+                        <p id="giornoDisplay" class="fontBold1Rem"></p>
+                    </div>
                     <input type="number" id="nuoveOre" placeholder="ore" step="1" min="0" max="23">
                     <input type="number" id="nuoviMinuti" placeholder="minuti" step="1" min="0" max="59">
                     <button id="saveBtn">Salva</button>
-                    <button id="cancelBtn">Annulla</button>
+                    <button id="deleteBtn">Elimina Registrazione</button>
                     </div>
             </div>
         </div>
@@ -134,7 +139,7 @@
                 <div>
                     <strong>Timer</strong>
                     <p>Imposta una materia e un tempo di studio. Se imposti il tempo a zero, il timer continua finché non lo interrompi manualmente.
-                        Al termine il tempo viene salvato e sarà visibile nel grafico.</p>
+                        Al termine il tempo viene salvato e sarà visibile nel grafico. Puoi aggiungere una nuova sessione impostando la materia, il tempo e la data, poi premi il pulsante +.</p>
                 </div>
             </li>
 
@@ -158,7 +163,7 @@
                 <i data-lucide="bar-chart-2"></i>
                 <div>
                     <strong>Grafico</strong>
-                    <p>Visualizza le sessioni di studio registrate in ogni mese. Nella home puoi modificare le ore di una sessione già registrata tenendo premuta la barra corrispondente.</p>
+                    <p>Visualizza le sessioni di studio registrate in ogni mese. Nella home puoi modificare le ore di una sessione già registrata tenendo premuta la barra corrispondente oppure eliminare la sessione.</p>
                 </div>
             </li>
 

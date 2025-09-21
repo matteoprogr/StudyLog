@@ -62,7 +62,7 @@ export async function creaCardInsEsame() {
         container.innerHTML = `
             <form class="esame-card form-esame">
                  <div class="row">
-                    <input type="text" maxlength="15" placeholder="Esame"  class="input-materia" required/>
+                    <input type="text" maxlength="20" placeholder="Esame"  class="input-materia" required/>
                     <input type="number" placeholder="Crediti" class="input-crediti" min="0" max="30" required/>
                   </div>
 
@@ -130,7 +130,7 @@ export async function updateCardEsame(esame, esameValue) {
         container.innerHTML = `
             <form class="esame-card form-esame">
              <div class="row">
-                <input type="text" maxlength="15" placeholder="Esame" value="${esameValue.materia}" class="input-materia" required/>
+                <input type="text" maxlength="20" placeholder="Esame" value="${esameValue.materia}" class="input-materia" required/>
                 <input type="number" placeholder="Crediti" value="${esameValue.crediti}" class="input-crediti" min="0" max="30" required/>
               </div>
 

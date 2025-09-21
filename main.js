@@ -347,7 +347,7 @@ async function materiaComponent(materia) {
         input.type = "text";
         const oldValue = span.textContent.trim();
         input.value = oldValue
-        input.maxLength = 15;
+        input.maxLength = 20;
         input.id = "updateMat";
         btnDelete.textContent = "❌";
         btnDelete.id = "delMat";

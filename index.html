@@ -103,19 +103,6 @@
             <button id="btnImportDB">Importa</button>
         </div>
 
-        <div class="info-list" id="explainCard">
-            <li><strong>Privacy:</strong> Con StudyLog puoi avere sempre sotto controllo le tue sessioni di studio, senza complicazioni e con la massima attenzione alla privacy.
-                L’app non salva alcun dato al di fuori del tuo dispositivo. Tutto rimane solo a te.</li>
-            <li><strong>Timer:</strong> imposta una materia e un tempo di studio.
-                se imposti il tempo a zero, il timer continua finché non lo interrompi manualmente.
-                Al termine il tempo viene salvato e sarà visibile nel grafico.</li>
-            <li><strong>Materie:</strong> tieni premuta una card per rinominare una materia. Con la ❌ puoi rimuovere la materia e i relativi tempi registrati.</li>
-            <li><strong>Dati:</strong> puoi esportare o importare i dati, oppure eliminare tutti i dati inseriti.</li>
-            <li><strong>Grafico:</strong> nella home puoi modificare le ore di una sessione già registrata tenendo premuta la barra corrispondente.</li>
-            <li><strong>Esami:</strong> nella sezione Esami puoi modificare un esame tenendo premuta la card corrispondente.</li>
-        </div>
-
-
         <!-- Modale di conferma -->
         <div id="confirm-modal" class="modal hidden">
             <div class="modal-content">
@@ -128,6 +115,63 @@
             </div>
         </div>
     </section>
+
+    <section id="info" class="page-section">
+        <h4>Info</h4>
+
+        <ul class="info-list">
+            <li>
+                <i data-lucide="shield"></i>
+                <div>
+                    <strong>Privacy</strong>
+                    <p>Con StudyLog puoi avere sempre sotto controllo le tue sessioni di studio, senza complicazioni e con la massima attenzione alla privacy.
+                        L’app non salva alcun dato al di fuori del tuo dispositivo. Tutto rimane solo a te.</p>
+                </div>
+            </li>
+
+            <li>
+                <i data-lucide="clock"></i>
+                <div>
+                    <strong>Timer</strong>
+                    <p>Imposta una materia e un tempo di studio. Se imposti il tempo a zero, il timer continua finché non lo interrompi manualmente.
+                        Al termine il tempo viene salvato e sarà visibile nel grafico.</p>
+                </div>
+            </li>
+
+            <li>
+                <i data-lucide="book-open"></i>
+                <div>
+                    <strong>Materie</strong>
+                    <p>Tieni premuta una card per rinominare una materia. Con la ❌ puoi rimuovere la materia e i relativi tempi registrati.</p>
+                </div>
+            </li>
+
+            <li>
+                <i data-lucide="database"></i>
+                <div>
+                    <strong>Dati</strong>
+                    <p>Puoi esportare o importare i dati, oppure eliminare tutti i dati inseriti.</p>
+                </div>
+            </li>
+
+            <li>
+                <i data-lucide="bar-chart-2"></i>
+                <div>
+                    <strong>Grafico</strong>
+                    <p>Visualizza le sessioni di studio registrate in ogni mese. Nella home puoi modificare le ore di una sessione già registrata tenendo premuta la barra corrispondente.</p>
+                </div>
+            </li>
+
+            <li>
+                <i data-lucide="clipboard"></i>
+                <div>
+                    <strong>Esami</strong>
+                    <p>Nella sezione Esami puoi modificare un esame tenendo premuta la card corrispondente.</p>
+                </div>
+            </li>
+        </ul>
+    </section>
+
 
 </main>
 
@@ -147,6 +191,9 @@
         </a>
         <a href="#" data-target="settings">
             <i data-lucide="settings"></i>
+        </a>
+        <a href="#" data-target="info">
+            <i data-lucide="help-circle"></i>
         </a>
     </div>
 </nav>

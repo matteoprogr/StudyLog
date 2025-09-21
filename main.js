@@ -427,13 +427,12 @@ export async function creaEsamiPage(){
     });
     if(cards.length !== 0){
         const media = prodottoVotiCrediti / totCrediti;
-        const mediaComp = mediaComponent(" Media ", media.toFixed(2));
+        const mediaComp = mediaComponent("Crediti: " + totCrediti ,"Media: " + media.toFixed(2));
         mediaDiv.appendChild(mediaComp);
     }else{
         const mediaComp = mediaComponent("Nessun esame inserito","");
         mediaDiv.appendChild(mediaComp);
     }
-
 
 }
 
@@ -482,8 +481,9 @@ async function getMaxDay(logs){
         }
     })
     if(max > minValue){
-        return Math.ceil(max);
+        return Math.ceil(max) + 1;
     }else{
+        if(max > 3) return 5;
         return minValue;
     }
 }

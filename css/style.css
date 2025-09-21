@@ -108,8 +108,9 @@ h4{
   margin: 0;
   margin-top: 1rem;
   margin-bottom: 1rem;
-  height: 40vh;
+  height: 85vh;
   overflow-y: auto;
+  scrollbar-width: none;
 }
 
 .info-list li {
@@ -125,8 +126,6 @@ h4{
 }
 
 .info-list li::before {
-  content: "✔";
-  color: #3498db;
   font-weight: bold;
 }
 
@@ -294,6 +293,7 @@ h4{
   overflow-x: auto;
   padding-bottom: 0.7rem;
   justify-content: flex-start;
+  scrollbar-width: none;
 }
 
 .selected{

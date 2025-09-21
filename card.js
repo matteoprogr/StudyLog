@@ -114,7 +114,7 @@ export function mediaComponent(mediaText, media) {
         container.classList.add("mediaComp");
            container.innerHTML = `
              <div class="mediaDiv">
-                <span>${mediaText}</span> <span class="media">${media} </span>
+                <span class="media"> ${mediaText} </span> <span class="media"> ${media} </span>
              </div>
            `;
 

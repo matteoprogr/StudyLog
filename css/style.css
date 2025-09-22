@@ -139,6 +139,33 @@ width: 18%;
   font-weight: bold;
 }
 
+.iconShield{
+    width: 6rem;
+    height: 6rem;
+}
+.iconTimer{
+    width: 6.5rem;
+    height: 6.5rem;
+}
+.iconMaterie{
+    width: 3.5rem;
+    height: 3.5rem;
+}
+.iconDB{
+    width: 2rem;
+    height: 2rem;
+}
+
+.iconGrafico{
+    width: 5rem;
+    height: 5rem;
+}
+
+.iconEsami{
+    width: 2.2rem;
+    height: 2.2rem;
+}
+
 
 #ricerca-materie{
  padding: 0.6rem;
@@ -309,6 +336,7 @@ width: 18%;
 
 .cat {
   display: flex;
+  gap: 0.3rem;
   flex-direction: row;
   padding: 0.5rem;
   font-weight: bold;
@@ -325,6 +353,10 @@ width: 18%;
   -webkit-user-select: none;
   -ms-user-select: none;
   user-select: none;
+}
+
+#updateMat{
+    padding-left: 0.2rem;
 }
 
 
@@ -375,7 +407,6 @@ width: 18%;
 
 .btn-delete{
     padding: 0 !important;
-    margin-left: 0.1rem;
 }
 
 #cancel-delete {

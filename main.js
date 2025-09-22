@@ -381,6 +381,7 @@ async function materiaComponent(materia) {
             deleteMaterie(oldValue);
             materie = await getAllMaterie();
             materieCreateComponent(materie);
+            drawDayChart();
           });
         }
 
@@ -502,7 +503,7 @@ async function getMaxDay(logs){
         }
     })
     if(max > minValue){
-        return Math.ceil(max) + 1;
+        return Math.ceil(max) + Math.ceil(max/5) + 2;
     }else{
         if(max > 3) return 5;
         return minValue;
@@ -579,7 +580,6 @@ async function drawChart() {
             type: 'value',
             min: 0,
             max: maxValue,
-            interval: 1,
             axisLabel: {
                 formatter: val => `${val}h`
             }

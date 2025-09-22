@@ -31,6 +31,7 @@ const modal = document.getElementById("confirm-modal");
 const confirmDelete = document.getElementById("confirm-delete");
 const cancelDelete = document.getElementById("cancel-delete");
 const audioFile = new Audio("assets/sounds/alarm.mp3");
+const carousel = document.querySelector('.chart-carousel');
 document.getElementById('deleteEsami').addEventListener('click', deleteEsami);
 let countdown;
 let remainingTime;
@@ -59,6 +60,7 @@ let time;
             if(targetId === "grafici"){
                 await setDate();
                 drawChart();
+                drawPieChart();
             }
             if(targetId === "registra"){
                 materie = await getAllMaterie();
@@ -82,6 +84,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 prevBtn.addEventListener("click", () => changeMonth(-1));
 nextBtn.addEventListener("click", () => changeMonth(1));
+
 await setDay();
 
 
@@ -259,6 +262,7 @@ try{
     const newMese = String(month + offset).padStart(2, "0");
     monthSelect.value = `${newAnno}-${newMese}`;
     drawChart();
+    drawPieChart();
     }catch(err){
         console.log(err)
     }
@@ -590,6 +594,7 @@ async function drawChart() {
             name: nomeMese,
             nameGap: 5
         },
+        grid: { bottom: '5%'},
         series: series
     };
     chart.clear();
@@ -597,6 +602,94 @@ async function drawChart() {
 
 }
 
+async function drawPieChart(){
+    const echarts = window.echarts;
+    const pieChart = echarts.init(document.getElementById('myChartPie'));
+
+    const aggregate = {};
+    const selectedMonth = monthSelect.value;
+    let logs = await getStudyLogsByMonth(selectedMonth);
+    logs.forEach(item =>{
+        const materia = item.materia;
+        if(!aggregate[materia]){
+            aggregate[materia] = 0;
+        }
+        aggregate[materia] += item.ore;
+    });
+
+    const data = Object.entries(aggregate).map(([name, value]) => ({name, value})).sort((a, b) => a.name.localeCompare(b.name));
+    const totale = data.reduce((acc, item) => acc + item.value, 0);
+
+    const option = {
+        tooltip: {
+        trigger: 'item',
+        formatter: function (params) {
+                return `${params.name}: ${formatOreMin(params.value)}`
+            }
+        },
+
+        legend: {
+            orient: 'horizontal',
+            type: 'scroll',
+            right: 10,
+            top: 10,
+            pageButtonGap: 5,
+            pageIconColor: '#2f4554',
+            pageIconInactiveColor: '#aaa',
+            pageTextStyle: { color: '#333' }
+        },
+        series: [
+            {
+                name: 'TotMese',
+                type: 'pie',
+                radius: ['50%','90%'],
+                center: ['48%', '50%'],
+                avoidLabelOverlap: false,
+                itemStyle: {
+                    borderRadius: 10,
+                    borderColor: '#fff',
+                    borderWidth: 2
+                },
+                label: {
+                    show: true,
+                    position: 'center',
+                    formatter: ()=> `${formatOreMin(totale)}`,
+                    fontSize: 18,
+                    fontWeight: 'bold',
+                    lineHeight: 22
+                },
+                labelLine: {
+                    show:false
+                },
+                data: data
+            }
+          ],
+          grid: { left: '2.5%', right: '2.5%', top: '10%', bottom: '0%'}
+    }
+
+    pieChart.setOption(option);
+    attachLegendHandler(pieChart);
+
+}
+
+function attachLegendHandler(chart){
+    chart.on('legendselectchanged', function (params){
+        const option = chart.getOption();
+        const selected = params.selected;
+        const data = option.series[0].data;
+        const newTotal = data.reduce((acc, item) => {return selected[item.name] ? acc + item.value : acc; }, 0);
+        option.series[0].label.formatter = () => `${formatOreMin(newTotal)}`;
+        chart.setOption(option);
+    });
+
+}
+
+
+function getNomeMeseItaliano(ym) {
+    const [year, month] = ym.split('-').map(Number);
+    const date = new Date(year, month - 1);
+    return date.toLocaleString('it-IT', { month: 'long' });
+}
 
 async function drawDayChart() {
     const echarts = window.echarts;
@@ -737,8 +830,3 @@ chart.on('mousedown', function(params) {
 }
 
 
-function getNomeMeseItaliano(ym) {
-    const [year, month] = ym.split('-').map(Number);
-    const date = new Date(year, month - 1);
-    return date.toLocaleString('it-IT', { month: 'long' });
-}

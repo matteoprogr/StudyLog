@@ -222,6 +222,11 @@ width: 18%;
   width:  90vw;
   height: 83vh;
 }
+#myChartPie {
+  margin: 0 auto;
+  width:  90vw;
+  height: 83vh;
+}
 
 #dayChart{
   margin-top: 1rem;
@@ -804,12 +809,26 @@ height: 90vh;
 }
 
 .esame-card.form-esame .row input {
-    flex: 1; /* Dividono lo spazio in maniera uniforme */
+    flex: 1;
 }
 .esame-card.form-esame .button-row {
     display: flex;
     gap: 10px;
-    justify-content: flex-end; /* Pulsanti a destra */
+    justify-content: flex-end;
+}
+
+
+.chart-carousel {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    margin-bottom: 0.5rem;
+}
+
+.chart-item {
+    min-width: 100%;
+    scroll-snap-align: start; /
+    flex-shrink: 0;
 }
 
 

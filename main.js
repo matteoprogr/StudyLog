@@ -608,6 +608,7 @@ async function drawPieChart(){
 
     const aggregate = {};
     const selectedMonth = monthSelect.value;
+    const nameMese = getNomeMeseItaliano(selectedMonth);
     let logs = await getStudyLogsByMonth(selectedMonth);
     logs.forEach(item =>{
         const materia = item.materia;
@@ -640,7 +641,7 @@ async function drawPieChart(){
         },
         series: [
             {
-                name: 'TotMese',
+                name: nameMese,
                 type: 'pie',
                 radius: ['50%','90%'],
                 center: ['48%', '50%'],

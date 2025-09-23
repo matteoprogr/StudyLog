@@ -445,7 +445,7 @@ export async function creaEsamiPage(){
     const newCardComp = await creaCardInsEsame();
     newCardDiv.appendChild(newCardComp);
 
-    const cards = await getAllEsami();
+    const cards = (await getAllEsami()).sort((a, b) => new Date(a.data) - new Date(b.data));
     cards.forEach(card => {
         const esame = creaEsameComponent(card);
         esamiCards.appendChild(esame);

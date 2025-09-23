@@ -650,7 +650,7 @@ async function lineMediaChart(){
       graphic: [
           {
             type: 'text',
-            left: "0%",
+            left: "3%",
             top: '5%',
             style: {
               text: 'Media nel tempo',

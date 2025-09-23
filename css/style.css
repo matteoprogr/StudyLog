@@ -230,7 +230,7 @@ width: 18%;
 #myChartPie {
   margin: 0 auto;
   width:  90vw;
-  height: 83vh;
+  height: 40vh;
 }
 
 #dayChart{
@@ -239,11 +239,17 @@ width: 18%;
   height: 45vh;
 }
 
+#lineChart{
+  margin: 0 auto;
+  width:  90vw;
+  height: 40vh;
+}
+
 .month-picker {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: clamp(1rem, 2rem, 3rem);
+  gap: clamp(1rem, 1rem, 1rem);
 }
 
 .month-picker button {
@@ -273,7 +279,7 @@ width: 18%;
   padding: clamp(0.3rem, 0.45rem, 0.6rem) clamp(0.5rem, 0.65rem, 0.8rem);
   font-size: clamp(0.9rem, 0.95rem, 1rem);
   outline: none;
-  width: clamp(30vw, 45%, 60vw);
+  width: clamp(30vw, 50%, 60vw);
 }
 
 .month-picker input[type="month"]:focus {

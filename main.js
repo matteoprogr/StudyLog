@@ -61,6 +61,7 @@ let time;
                 await setDate();
                 drawChart();
                 drawPieChart();
+                lineMediaChart();
             }
             if(targetId === "registra"){
                 materie = await getAllMaterie();
@@ -263,6 +264,7 @@ try{
     monthSelect.value = `${newAnno}-${newMese}`;
     drawChart();
     drawPieChart();
+    lineMediaChart();
     }catch(err){
         console.log(err)
     }
@@ -605,6 +607,63 @@ async function drawChart() {
 
 }
 
+async function lineMediaChart(){
+
+    const echarts = window.echarts;
+    const lineChart = echarts.init(document.getElementById("lineChart"));
+    const allEsami = await getAllEsami();
+    const allDataEsami = allEsami.map(esame => esame.data).sort((a,b) => new Date(a) - new Date(b));
+    const allMedie = [];
+    let product = 0;
+    let sumCrediti = 0;
+    let min = parseInt(allEsami[0].voto, 10);
+    for(const esame of allEsami){
+        const voto = parseInt(esame.voto, 10);
+        sumCrediti += parseInt(esame.crediti, 10);
+        const productVotoCrediti = voto * parseInt(esame.crediti, 10);
+        product += productVotoCrediti;
+        const media = product / sumCrediti;
+        allMedie.push(media);
+        if(voto < min){
+            min = voto;
+        }
+    }
+
+
+    const option = {
+      xAxis: {
+        type: 'category',
+        data: allDataEsami
+      },
+      yAxis: {
+        type: 'value',
+        min: min - 1,
+        max: 30,
+        interval: 1,
+      },
+      series: [
+        {
+          data: allMedie,
+          type: 'line'
+        }
+      ],
+      graphic: [
+          {
+            type: 'text',
+            left: "0%",
+            top: '5%',
+            style: {
+              text: 'Media nel tempo',
+              font: '0.8rem sans-serif',
+              fill: '#333'
+            }
+          }
+        ]
+    };
+    lineChart.clear();
+    lineChart.setOption(option);
+}
+
 async function drawPieChart(){
     const echarts = window.echarts;
     const pieChart = echarts.init(document.getElementById('myChartPie'));
@@ -646,8 +705,8 @@ async function drawPieChart(){
             {
                 name: nameMese,
                 type: 'pie',
-                radius: ['50%','90%'],
-                center: ['48%', '50%'],
+                radius: ['40%','70%'],
+                center: ['50%', '60%'],
                 avoidLabelOverlap: false,
                 itemStyle: {
                     borderRadius: 10,

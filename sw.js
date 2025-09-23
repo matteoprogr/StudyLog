@@ -1,9 +1,9 @@
-const CACHE_NAME = 'studylog-cache-v44';
+const CACHE_NAME = 'studylog-cache-v45';
 const urlsToCache = [
   '/',
-  '/index.html?v=44',
-  '/styles.css?v=44',
-  '/main.js?v=44',
+  '/index.html?v=45',
+  '/styles.css?v=45',
+  '/main.js?v=45',
   '/assets/sounds/alarm.mp3',
   '/icons/icon-192.png',
   '/icons/icon-512.png',

@@ -109,12 +109,12 @@ export async function creaCardInsEsame() {
     return container;
 }
 
-export function mediaComponent(mediaText, media) {
+export function mediaComponent(mediaText, media, votoLaurea) {
         const container = document.createElement("div");
         container.classList.add("mediaComp");
            container.innerHTML = `
              <div class="mediaDiv">
-                <span class="media"> ${mediaText} </span> <span class="media"> ${media} </span>
+                <span class="media"> ${mediaText} </span> <span class="media"> ${media} </span> <span class="media"> ${votoLaurea} </span>
              </div>
            `;
 

@@ -401,8 +401,10 @@ async function materiaComponent(materia) {
             if (oldValue !== newValue) {
                 await updateMateria(oldValue, newValue);
             }
+
             materie = await getAllMaterie();
             materieCreateComponent(materie);
+            await drawDayChart();
 
         };
 
@@ -455,10 +457,11 @@ export async function creaEsamiPage(){
     });
     if(cards.length !== 0){
         const media = prodottoVotiCrediti / totCrediti;
-        const mediaComp = mediaComponent("Crediti: " + totCrediti ,"Media: " + media.toFixed(2));
+        const votoLaurea = media * 110 / 30;
+        const mediaComp = mediaComponent("Crediti: " + totCrediti ,"Media: " + media.toFixed(2), "Voto: " + votoLaurea.toFixed(2));
         mediaDiv.appendChild(mediaComp);
     }else{
-        const mediaComp = mediaComponent("Nessun esame inserito","");
+        const mediaComp = mediaComponent("Nessun esame inserito","","");
         mediaDiv.appendChild(mediaComp);
     }
 
@@ -760,57 +763,45 @@ async function drawDayChart() {
     const selectedDay = daySelect.value;
     let logs = await getStudyLogsByDay(selectedDay);
     materie = await getAllMaterie();
-    const nomeMaterie = materie.map(m => m.nome);
     const maxValue = await getMaxDay(logs);
 
-    const dati = nomeMaterie.reduce((acc, m) => {
-        acc[m] = 0;
-        return acc;
-    }, {});
-
+    const dati = {};
     logs.forEach(log => {
-       const val = parseFloat(log.ore) || 0;
-       if(dati[log.materia] !== undefined){
-        dati[log.materia] += val;
-       } else{
-        dati[log.materia] = val;
-       }
+        const val = parseFloat(log.ore) || 0;
+            if(dati[log.materia] !== undefined){
+            dati[log.materia] += val;
+            } else{
+               dati[log.materia] = val;
+            }
     });
 
-    const colorPalette  = [
-    '#5470C6', '#91CC75', '#EE6666', '#73C0DE', '#FAC858',
-        '#3BA272', '#FC8452', '#9A60B4', '#EA7CCC'
-    ];
+    const sortedDati = Object.entries(dati).sort((a, b) => a[0].localeCompare(b[0]));
 
-    const filteredMaterie = nomeMaterie.filter(m => dati[m] > 0);
-    let zeroLog = '';
-    if(filteredMaterie.length === 0) zeroLog = 'Nessuna sessione registrata'
+    const filteredMaterie = sortedDati.map(([materia, ore]) => materia);
+    const defaultColors = ['#5470C6', '#91CC75','#FAC858', '#EE6666', '#73C0DE',  '#3BA272', '#FC8452', '#9A60B4', '#EA7CCC'];
+
     const series = [{
-        name: '',
-        type: 'bar',
-        data: filteredMaterie.map((m, idx) => {
-            const valueForMateria = dati[m] || 0;
-            return{
-                value: valueForMateria,
-                itemStyle: {
-                    color: colorPalette [idx % colorPalette .length]
-                }
-            }
-        }),
-        label: {
-            show: true,
-            position: 'right',
-            formatter: params => formatOreMin(params.value)
-        }
+      name: 'Ore di studio',
+      type: 'bar',
+      data: filteredMaterie.map(m => dati[m]),
+      label: {
+        show: true,
+        position: 'right',
+        formatter: params => formatOreMin(params.value)
+      },
+      itemStyle: {
+        color: (params) => defaultColors[params.dataIndex % defaultColors.length]
+      }
     }];
 
-    // Configurazione grafico
+    let zeroLog = '';
+    if(filteredMaterie.length === 0) zeroLog = 'Nessuna sessione registrata'
+
     const option = {
         tooltip: {
             trigger: 'item',
             formatter: params => `${params.name}: ${formatOreMin(params.value)}`
         },
-
         xAxis: {
             type: 'value',
             min: 0,

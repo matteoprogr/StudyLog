@@ -51,26 +51,26 @@ h4{
 .nav-links {
     display: flex;
     width: 100%;
-    max-width: 500px;
+    max-width: 31.25rem;
     justify-content: space-around;
-    padding: 0.5rem 0;
+    padding: clamp(0.3rem, 0.55rem, 0.8rem) 0;
 }
 
 .nav-links a {
     color: #aaa;
     text-decoration: none;
-    font-size: 0.8rem;
+    font-size: clamp(0.7rem, 0.85rem, 1rem);
     font-weight: 500;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.2rem;
+    gap: clamp(0.15rem, 0.3rem, 0.4rem);
     transition: color 0.3s ease;
 }
 
 .nav-links a i {
-    width: 24px;
-    height: 24px;
+    width: clamp(1rem, 1.4rem, 1.8rem);
+    height: clamp(1rem, 1.4rem, 1.8rem);
 }
 
 .nav-links a.active,
@@ -82,16 +82,16 @@ h4{
 #study-form {
     display: flex;
     flex-direction: column;
-    gap: 0.8rem;
-    margin-top: 1rem;
+    gap: clamp(0.5rem, 0.8rem, 1rem);
+    margin-top: clamp(0.8rem, 1.25rem, 1.5rem);
 }
 
 #study-form input, #study-form button {
-    font-size: 1rem;
-    border-radius: 6px;
+    font-size: clamp(0.9rem, 1rem, 1.1rem);
+    border-radius: clamp(0.3rem, 0.4rem, 0.5rem);
 }
 .inputMateria{
-    border: 1px solid #ccc;
+    border: 0.0625rem solid #ccc;
 }
 
 #study-form button {
@@ -99,7 +99,8 @@ h4{
     color: white;
     cursor: pointer;
     border: none;
-    padding: 0.6rem;
+    padding: clamp(0.5rem, 0.65rem, 0.8rem);
+    font-size: clamp(0.9rem, 1rem, 1.1rem);
 }
 .width100{
     width: 100%;
@@ -116,8 +117,8 @@ width: 18%;
   list-style: none;
   padding: 0;
   margin: 0;
-  margin-top: 1rem;
-  margin-bottom: 1rem;
+  margin-top: clamp(0.8rem, 1.25rem, 1.5rem);
+  margin-bottom: clamp(0.8rem,  1.25rem, 1.5rem);
   height: 85vh;
   overflow-y: auto;
   scrollbar-width: none;
@@ -125,13 +126,13 @@ width: 18%;
 
 .info-list li {
   background: linear-gradient(135deg, rgba(236, 244, 251, 0.4), #FFFFFF);
-  margin: 0.625rem 0;
-  padding: 0.75rem 0.9375rem;
-  border-radius: 0.5rem;
-  font-size: 0.95rem;
+  margin: clamp(0.4rem,  0.6rem, 0.8rem) 0;
+  padding: clamp(0.6rem, 0.8rem, 1rem) clamp(0.7rem, 1rem, 1.2rem);
+  border-radius: clamp(0.4rem, 0.5rem, 0.6rem);
+  font-size: clamp(0.95rem, 0.975rem, 1rem);
   box-shadow: 0 0.125rem 0.375rem rgba(0,0,0,0.05);
   display: flex;
-  gap: 0.625rem;
+  gap: clamp(0.4rem, 0.6rem, 0.8rem);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -139,48 +140,50 @@ width: 18%;
   font-weight: bold;
 }
 
-.iconShield{
-    width: 6rem;
-    height: 6rem;
-}
-.iconTimer{
-    width: 6.5rem;
-    height: 6.5rem;
-}
-.iconMaterie{
-    width: 3.5rem;
-    height: 3.5rem;
-}
-.iconDB{
-    width: 2rem;
-    height: 2rem;
+.iconShield {
+    width: clamp(4rem, 5rem, 6rem);
+    height: clamp(4rem, 5rem, 6rem);
 }
 
-.iconGrafico{
-    width: 5rem;
-    height: 5rem;
+.iconTimer {
+    width: clamp(4.5rem, 5.5rem, 6.5rem);
+    height: clamp(4.5rem, 5.5rem, 6.5rem);
 }
 
-.iconEsami{
-    width: 2.2rem;
-    height: 2.2rem;
+.iconMaterie {
+    width: clamp(2.5rem, 3rem, 3.5rem);
+    height: clamp(2.5rem, 3rem, 3.5rem);
+}
+
+.iconDB {
+    width: clamp(1.5rem, 1.75rem, 2rem);
+    height: clamp(1.5rem, 1.75rem, 2rem);
+}
+
+.iconGrafico {
+    width: clamp(3.5rem, 4.25rem, 5rem);
+    height: clamp(3.5rem, 4.25rem, 5rem);
+}
+
+.iconEsami {
+    width: clamp(1.8rem, 2rem, 2.2rem);
+    height: clamp(1.8rem, 2rem, 2.2rem);
 }
 
 
 #ricerca-materie{
- padding: 0.6rem;
+ padding: clamp(0.5rem, 0.65rem, 0.8rem);
 }
 
 #minutes-value{
     text-align: center;
-    font-size: 1.5rem;
+    font-size: clamp(1.2rem, 1.35rem, 1.5rem);
     font-weight: bold;
 }
 
 #minutes {
     width: 100%;
-    margin-top: 0.5rem;
-    margin-bottom: 0.5rem;
+    margin: clamp(0.3rem, 0.4rem, 0.5rem) 0;
     accent-color: #333;
     padding: 0;
 }
@@ -188,25 +191,27 @@ width: 18%;
 
 /* Timer */
 #timer-container {
-    margin-top: 2rem;
+    margin-top: clamp(1.5rem, 1.75rem, 2rem);
     text-align: center;
 }
 
 #timer-display {
-    font-size: 2.5rem;
+    font-size: clamp(2rem, 2.25rem, 2.5rem);
     font-weight: bold;
-    margin-bottom: 1rem;
+    margin-bottom: clamp(0.8rem, 0.9rem, 1rem);
 }
 
 #stop-btn {
-    padding: 0.6rem 1rem;
-    font-size: 1rem;
-    border-radius: 6px;
+    padding: clamp(0.5rem, 0.55rem, 0.6rem) clamp(0.8rem, 0.9rem, 1rem);
+    font-size: clamp(0.9rem, 0.95rem, 1rem);
+    border-radius: clamp(0.4rem, 0.5rem, 0.6rem);
     border: none;
     background: #c0392b;
     color: white;
     cursor: pointer;
-    width: 40%;
+    width: clamp(35%, 40%, 45%);
+    display: block;
+    margin: 0 auto;
 }
 
 #stop-btn:hover {
@@ -229,17 +234,16 @@ width: 18%;
 }
 
 #dayChart{
-  margin-top: 1rem;
-  margin-bottom: 1rem;
+  margin: clamp(0.5rem, 0.75rem, 1rem) 0;
   width:  85vw;
-  height: 40vh;
+  height: 45vh;
 }
 
 .month-picker {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 2vw;
+  gap: clamp(1rem, 2rem, 3rem);
 }
 
 .month-picker button {
@@ -247,8 +251,8 @@ width: 18%;
   color: #fff;
   border: none;
   border-radius: 6px;
-  padding: 0.2em 0.5em;
-  font-size: 1.2em;
+  padding: clamp(0.2rem, 0.3rem, 0.4rem) clamp(0.5rem, 0.65rem, 0.8rem);
+    font-size: clamp(1rem, 1.1rem, 1.2rem);
   cursor: pointer;
   transition: background 0.2s, transform 0.1s;
 }
@@ -265,16 +269,16 @@ width: 18%;
   background-color: #444;
   color: #fff;
   border: 0.1em solid #666;
-  border-radius: 6px;
-  padding: 0.4em 0.8em;
-  font-size: 1em;
+  border-radius: clamp(0.3rem, 0.45rem, 0.6rem);
+  padding: clamp(0.3rem, 0.45rem, 0.6rem) clamp(0.5rem, 0.65rem, 0.8rem);
+  font-size: clamp(0.9rem, 0.95rem, 1rem);
   outline: none;
-  width: 45vw;
+  width: clamp(30vw, 45%, 60vw);
 }
 
 .month-picker input[type="month"]:focus {
   border-color: #aaa;
-  box-shadow: 0 0 0.5em rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 clamp(0.3rem, 0.4rem, 0.5rem) rgba(74, 144, 226, 0.5);
 }
 .month-picker input[type="month"]:focus {
   border-color: #4a90e2;
@@ -285,7 +289,7 @@ width: 18%;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 2vw;
+  gap: clamp(1rem, 2rem, 3rem);
 }
 
 
@@ -293,9 +297,9 @@ width: 18%;
   background-color: #555;
   color: #fff;
   border: none;
-  border-radius: 6px;
-  padding: 0.2em 0.5em;
-  font-size: 1.2em;
+  border-radius: clamp(0.3rem, 0.45rem, 0.6rem);
+  padding: clamp(0.2rem, 0.3rem, 0.4rem) clamp(0.5rem, 0.65rem, 0.8rem);
+  font-size: clamp(1rem, 1.1rem, 1.2rem);
   cursor: pointer;
   transition: background 0.2s, transform 0.1s;
 }
@@ -312,24 +316,24 @@ width: 18%;
   background-color: #444;
   color: #fff;
   border: 0.1em solid #666;
-  border-radius: 6px;
-  padding: 0.4em 0.8em;
-  font-size: 1em;
+  border-radius: clamp(0.3rem, 0.45rem, 0.6rem);
+  padding: clamp(0.3rem, 0.45rem, 0.6rem) clamp(0.5rem, 0.65rem, 0.8rem);
+  font-size: clamp(0.9rem, 0.95rem, 1rem);
   outline: none;
-  width: 45vw;
+  width: clamp(30vw, 45%, 60vw);
 }
 
 /* Focus sull'input */
 .date-picker input[type="date"]:focus {
   border-color: #aaa;
-  box-shadow: 0 0 0.5em rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 clamp(0.3rem, 0.4rem, 0.5rem) rgba(74, 144, 226, 0.5);
 }
 
 
 .categorie-cards {
   display: flex;
   overflow-x: auto;
-  padding-bottom: 0.7rem;
+  padding-bottom: clamp(0.5rem, 0.6rem, 0.7rem);
   justify-content: flex-start;
   scrollbar-width: none;
 }
@@ -341,18 +345,19 @@ width: 18%;
 
 .cat {
   display: flex;
-  gap: 0.3rem;
+  gap: clamp(0.2rem, 0.3rem, 0.4rem);
   flex-direction: row;
-  padding: 0.5rem;
+  padding: clamp(0.4rem, 0.5rem, 0.6rem);
   font-weight: bold;
   background: linear-gradient(135deg, rgba(236, 244, 251, 0.4), #FFFFFF);
-  border-radius: 6px;
+  border-radius: clamp(0.3rem, 0.335rem, 0.375rem);
   box-sizing: border-box;
   position: relative;
-  margin: 0.5rem 0.2rem;
+   margin: clamp(0.3rem, 0.4rem, 0.5rem) clamp(0.1rem, 0.15rem, 0.2rem);
   border: 1px solid rgba(0, 0, 0, 0.1);
   cursor: pointer;
   transition: background-color 0.3s ease;
+  font-size: clamp(0.875rem, 0.95rem, 1rem);
 }
 .mat-name{
   -webkit-user-select: none;
@@ -361,7 +366,7 @@ width: 18%;
 }
 
 #updateMat{
-    padding-left: 0.2rem;
+    padding-left: clamp(0.1rem, 0.15rem, 0.2rem);
 }
 
 
@@ -384,30 +389,31 @@ width: 18%;
 
 .modal-content {
   background: #fff;
-  padding: 1em;
-  border-radius: 0.5em;
-  width: 90%;
+  padding: clamp(0.8rem, 0.9rem, 1em);
+  border-radius: clamp(0.4rem, 0.45rem, 0.5rem);
+  width: clamp(80%, 90%, 95%);
   text-align: center;
 }
 
 .modal-actions {
-  margin-top: 1.5em;
+  margin-top: clamp(1rem, 1.25rem, 1.5em);
   display: flex;
   justify-content: space-around;
 }
 
 .modal-actions button {
-  padding: 0.5em 1em;
+  padding: clamp(0.4rem, 0.45rem, 0.5em) clamp(0.8rem, 0.9rem, 1em);
   border: none;
-  border-radius: 0.3em;
+  border-radius: clamp(0.2rem, 0.25rem, 0.3em);
   cursor: pointer;
+  flex: 1;
 }
 
 #confirm-delete {
   background: #e74c3c;
   width: 100%;
   color: #fff;
-  margin: 0.2rem;
+  margin: clamp(0.1rem, 0.15rem, 0.2rem);
 }
 
 .btn-delete{
@@ -423,38 +429,41 @@ width: 18%;
 #delete-db-btn{
     background: #333;
     color: white;
-    border-radius: 6px;
+    border-radius: clamp(0.4rem, 0.5rem, 0.6rem);
     cursor: pointer;
     border: none;
-    padding: 0.6rem;
+    padding: clamp(0.5rem, 0.55rem, 0.6rem);
     width: 100%;
 }
 
 .btn {
-    flex: 1 1 0;
-    padding: 0.825rem;
-    margin-top: 0.5rem;
-    border-radius: 6px;
-    border: 0.0625rem solid #ccc;
-    font-size: 0.875rem;
+  flex: 1 1 0;
+  padding: clamp(0.6rem, 0.7125rem, 0.825rem);
+  margin-top: clamp(0.3rem, 0.4rem, 0.5rem);
+  border-radius: clamp(0.3rem, 0.35rem, 0.375rem);
+  border: 0.0625rem solid #ccc;
+  font-size: clamp(0.75rem, 0.825rem, 0.875rem);
 }
 
 .toast {
-  position: fixed;
-  top: 1rem;
-  left: 5.5rem;
-  background: #2ecc71;
-  color: #fff;
-  padding: 0.75rem 1.25rem;
-  border-radius: 6px;
-  box-shadow: 0 0.25rem 0.75rem rgba(0,0,0,0.2);
-  opacity: 0;
-  transform: translateY(-50% ,1.25rem);
-  transition: all 0.4s ease;
-  z-index: 9999;
-  font-size: 0.9rem;
-  max-width: 90vw;
-  word-break: break-word;
+    position: fixed;
+    top: clamp(0.5rem, 5%, 1.5rem);
+    left: clamp(0.5rem, 2%, 1rem);
+    background: #2ecc71;
+    color: #fff;
+    padding: clamp(0.5rem, 0.9rem, 1.25rem) clamp(0.75rem, 1.125rem, 1.5rem);
+    border-radius: 0.375rem;
+    box-shadow: 0 0.25rem 0.75rem rgba(0,0,0,0.2);
+    opacity: 0;
+    transform: translateY(-50% ,1.25rem);
+    transition: all 0.4s ease;
+    z-index: 9999;
+    font-size: clamp(0.8rem, 0.9rem, 1rem);
+    max-width: 90vw;
+    word-break: break-word;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .toast.show {
@@ -466,40 +475,29 @@ width: 18%;
   background: #ff3b30;
 }
 
-#btnExportDB{
-    background: #333;
-    color: white;
-    border-radius: 6px;
-    cursor: pointer;
-    border: none;
-    padding: 0.6rem;
-    width: 100%;
-}
-
-#btnImportDB{
-    background: #333;
-    color: white;
-    border-radius: 6px;
-    cursor: pointer;
-    border: none;
-    padding: 0.6rem;
-    width: 100%;
+#btnExportDB,
+#btnImportDB {
+  background: #333;
+  color: white;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  border: none;
+  padding: clamp(0.5rem, 0.55rem, 0.6rem);
+  width: 100%;
+  font-size: clamp(0.9rem, 0.95rem, 1rem);
 }
 
 input[type="file"] {
     width: 100%;
-    padding: 0.6rem;
+    padding: clamp(0.5rem, 0.55rem, 0.6rem);
     border: none;
     border-radius: 6px;
-    font-size: 1rem;
+    font-size: clamp(0.9rem, 0.95rem, 1rem);
 }
 
 .spinner-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   background: rgba(255, 255, 255, 0.7);
   display: none;
   align-items: center;
@@ -508,11 +506,11 @@ input[type="file"] {
 }
 
 .spinner {
-  border: 0.4em solid rgba(0,0,0,0.1);
+  border: clamp(0.2em, 0.3em, 0.4em) solid rgba(0,0,0,0.1);
   border-left-color: #007aff;
   border-radius: 50%;
-  width: 3rem;
-  height: 3rem;
+  width: clamp(2rem, 2.5rem, 3rem);
+  height: clamp(2rem, 2.5rem, 3rem);
   animation: spin 1s linear infinite;
 }
 
@@ -523,10 +521,7 @@ input[type="file"] {
 /* Overlay per lo sfondo scuro */
 .overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   backdrop-filter: blur(5px);
   display: flex;
   justify-content: center;
@@ -534,7 +529,7 @@ input[type="file"] {
   z-index: 9999;
 }
 
-/* Contenitore del modulo */
+
 .form-container {
     backdrop-filter: blur(5px);
     background: linear-gradient(135deg, rgba(236, 244, 251, 0.4), #FFFFFF);
@@ -542,45 +537,44 @@ input[type="file"] {
     top: 0;
     margin-top: 3rem;
     flex-direction: column;
-    padding: 1rem;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    width: 13rem;
+    padding: clamp(0.75rem, 0.875rem, 1rem);
+    border-radius: 0.375rem;
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.2);
+    width: clamp(12rem, 16rem, 20rem);
     text-align: center;
 }
 
 
 #nuoveOre, #nuoviMinuti{
-  width: 40%;
-  padding: 10px;
-  margin: 10px 0;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 16px;
+    width: clamp(30%, 35%, 40%);
+    padding: clamp(0.5rem, 0.575rem, 0.625rem);
+    margin: clamp(0.5rem, 0.675rem, 0.625rem) 0;
+    border: 0.0625rem; solid #ccc;
+    border-radius: 0.25rem;
+    font-size: clamp(0.9rem, 1rem, 1rem);
 }
 
-/* Pulsante di salvataggio */
 #saveBtn {
     background: #333;
     color: white;
     width: 100%;
-    padding: 0.5rem;
-    margin: 0.5rem 0;
+    padding: clamp(0.4rem, 0.45rem, 0.5rem);
+    margin: clamp(0.4rem, 0.45rem, 0.5rem) 0;
     border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 16px;
+    border-radius: 0.25rem;
+    font-size: clamp(0.9rem, 0.95rem, 1rem);
 }
 
 
-/* Nascondi il modulo di default */
 .hidden {
   display: none;
 }
 
+
 #cancelBtn {
     position: absolute;
     background: none;
-    font-size: 1.1rem;
+    font-size: clamp(1rem, 1.05rem, 1.1rem);
     border: none;
     margin-right:0.5rem;
     top: 0;
@@ -591,10 +585,10 @@ input[type="file"] {
     background:  #c0392b;
     color: white;
     width: 100%;
-    padding: 0.5rem;
+    padding: clamp(0.4rem, 0.45rem, 0.5rem);
     border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 1rem;
+    border-radius: 0.25rem;
+    font-size: clamp(0.9rem, 0.95rem, 1rem);;
 }
 
 .esame {
@@ -606,17 +600,18 @@ input[type="file"] {
     border-radius: 0.425rem;
     box-sizing: border-box;
     position: relative;
-    margin: 0.5rem 0;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1),
-            0 1px 2px rgba(0, 0, 0, 0.06);
+    margin: clamp(0.25rem, 0.375rem, 0.5rem) 0;
+    border: 0.0625rem  solid rgba(0, 0, 0, 0.1);
+    box-shadow:
+        0 0.0625rem 0.1875rem rgba(0, 0, 0, 0.1),
+        0 0.0625rem 0.125rem rgba(0, 0, 0, 0.06);
     cursor: pointer;
     transition: background-color 0.3s ease;
     background: linear-gradient(135deg, rgba(236, 244, 251, 0.4), #FFFFFF);
 }
 
 .esame-header{
-    font-size: 0.90rem;
+    font-size: clamp(0.85rem, 0.875rem, 0.9rem);
     color: #5a6c7d;
     font-weight: 750;
     display: flex;
@@ -629,8 +624,7 @@ input[type="file"] {
     align-items: center;
     position: relative;
     border-radius: 0.425rem;
-    padding-right: 0.2rem;
-    padding-left: 0.2rem;
+    padding: 0 clamp(0.2rem, 0.2rem, 0.2rem);
     color: #2c3e50;
 }
 .voto-data {
@@ -641,25 +635,25 @@ input[type="file"] {
 
 .esame-content{
     flex-basis: 100%;
-    max-width:100%
+    max-width:100%;
 }
 #esamiCards{
-overflow-y: auto;
-height: 70vh;
-scrollbar-width: none;
+    overflow-y: auto;
+    height: 70vh;
+    scrollbar-width: none;
 }
 
 .esami-container{
-height: 90vh;
+    height: 90vh;
 }
 
 .materiaEsame {
-  font-size: 1.25rem;
-  font-weight: 500;
-  text-align: left;
-  white-space: nowrap;
-  overflow-x: auto;
-  scrollbar-width: none;
+    font-size: clamp(1rem, 1.125rem, 1.25rem);
+    font-weight: 500;
+    text-align: left;
+    white-space: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
     -webkit-user-select: none;
     -ms-user-select: none;
     user-select: none;
@@ -669,39 +663,42 @@ height: 90vh;
     background: #333;
     color: white;
     width: 100%;
-    padding: 0.5rem;
-    margin: 0.5rem 0;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 16px;
+    padding: clamp(0.3rem, 0.4rem, 0.5rem);
+    margin: clamp(0.3rem, 0.4rem, 0.5rem) 0;
+    border: 0.0625rem solid #ccc;
+    border-radius: 0.25rem;
+    font-size: clamp(0.9rem, 0.95rem, 1rem);
     z-index: 10;
 }
 
 .elimina-btn {
-  background:  #c0392b;
-  color: white;
+    background:  #c0392b;
+    color: white;
     width: 100%;
-    padding: 0.5rem;
-    margin: 0.5rem 0;
+    padding: clamp(0.3rem, 0.4rem, 0.5rem);
+    margin: 0 clamp(0.3rem, 0.4rem, 0.5rem) 0 0;
     margin-top: 0;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 16px;
+    border: 0.0625rem solid #ccc;
+    border-radius: 0.25rem;
+    font-size: clamp(0.9rem, 0.95rem, 1rem);
     z-index: 10;
 }
 .btn-container{
     position: sticky;
     bottom: 5%;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.25rem, 0.375rem, 0.5rem);
 }
 
 .voto {
-  font-size: 1.25rem;
-  font-weight: 500;
-  white-space: nowrap;
-  overflow-x: auto;
-  margin-left: 0.2rem;
-  text-align: right;
-  scrollbar-width: none;
+    font-size: clamp(1rem, 1.125rem, 1.25rem);
+    font-weight: 500;
+    white-space: nowrap;
+    overflow-x: auto;
+    margin-left: clamp(0.1rem, 0.15rem, 0.2rem);
+    text-align: right;
+    scrollbar-width: none;
     -webkit-user-select: none;
     -ms-user-select: none;
     user-select: none;
@@ -710,14 +707,14 @@ height: 90vh;
 .data{
     flex-basis: 35%;
     text-align: right;
-    margin-right: 0.2rem;
+    margin-right: clamp(0.1rem, 0.2rem, 0.25rem);
     -webkit-user-select: none;
     -ms-user-select: none;
     user-select: none;
 }
 .crediti{
     text-align: left;
-    margin-right: 0.2rem;
+    margin-right: clamp(0.1rem, 0.2rem, 0.25rem);
     -webkit-user-select: none;
     -ms-user-select: none;
     user-select: none;
@@ -727,50 +724,41 @@ height: 90vh;
     background: #333;
     color: white;
     width: 100%;
-    padding: 0.3rem;
-    margin: 0.2rem 0;
+    padding: clamp(0.2rem, 0.25rem, 0.3rem);
+    margin: clamp(0.1rem, 0.15rem, 0.2rem) 0;
     border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 1rem;
+    border-radius: 0.25rem;
+    font-size: clamp(0.9rem, 0.95rem, 1rem);
 }
 
 /* Pulsante di annullamento */
 .cancel-btn {
-  background:  #c0392b;
-  color: white;
+    background:  #c0392b;
+    color: white;
     width: 100%;
-    padding: 0.3rem;
-    margin: 0.2rem 0;
+    padding: clamp(0.2rem, 0.25rem, 0.3rem);
+    margin: clamp(0.1rem, 0.15rem, 0.2rem) 0;
     border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 16px;
+    border-radius: 0.25rem;
+    font-size: clamp(0.9rem, 0.95rem, 1rem);
 }
 
-.esame-card.form-esame {
+
+.esame-card.form-esame,
+.mediaComp {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    margin-top: 1rem;
-    padding: 0.5rem;
+    gap: clamp(0.25rem, 0.375rem, 0.5rem);
+    margin-top: clamp(0.5rem, 0.75rem, 1rem);
+    padding: clamp(0.25rem, 0.375rem, 0.5rem);
     border: 1px solid #ccc;
-    border-radius: 8px;
+    border-radius: 0.5rem;
     width: 100%;
-    backdrop-filter: blur(5px);
+    backdrop-filter: blur(clamp(0.1rem, 0.2065rem, 0.3125rem));
     background: linear-gradient(135deg, rgba(236, 244, 251, 0.4), #FFFFFF);
+    box-sizing: border-box;
 }
 
-.mediaComp{
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    margin-top: 1rem;
-    padding: 0.5rem;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    width: 100%;
-    backdrop-filter: blur(5px);
-    background: linear-gradient(135deg, rgba(236, 244, 251, 0.4), #FFFFFF);
-}
 .mediaDiv{
     display: flex;
     justify-content: space-between;
@@ -779,33 +767,33 @@ height: 90vh;
 }
 
 .media{
-  font-size: 1rem;
-  font-weight: 500;
-  white-space: nowrap;
-  overflow-x: auto;
-  margin-left: 0.2rem;
-  text-align: right;
-  scrollbar-width: none;
+    font-size: clamp(0.9rem, 0.95rem, 1rem);
+    font-weight: 500;
+    white-space: nowrap;
+    overflow-x: auto;
+    margin-left: clamp(0.1rem, 0.15rem, 0.2rem);
+    text-align: right;
+    scrollbar-width: none;
     -webkit-user-select: none;
     -ms-user-select: none;
     user-select: none;
 }
 
 .fontBold1Rem{
-  font-size: 1rem;
+  font-size: clamp(0.9rem, 0.95rem, 1rem);
   font-weight: 500;
 }
 
 .esame-card.form-esame input {
-    padding: 6px 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 14px;
+    padding: clamp(0.25rem, 0.325rem, 0.375rem) clamp(0.3rem, 0.4rem, 0.5rem);
+    border: 0.0625rem solid #ccc;
+    border-radius: 0.25rem;
+    font-size: clamp(0.8rem, 0.8375rem, 0.875rem);
 }
 
 .esame-card.form-esame .row {
     display: flex;
-    gap: 10px;
+    gap: 0.625rem;
 }
 
 .esame-card.form-esame .row input {
@@ -813,7 +801,7 @@ height: 90vh;
 }
 .esame-card.form-esame .button-row {
     display: flex;
-    gap: 10px;
+    gap: clamp(0.25rem, 0.45rem, 0.625rem);
     justify-content: flex-end;
 }
 
@@ -827,7 +815,7 @@ height: 90vh;
 
 .chart-item {
     min-width: 100%;
-    scroll-snap-align: start; /
+    scroll-snap-align: start;
     flex-shrink: 0;
 }
 

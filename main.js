@@ -537,14 +537,17 @@ async function drawChart() {
         const giorno = new Date(log.data).getDate();
         const idx = giorno - 1;
         const val = parseFloat(log.ore) || 0;
-        datiMaterie[log.materia][idx] = (datiMaterie[log.materia][idx] || 0) + val;
+        if(val > 0){
+            datiMaterie[log.materia][idx] = (datiMaterie[log.materia][idx] || 0) + val;
+        }
     });
 
     const materieConDati = nomeMaterie.filter(m =>
         datiMaterie[m].some(val => val > 0)
     );
 
-    const series = nomeMaterie.map(m => ({
+
+    const series = materieConDati.map(m => ({
         name: m,
         type: 'bar',
         stack: 'total',
@@ -569,7 +572,7 @@ async function drawChart() {
             }
         },
         legend: {
-            data: nomeMaterie,
+            data: materieConDati,
             orient: 'horizontal',
             type: 'scroll',
             right: 10,

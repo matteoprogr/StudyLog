@@ -613,7 +613,7 @@ async function drawChart() {
             name: nomeMese,
             nameGap: 5
         },
-        grid: { bottom: '5%'},
+        grid: { bottom: '10%'},
         series: series
     };
     chart.clear();

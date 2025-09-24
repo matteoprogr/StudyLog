@@ -68,7 +68,7 @@ export async function creaCardInsEsame() {
 
                 <div class="row">
                     <input type="date" class="input-data" id="dataEsami" required/>
-                    <input type="number" placeholder="Voto" class="input-voto" min="0" max="30" required/>
+                    <input type="number" placeholder="Voto" class="input-voto" min="18" max="30" required/>
                 </div>
 
                 <div class="button-row">
@@ -136,7 +136,7 @@ export async function updateCardEsame(esame, esameValue) {
 
                 <div class="row">
                     <input type="date" class="input-data"  value="${dataValue}" required/>
-                    <input type="number" placeholder="Voto" value="${esameValue.voto}" class="input-voto" min="0" max="30" required/>
+                    <input type="number" placeholder="Voto" value="${esameValue.voto}" class="input-voto" min="18" max="30" required/>
                 </div>
 
                 <div class="button-row">

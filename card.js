@@ -1,5 +1,5 @@
 import { saveEsame, showErrorToast, updateEsami} from './query.js'
-import { creaEsamiPage, setDateEsami } from './main.js'
+import { creaEsamiPage, setDateEsami, dataInFormatoInterfaccia, dateInFormatoSistema } from './main.js'
 
 export function creaEsameComponent(esame) {
 
@@ -125,7 +125,7 @@ export function mediaComponent(mediaText, media, votoLaurea) {
 export async function updateCardEsame(esame, esameValue) {
     const container = document.createElement("div");
     const esamiCards = document.getElementById('esamiCards');
-    const dataValue = new Date(esameValue.data).toISOString().split("T")[0];
+    const dataValue = await dateInFormatoSistema(esameValue.data);
 
         container.innerHTML = `
             <form class="esame-card form-esame">

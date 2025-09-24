@@ -296,6 +296,16 @@ export async function setDateEsami(dataEsami){
         dataEsami.value = formatted;
 }
 
+export function dataInFormatoInterfaccia(data){
+    const [y,m,d] = data.split("-");
+    return `${d.padStart(2,"0")}/${m.padStart(2,"0")}/${y}`
+}
+
+export async function dateInFormatoSistema(data){
+    const [d,m,y] = data.split("/");
+    return `${y}-${m}-${d}`;
+}
+
 async function saveLog(materiaIns, minutes, data) {
     let formatted;
     if(!isValid(data)){
@@ -448,13 +458,14 @@ export async function creaEsamiPage(){
     newCardDiv.appendChild(newCardComp);
 
     const cards = (await getAllEsami()).sort((a, b) => new Date(a.data) - new Date(b.data));
-    cards.forEach(card => {
+    for(const card of cards){
+        card.data = await dataInFormatoInterfaccia(card.data);
         const esame = creaEsameComponent(card);
         esamiCards.appendChild(esame);
         const creditiParse = parseInt(card.crediti, 10);
         prodottoVotiCrediti += (parseInt(card.voto, 10) * creditiParse);
         totCrediti += creditiParse;
-    });
+    }
     if(cards.length !== 0){
         const media = prodottoVotiCrediti / totCrediti;
         const votoLaurea = media * 110 / 30;
@@ -616,6 +627,7 @@ async function lineMediaChart(){
     const lineChart = echarts.init(document.getElementById("lineChart"));
     const allEsami = await getAllEsami();
     const allDataEsami = allEsami.map(esame => esame.data).sort((a,b) => new Date(a) - new Date(b));
+    const allDataFormatted = allDataEsami.map(data => dataInFormatoInterfaccia(data));
     const allMedie = [];
     let product = 0;
     let sumCrediti = 0;
@@ -636,7 +648,7 @@ async function lineMediaChart(){
     const option = {
       xAxis: {
         type: 'category',
-        data: allDataEsami
+        data: allDataFormatted
       },
       yAxis: {
         type: 'value',
@@ -653,7 +665,7 @@ async function lineMediaChart(){
       graphic: [
           {
             type: 'text',
-            left: "3%",
+            left: "35%",
             top: '5%',
             style: {
               text: 'Media nel tempo',

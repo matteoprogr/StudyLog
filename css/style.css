@@ -23,10 +23,18 @@ h4{
     display: none;
     padding: 1.5rem;
     animation: fadeIn 0.3s ease;
+    min-height: 100vh;
+    box-sizing: border-box;
 }
 
 .page-section.active {
     display: block;
+}
+
+.section-container{
+    overflow-y: auto;
+    height: 91vh;
+    scrollbar-width: none;
 }
 
 /* Effetto transizione */
@@ -225,7 +233,7 @@ width: 18%;
 #myChart {
   margin: 0 auto;
   width:  90vw;
-  height: 83vh;
+  height: 80vh;
 }
 #myChartPie {
   margin: 0 auto;
@@ -645,12 +653,12 @@ input[type="file"] {
 }
 #esamiCards{
     overflow-y: auto;
-    height: 73vh;
+    height: 65vh;
     scrollbar-width: none;
 }
 
 .esami-container{
-    height: 90vh;
+    height: 70vh;
 }
 
 .materiaEsame {
@@ -690,10 +698,11 @@ input[type="file"] {
     z-index: 10;
 }
 .btn-container{
-    position: sticky;
+    position: fixed;
     bottom: 7%;
     display: flex;
     flex-direction: column;
+    width: 90%;
 }
 
 .voto {

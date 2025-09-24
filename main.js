@@ -652,7 +652,7 @@ async function lineMediaChart(){
       },
       yAxis: {
         type: 'value',
-        min: min - 1,
+        min: Math.floor(min - 1),
         max: 30,
         interval: 1,
       },

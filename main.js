@@ -639,8 +639,8 @@ async function lineMediaChart(){
         product += productVotoCrediti;
         const media = product / sumCrediti;
         allMedie.push(media);
-        if(voto < min){
-            min = voto;
+        if(media < min){
+            min = media;
         }
     }
 
@@ -665,8 +665,8 @@ async function lineMediaChart(){
       graphic: [
           {
             type: 'text',
-            left: "35%",
-            top: '5%',
+            left: "37%",
+            top: '10%',
             style: {
               text: 'Media nel tempo',
               font: '0.8rem sans-serif',

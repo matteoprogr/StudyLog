@@ -855,7 +855,7 @@ chart.on('mousedown', function(params) {
         const ore = Math.floor(valoreAttuale);
         const minuti = Math.round((valoreAttuale - ore) * 60);
         document.getElementById('materiaDisplay').textContent = `${materia}`;
-        document.getElementById('giornoDisplay').textContent = `${giorno}`;
+        document.getElementById('giornoDisplay').textContent = dataInFormatoInterfaccia(`${giorno}`);
         document.getElementById('nuoveOre').value = ore;
         document.getElementById('nuoviMinuti').value = minuti;
 

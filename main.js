@@ -88,6 +88,11 @@ nextBtn.addEventListener("click", () => changeMonth(1));
 
 await setDay();
 
+if ('Notification' in window && Notification.permission !== 'granted') {
+  await Notification.requestPermission();
+}
+
+
 
     minutesSlider.addEventListener("input", () => {
         minutesValue.textContent = minutesSlider.value;
@@ -164,12 +169,34 @@ async function deleteEsami(){
     await creaEsamiPage()
 }
 
+//function startTimer() {
+//  const minutes = parseInt(minutesSlider.value, 10);
+//  durationMs = minutes * 60 * 1000;
+//  startTime = Date.now();
+//  timerInterval = setInterval(updateTimer, 1000);
+//  updateTimer();
+//  dayChart.classList.add('hidden');
+//  daySelect.classList.add("hidden");
+//}
+
 function startTimer() {
   const minutes = parseInt(minutesSlider.value, 10);
   durationMs = minutes * 60 * 1000;
   startTime = Date.now();
+  const endTime = startTime + durationMs;
+
   timerInterval = setInterval(updateTimer, 1000);
   updateTimer();
+
+  // 👉 invio al service worker
+  if (navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage({
+      type: 'START_TIMER',
+      endTime,
+      materia
+    });
+  }
+
   dayChart.classList.add('hidden');
   daySelect.classList.add("hidden");
 }

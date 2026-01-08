@@ -1,29 +1,162 @@
-import { saveStudyLog, getAllStudyLogs, saveMateria, getAllMaterie, getStudyLogsByMonth, deleteDatabase,
-updateMateria, deleteMaterie, isValid, updateOreInLogs, getStudyLogsByDay, showErrorToast, getAllEsami, deleteEsame, deleteLogByMateriaData } from "./query.js";
+import {
+  saveStudyLog,
+  getAllStudyLogs,
+  saveMateria,
+  getAllMaterie,
+  getStudyLogsByMonth,
+  deleteDatabase,
+  updateMateria,
+  deleteMaterie,
+  isValid,
+  updateOreInLogs,
+  getStudyLogsByDay,
+  showErrorToast,
+  getAllEsami,
+  deleteEsame,
+  deleteLogByMateriaData,
+} from "./query.js";
 
-import { creaEsameComponent, creaCardInsEsame, mediaComponent } from "./card.js";
+import {
+  creaEsameComponent,
+  creaCardInsEsame,
+  mediaComponent,
+} from "./card.js";
+
+const { createClient } = supabase;
+const supabaseClient = createClient(
+  "https://mwfyrjedrqgtprcgtgti.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im13ZnlyamVkcnFndHByY2d0Z3RpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3MTk0NjQsImV4cCI6MjA4MzI5NTQ2NH0.uwA7ifZSKw-ZA7QpbcOkLHodHc9YTgezzexTc5A25TI"
+);
+
 
 /////////  SERVICE WORKER ////////////////
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
-      .then(reg => console.log('Service Worker registered:', reg))
-      .catch(err => console.log('Service Worker registration failed:', err));
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", async () => {
+    try {
+      console.log("🔄 Registrazione Service Worker...");
+
+      // Registra il service worker
+      const registration = await navigator.serviceWorker.register("/sw.js");
+      console.log("✅ Service Worker registrato:", registration);
+      console.log("📊 Stato SW:");
+      console.log("  - installing:", registration.installing);
+      console.log("  - waiting:", registration.waiting);
+      console.log("  - active:", registration.active);
+      console.log("  - controller:", navigator.serviceWorker.controller);
+
+      // Aspetta che sia completamente pronto
+      await navigator.serviceWorker.ready;
+      console.log("🎉 Service Worker pronto e attivo!");
+
+      // IMPORTANTE: Ora puoi registrare le push notifications
+      await registerPushSubscription();
+    } catch (err) {
+      console.error("❌ Errore Service Worker:", err);
+    }
   });
 }
 
+// Funzione per registrare le push notifications
+export async function registerPushSubscription() {
+  // Controlla se l'utente è loggato
+  const currentUser = window.getCurrentUser ? window.getCurrentUser() : null;
+
+  if (!currentUser) {
+    console.log("ℹ️ Push notifications disponibili solo con account");
+    return;
+  } else {
+    console.log("currentUser:", currentUser);
+  }
+
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+    console.log("❌ Push notifications non supportate");
+    return;
+  }
+
+  try {
+    // Verifica se l'utente è autenticato
+    const {
+      data: { user },
+      error: authError,
+    } = await supabaseClient.auth.getUser();
+
+    if (authError || !user) {
+      console.error("⚠️ Utente non autenticato. Effettua il login prima.");
+      return;
+    }
+
+    console.log("📬 Registrazione push notification per utente:", user.id);
+
+    const registration = await navigator.serviceWorker.ready;
+
+    const existingSub = await registration.pushManager.getSubscription();
+    if (existingSub) {
+      console.log("✅ Push subscription già esistente");
+      return existingSub;
+    }
+
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") {
+      console.log("⚠️ Permesso notifiche negato");
+      return;
+    }
+
+    const subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(
+        "BAYBaa5RHouKeRnhTeVb06ki3MW7gKs8DJoUiqS7BBmeGPoLsTw1_zqBShfsx_fVswBYpcq835w1Ylhttw0dldI"
+      ),
+    });
+
+    const subscriptionJSON = subscription.toJSON();
+
+    let clientUUID = localStorage.getItem("client_uuid");
+    if (!clientUUID) {
+      clientUUID = crypto.randomUUID();
+      localStorage.setItem("client_uuid", clientUUID);
+    }
+
+    // Salva con user_id
+    const { data, error } = await supabaseClient
+      .from("push_subscriptions")
+      .insert({
+        subscription: subscriptionJSON,
+        client_uuid: clientUUID,
+        user_id: user.id, // Associa all'utente autenticato
+      });
+
+    if (error) {
+      console.error("❌ Errore Supabase:", error);
+    } else {
+      console.log("✅ Subscription salvata per utente", user.id);
+    }
+
+    return subscription;
+  } catch (error) {
+    console.error("❌ Errore:", error);
+  }
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
+}
 
 /////////////  VARIABILi GLOBALI ///////////////////
 const form = document.getElementById("study-form");
-document.getElementById("addReg").addEventListener('click', aggiungiRegistrazione);
+document
+  .getElementById("addReg")
+  .addEventListener("click", aggiungiRegistrazione);
 const materiaInput = document.getElementById("ricerca-materie");
 const minutesSlider = document.getElementById("minutes");
 const minutesValue = document.getElementById("minutes-value");
 const timerContainer = document.getElementById("timer-container");
 const timerDisplay = document.getElementById("timer-display");
 const stopBtn = document.getElementById("stop-btn");
-const daySelect = document.getElementById('day-select');
-const monthSelect = document.getElementById('month-select');
+const daySelect = document.getElementById("day-select");
+const monthSelect = document.getElementById("month-select");
 const prevBtn = document.getElementById("prev-month");
 const nextBtn = document.getElementById("next-month");
 const deleteBtn = document.getElementById("delete-db-btn");
@@ -31,8 +164,8 @@ const modal = document.getElementById("confirm-modal");
 const confirmDelete = document.getElementById("confirm-delete");
 const cancelDelete = document.getElementById("cancel-delete");
 const audioFile = new Audio("assets/sounds/alarm.mp3");
-const carousel = document.querySelector('.chart-carousel');
-document.getElementById('deleteEsami').addEventListener('click', deleteEsami);
+const carousel = document.querySelector(".chart-carousel");
+document.getElementById("deleteEsami").addEventListener("click", deleteEsami);
 let countdown;
 let remainingTime;
 let startTime = null;
@@ -43,169 +176,167 @@ let minutes;
 let materie;
 let time;
 
+const links = document.querySelectorAll(".nav-links a");
+const sections = document.querySelectorAll(".page-section");
 
-    const links = document.querySelectorAll(".nav-links a");
-    const sections = document.querySelectorAll(".page-section");
+lucide.createIcons();
 
-    lucide.createIcons();
+// --- Navigation ---
+links.forEach((link) => {
+  link.addEventListener("click", async (e) => {
+    e.preventDefault();
+    links.forEach((l) => l.classList.remove("active"));
+    link.classList.add("active");
 
-    // --- Navigation ---
-    links.forEach(link => {
-        link.addEventListener("click", async (e) => {
-            e.preventDefault();
-            links.forEach(l => l.classList.remove("active"));
-            link.classList.add("active");
+    const targetId = link.getAttribute("data-target");
+    if (targetId === "grafici") {
+      await setDate();
+      drawChart();
+      drawPieChart();
+      lineMediaChart();
+    }
+    if (targetId === "registra") {
+      materie = await getAllMaterie();
+      materieCreateComponent(materie);
+      drawDayChart();
+    }
+    if (targetId === "esami") {
+      creaEsamiPage();
+    }
 
-            const targetId = link.getAttribute("data-target");
-            if(targetId === "grafici"){
-                await setDate();
-                drawChart();
-                drawPieChart();
-                lineMediaChart();
-            }
-            if(targetId === "registra"){
-                materie = await getAllMaterie();
-                materieCreateComponent(materie);
-                drawDayChart();
-            }
-            if(targetId === "esami"){
-                creaEsamiPage();
-            }
-
-            sections.forEach(section => {
-                section.classList.remove("active");
-                if (section.id === targetId) section.classList.add("active");
-            });
-        });
+    sections.forEach((section) => {
+      section.classList.remove("active");
+      if (section.id === targetId) section.classList.add("active");
     });
-
-
+  });
+});
 
 document.addEventListener("DOMContentLoaded", async () => {
+  prevBtn.addEventListener("click", () => changeMonth(-1));
+  nextBtn.addEventListener("click", () => changeMonth(1));
 
-prevBtn.addEventListener("click", () => changeMonth(-1));
-nextBtn.addEventListener("click", () => changeMonth(1));
+  await setDay();
 
-await setDay();
+  if ("Notification" in window && Notification.permission !== "granted") {
+    await Notification.requestPermission();
+  }
 
-if ('Notification' in window && Notification.permission !== 'granted') {
-  await Notification.requestPermission();
-}
+  minutesSlider.addEventListener("input", () => {
+    minutesValue.textContent = minutesSlider.value;
+  });
+  monthSelect.addEventListener("change", drawChart);
+  daySelect.addEventListener("change", drawDayChart);
+  materie = await getAllMaterie();
+  materieCreateComponent(materie);
 
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    minutes = parseInt(minutesValue.innerText, 10);
+    if (minutes === 0) {
+      startInfiniteTimer();
+    } else {
+      startTimer();
+    }
 
+    form.classList.add("hidden");
+    timerContainer.classList.remove("hidden");
+    materia = materiaInput.value.trim();
+  });
 
-    minutesSlider.addEventListener("input", () => {
-        minutesValue.textContent = minutesSlider.value;
-    });
-    monthSelect.addEventListener('change', drawChart);
-    daySelect.addEventListener('change', drawDayChart);
-    materie = await getAllMaterie();
-    materieCreateComponent(materie);
+  stopBtn.addEventListener("click", async () => {
+    await stopTimer();
+    resetForm();
+    form.classList.remove("hidden");
+    timerContainer.classList.add("hidden");
+  });
 
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-      minutes = parseInt(minutesValue.innerText, 10);
-      if(minutes === 0){
-        startInfiniteTimer();
-      }else{
-        startTimer();
-      }
+  deleteBtn.addEventListener("click", () => {
+    modal.classList.remove("hidden");
+  });
 
-      form.classList.add("hidden");
-      timerContainer.classList.remove("hidden");
-      materia = materiaInput.value.trim();
-    });
+  cancelDelete.addEventListener("click", () => {
+    modal.classList.add("hidden");
+  });
 
-    stopBtn.addEventListener("click", async () => {
-      await stopTimer();
-      resetForm();
-      form.classList.remove("hidden");
-      timerContainer.classList.add("hidden");
-    });
-
-deleteBtn.addEventListener("click", () => {
-  modal.classList.remove("hidden");
+  confirmDelete.addEventListener("click", () => {
+    modal.classList.add("hidden");
+    deleteDatabase();
+  });
 });
-
-cancelDelete.addEventListener("click", () => {
-  modal.classList.add("hidden");
-});
-
-confirmDelete.addEventListener("click", () => {
-  modal.classList.add("hidden");
-  deleteDatabase();
-});
-
-});
-
 
 ///////////  FUNZIONI //////////////////////
 
-async function aggiungiRegistrazione(){
-    const minutes = parseInt(minutesSlider.value, 10);
-    materia = materiaInput.value.trim();
-    if(minutes !== 0 && isValid(materia) && isValid(daySelect.value)){
-         await saveLog(materia,minutes,daySelect.value);
-         resetForm();
-         drawDayChart();
-         minutesValue.textContent = 0;
-    }else{
-        showErrorToast("Valori non validi","error");
-        return;
-    }
-    return;
-}
-
-async function deleteEsami(){
-    const selectedCards = document.querySelectorAll(".selected");
-    if(selectedCards.length === 0){
-        showErrorToast("Selezionare almeno un esame", "error");
-        return;
-    }
-
-    for(const card of selectedCards){
-         await deleteEsame(parseInt(card.id,10));
-    }
-    await creaEsamiPage()
-}
-
-//function startTimer() {
-//  const minutes = parseInt(minutesSlider.value, 10);
-//  durationMs = minutes * 60 * 1000;
-//  startTime = Date.now();
-//  timerInterval = setInterval(updateTimer, 1000);
-//  updateTimer();
-//  dayChart.classList.add('hidden');
-//  daySelect.classList.add("hidden");
-//}
-
-function startTimer() {
+async function aggiungiRegistrazione() {
   const minutes = parseInt(minutesSlider.value, 10);
+  materia = materiaInput.value.trim();
+  if (minutes !== 0 && isValid(materia) && isValid(daySelect.value)) {
+    await saveLog(materia, minutes, daySelect.value);
+    resetForm();
+    drawDayChart();
+    minutesValue.textContent = 0;
+  } else {
+    showErrorToast("Valori non validi", "error");
+    return;
+  }
+  return;
+}
+
+async function deleteEsami() {
+  const selectedCards = document.querySelectorAll(".selected");
+  if (selectedCards.length === 0) {
+    showErrorToast("Selezionare almeno un esame", "error");
+    return;
+  }
+
+  for (const card of selectedCards) {
+    await deleteEsame(parseInt(card.id, 10));
+  }
+  await creaEsamiPage();
+}
+
+
+async function startTimer() {
+  const {
+    data: { user },
+  } = await supabaseClient.auth.getUser();
+  console.log(user);
+
+  const minutes = parseInt(minutesSlider.value, 10);
+  if (!minutes || minutes <= 0) return;
+
   durationMs = minutes * 60 * 1000;
   startTime = Date.now();
-  const endTime = startTime + durationMs;
+  const endTime = new Date(startTime + durationMs).toISOString();
 
+  // Avvio timer UI (come prima)
   timerInterval = setInterval(updateTimer, 1000);
   updateTimer();
 
-  // 👉 invio al service worker
-  if (navigator.serviceWorker.controller) {
-    navigator.serviceWorker.controller.postMessage({
-      type: 'START_TIMER',
-      endTime,
-      materia
-    });
-  }
-
-  dayChart.classList.add('hidden');
+  dayChart.classList.add("hidden");
   daySelect.classList.add("hidden");
+
+  //salvataggio timer su Supabase
+  try {
+    const { error } = await supabaseClient.from("study_timers").insert({
+      materia,
+      end_time: endTime,
+      notified: false,
+      user_id: user.id,
+    });
+
+    if (error) {
+      console.error("Errore Supabase:", error);
+    }
+  } catch (err) {
+    console.error("Errore rete:", err);
+  }
 }
 
 function startInfiniteTimer() {
   startTime = Date.now();
   timerInterval = setInterval(updateInfiniteTimer, 1000);
   updateInfiniteTimer();
-  dayChart.classList.add('hidden');
+  dayChart.classList.add("hidden");
   daySelect.classList.add("hidden");
 }
 
@@ -216,24 +347,23 @@ function updateInfiniteTimer() {
 }
 
 async function stopTimer() {
-    clearInterval(timerInterval);
-    startTime = null;
-    durationMs = 0;
-    updateTimerDisplay(0);
-    minutesValue.textContent = 0;
-    const audio = audioFile;
-    audio.play().catch(err => console.log("Errore audio:", err));
-    const minutiPassati = time / (1000 * 60);
-    await saveLog(materia, minutiPassati);
-    minutesValue.textContent = 0;
-    form.classList.remove("hidden");
-    timerContainer.classList.add("hidden");
-    materie = await getAllMaterie();
-    materieCreateComponent(materie);
-    daySelect.classList.remove("hidden");
-    drawDayChart();
+  clearInterval(timerInterval);
+  startTime = null;
+  durationMs = 0;
+  updateTimerDisplay(0);
+  minutesValue.textContent = 0;
+  const audio = audioFile;
+  audio.play().catch((err) => console.log("Errore audio:", err));
+  const minutiPassati = time / (1000 * 60);
+  await saveLog(materia, minutiPassati);
+  minutesValue.textContent = 0;
+  form.classList.remove("hidden");
+  timerContainer.classList.add("hidden");
+  materie = await getAllMaterie();
+  materieCreateComponent(materie);
+  daySelect.classList.remove("hidden");
+  drawDayChart();
 }
-
 
 async function updateTimer() {
   const elapsed = Date.now() - startTime;
@@ -244,8 +374,8 @@ async function updateTimer() {
     clearInterval(timerInterval);
     updateTimerDisplay(0);
     const audio = audioFile;
-    audio.play().catch(err => console.log("Errore audio:", err));
-    await saveLog(materia,minutes);
+    audio.play().catch((err) => console.log("Errore audio:", err));
+    await saveLog(materia, minutes);
     minutesValue.textContent = 0;
     resetForm();
     form.classList.remove("hidden");
@@ -264,108 +394,108 @@ function updateTimerDisplay(ms) {
   const h = Math.floor(totalSeconds / 3600);
   const m = Math.floor((totalSeconds % 3600) / 60);
   const s = totalSeconds % 60;
-  timerDisplay.textContent =
-    `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+  timerDisplay.textContent = `${h.toString().padStart(2, "0")}:${m
+    .toString()
+    .padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 }
 
-async function getTime(minutes){
-    return minutes / 60;
+async function getTime(minutes) {
+  return minutes / 60;
 }
-
 
 function changeMonth(offset) {
-try{
+  try {
     let [year, month] = monthSelect.value.split("-").map(Number);
-    if(month === 12 || month === 1){
-        if(offset < 0 && month === 1){
-            year += offset;
-            month = 13;
-        }
-        if(offset > 0 && month === 12){
-            year += offset;
-            month = 0;
-        }
+    if (month === 12 || month === 1) {
+      if (offset < 0 && month === 1) {
+        year += offset;
+        month = 13;
+      }
+      if (offset > 0 && month === 12) {
+        year += offset;
+        month = 0;
+      }
     }
-    const newAnno =  year;
+    const newAnno = year;
     const newMese = String(month + offset).padStart(2, "0");
     monthSelect.value = `${newAnno}-${newMese}`;
     drawChart();
     drawPieChart();
     lineMediaChart();
-    }catch(err){
-        console.log(err)
-    }
+  } catch (err) {
+    console.log(err);
+  }
 }
 
-async function setDate(){
-        const oggi = new Date();
-        const anno = oggi.getFullYear();
-        const mese = String(oggi.getMonth() + 1).padStart(2, "0");
-        monthSelect.value = `${anno}-${mese}`;
+async function setDate() {
+  const oggi = new Date();
+  const anno = oggi.getFullYear();
+  const mese = String(oggi.getMonth() + 1).padStart(2, "0");
+  monthSelect.value = `${anno}-${mese}`;
 }
 
-async function setDay(){
-        const today = new Date();
-        const y = today.getFullYear();
-        const m = String(today.getMonth() +1).padStart(2,'0');
-        const d = String(today.getDate()).padStart(2,'0');
-        const formatted = `${y}-${m}-${d}`;
-        daySelect.value = formatted;
-        drawDayChart();
+async function setDay() {
+  const today = new Date();
+  const y = today.getFullYear();
+  const m = String(today.getMonth() + 1).padStart(2, "0");
+  const d = String(today.getDate()).padStart(2, "0");
+  const formatted = `${y}-${m}-${d}`;
+  daySelect.value = formatted;
+  drawDayChart();
 }
 
-export async function setDateEsami(dataEsami){
-        const today = new Date();
-        const y = today.getFullYear();
-        const m = String(today.getMonth() +1).padStart(2,'0');
-        const d = String(today.getDate()).padStart(2,'0');
-        const formatted = `${y}-${m}-${d}`;
-        dataEsami.value = formatted;
+export async function setDateEsami(dataEsami) {
+  const today = new Date();
+  const y = today.getFullYear();
+  const m = String(today.getMonth() + 1).padStart(2, "0");
+  const d = String(today.getDate()).padStart(2, "0");
+  const formatted = `${y}-${m}-${d}`;
+  dataEsami.value = formatted;
 }
 
-export function dataInFormatoInterfaccia(data){
-    const [y,m,d] = data.split("-");
-    return `${d.padStart(2,"0")}/${m.padStart(2,"0")}/${y}`
+export function dataInFormatoInterfaccia(data) {
+  const [y, m, d] = data.split("-");
+  return `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${y}`;
 }
 
-export async function dateInFormatoSistema(data){
-    const [d,m,y] = data.split("/");
-    return `${y}-${m}-${d}`;
+export async function dateInFormatoSistema(data) {
+  const [d, m, y] = data.split("/");
+  return `${y}-${m}-${d}`;
 }
 
 async function saveLog(materiaIns, minutes, data) {
-    let formatted;
-    if(!isValid(data)){
-        const today = new Date();
-        const yyyy = today.getFullYear();
-        const mm = String(today.getMonth() + 1).padStart(2, '0');
-        const dd = String(today.getDate()).padStart(2, '0');
-        formatted = `${yyyy}-${mm}-${dd}`;
-    }else{
-        formatted = data;
-    }
+  let formatted;
+  if (!isValid(data)) {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    formatted = `${yyyy}-${mm}-${dd}`;
+  } else {
+    formatted = data;
+  }
 
-    const time = await getTime(minutes);
-    const materiaCap = capitalizeFirstLetter(materiaIns);
-    const existLog = await updateOreInLogs(time, formatted, materiaCap)
-    if(!existLog){
-        const log = {
-            data: formatted,
-            materia: materiaCap,
-            ore: time
-        };
-        const materia ={
-            nome: materiaCap
-        }
-        let matExist = false;
-        for(const mat of materie){
-            if(mat.nome === materiaCap){
-                matExist = true;
-            }
-        }
-        if(!matExist) await saveMateria(materia);
-        await saveStudyLog(log);
+  const time = await getTime(minutes);
+  const materiaCap = capitalizeFirstLetter(materiaIns);
+  const existLog = await updateOreInLogs(time, formatted, materiaCap);
+  if (!existLog) {
+    const log = {
+      data: formatted,
+      materia: materiaCap,
+      ore: time,
+    };
+    const materia = {
+      nome: materiaCap,
+    };
+    let matExist = false;
+    for (const mat of materie) {
+      if (mat.nome === materiaCap) {
+        matExist = true;
+      }
     }
+    if (!matExist) await saveMateria(materia);
+    await saveStudyLog(log);
+  }
 }
 
 export function capitalizeFirstLetter(str) {
@@ -374,552 +504,579 @@ export function capitalizeFirstLetter(str) {
 }
 
 function resetForm() {
-    form.reset();
-    form.classList.remove("hidden");
-    timerContainer.classList.add("hidden");
-    timerDisplay.textContent = "00:00";
+  form.reset();
+  form.classList.remove("hidden");
+  timerContainer.classList.add("hidden");
+  timerDisplay.textContent = "00:00";
 }
 
 async function materieCreateComponent(mats) {
-    const materieList = document.getElementById('categorieCardsEntrata');
-    materieList.innerHTML = "";
-    for(const materia of mats){
-        const nodo = await materiaComponent(materia.nome);
-        materieList.appendChild(nodo);
-    }
+  const materieList = document.getElementById("categorieCardsEntrata");
+  materieList.innerHTML = "";
+  for (const materia of mats) {
+    const nodo = await materiaComponent(materia.nome);
+    materieList.appendChild(nodo);
+  }
 }
 
 async function materiaComponent(materia) {
-    const container = document.createElement("div");
-    container.classList.add("cat");
-    let pressTimer;
-    container.innerHTML = `
+  const container = document.createElement("div");
+  container.classList.add("cat");
+  let pressTimer;
+  container.innerHTML = `
         <span class="mat-name">${materia}</span>
     `;
 
-    container.addEventListener("click", () => {
-        const materiaEl = container.querySelector("span");
-        const materiaInput = document.getElementById("ricerca-materie");
-        if(isValid(materiaEl)) materiaInput.value = materiaEl.innerText;
-    });
+  container.addEventListener("click", () => {
+    const materiaEl = container.querySelector("span");
+    const materiaInput = document.getElementById("ricerca-materie");
+    if (isValid(materiaEl)) materiaInput.value = materiaEl.innerText;
+  });
 
-    const span = container.querySelector('.mat-name');
-    container.addEventListener("touchstart", () => {
+  const span = container.querySelector(".mat-name");
+  container.addEventListener("touchstart", () => {
     pressTimer = setTimeout(() => {
-        const input = document.createElement("input");
-        const btnDelete = document.createElement("button");
-        input.type = "text";
-        const oldValue = span.textContent.trim();
-        input.value = oldValue
-        input.maxLength = 20;
-        input.id = "updateMat";
-        btnDelete.textContent = "❌";
-        btnDelete.id = "delMat";
-        btnDelete.classList.add("btn-delete");
-        btnDelete.setAttribute("tabindex", "-1");
-        if (!container.querySelector(".btn-delete")) {
-          container.appendChild(btnDelete);
-          btnDelete.addEventListener("click",async () => {
-            container.remove();
-            deleteMaterie(oldValue);
-            materie = await getAllMaterie();
-            materieCreateComponent(materie);
-            drawDayChart();
-          });
+      const input = document.createElement("input");
+      const btnDelete = document.createElement("button");
+      input.type = "text";
+      const oldValue = span.textContent.trim();
+      input.value = oldValue;
+      input.maxLength = 20;
+      input.id = "updateMat";
+      btnDelete.textContent = "❌";
+      btnDelete.id = "delMat";
+      btnDelete.classList.add("btn-delete");
+      btnDelete.setAttribute("tabindex", "-1");
+      if (!container.querySelector(".btn-delete")) {
+        container.appendChild(btnDelete);
+        btnDelete.addEventListener("click", async () => {
+          container.remove();
+          deleteMaterie(oldValue);
+          materie = await getAllMaterie();
+          materieCreateComponent(materie);
+          drawDayChart();
+        });
+      }
+
+      span.replaceWith(input);
+      input.focus();
+
+      const confirm = async () => {
+        const newValue = input.value.trim() || materia;
+        span.textContent = newValue;
+        try {
+          input.replaceWith(span);
+        } catch {}
+        if (oldValue !== newValue) {
+          await updateMateria(oldValue, newValue);
         }
 
-        span.replaceWith(input);
-        input.focus();
+        materie = await getAllMaterie();
+        materieCreateComponent(materie);
+        await drawDayChart();
+      };
 
-        const confirm = async () => {
-            const newValue = input.value.trim() || materia;
-            span.textContent = newValue;
-            try{ input.replaceWith(span); }catch{}
-            if (oldValue !== newValue) {
-                await updateMateria(oldValue, newValue);
-            }
+      const notConfirm = async () => {
+        btnDelete.remove();
+        span.textContent = oldValue;
+        try {
+          input.replaceWith(span);
+        } catch {}
+      };
 
-            materie = await getAllMaterie();
-            materieCreateComponent(materie);
-            await drawDayChart();
-
-        };
-
-
-        const notConfirm = async () => {
-            btnDelete.remove();
-            span.textContent = oldValue;
-            try{ input.replaceWith(span); }catch{}
-        };
-
-        input.addEventListener("blur",(ev) => {
+      input.addEventListener(
+        "blur",
+        (ev) => {
           if (ev.relatedTarget === btnDelete) return;
-          notConfirm(); },{ once: true } );
+          notConfirm();
+        },
+        { once: true }
+      );
 
-        input.addEventListener("keydown", (ev) => {
-            if (ev.key === "Enter") {
-                confirm();
-            }
-        });
+      input.addEventListener("keydown", (ev) => {
+        if (ev.key === "Enter") {
+          confirm();
+        }
+      });
     }, 600);
-});
+  });
 
-    container.addEventListener("touchend", () => {
-        clearTimeout(pressTimer);
-    });
+  container.addEventListener("touchend", () => {
+    clearTimeout(pressTimer);
+  });
 
-    return container;
+  return container;
 }
 
-export async function creaEsamiPage(){
-    const newCardDiv = document.getElementById('newEsamiCard');
-    const esamiCards = document.getElementById('esamiCards');
-    const mediaDiv = document.getElementById('media');
-    let prodottoVotiCrediti = 0;
-    let totCrediti = 0;
-    newCardDiv.innerHTML = "";
-    esamiCards.innerHTML = "";
-    media.innerHTML = "";
+export async function creaEsamiPage() {
+  const newCardDiv = document.getElementById("newEsamiCard");
+  const esamiCards = document.getElementById("esamiCards");
+  const mediaDiv = document.getElementById("media");
+  let prodottoVotiCrediti = 0;
+  let totCrediti = 0;
+  newCardDiv.innerHTML = "";
+  esamiCards.innerHTML = "";
+  media.innerHTML = "";
 
-    const newCardComp = await creaCardInsEsame();
-    newCardDiv.appendChild(newCardComp);
+  const newCardComp = await creaCardInsEsame();
+  newCardDiv.appendChild(newCardComp);
 
-    const cards = (await getAllEsami()).sort((a, b) => new Date(a.data) - new Date(b.data));
-    for(const card of cards){
-        card.data = await dataInFormatoInterfaccia(card.data);
-        const esame = creaEsameComponent(card);
-        esamiCards.appendChild(esame);
-        const creditiParse = parseInt(card.crediti, 10);
-        prodottoVotiCrediti += (parseInt(card.voto, 10) * creditiParse);
-        totCrediti += creditiParse;
-    }
-    if(cards.length !== 0){
-        const media = prodottoVotiCrediti / totCrediti;
-        const votoLaurea = media * 110 / 30;
-        const mediaComp = mediaComponent("Crediti: " + totCrediti ,"Media: " + media.toFixed(2), "Voto: " + votoLaurea.toFixed(2));
-        mediaDiv.appendChild(mediaComp);
-    }else{
-        const mediaComp = mediaComponent("Nessun esame inserito","","");
-        mediaDiv.appendChild(mediaComp);
-    }
-
+  const cards = (await getAllEsami()).sort(
+    (a, b) => new Date(a.data) - new Date(b.data)
+  );
+  for (const card of cards) {
+    card.data = await dataInFormatoInterfaccia(card.data);
+    const esame = creaEsameComponent(card);
+    esamiCards.appendChild(esame);
+    const creditiParse = parseInt(card.crediti, 10);
+    prodottoVotiCrediti += parseInt(card.voto, 10) * creditiParse;
+    totCrediti += creditiParse;
+  }
+  if (cards.length !== 0) {
+    const media = prodottoVotiCrediti / totCrediti;
+    const votoLaurea = (media * 110) / 30;
+    const mediaComp = mediaComponent(
+      "Crediti: " + totCrediti,
+      "Media: " + media.toFixed(2),
+      "Voto: " + votoLaurea.toFixed(2)
+    );
+    mediaDiv.appendChild(mediaComp);
+  } else {
+    const mediaComp = mediaComponent("Nessun esame inserito", "", "");
+    mediaDiv.appendChild(mediaComp);
+  }
 }
-
 
 function formatOreMin(oreDecimal) {
-    const h = Math.floor(oreDecimal);
-    const min = Math.round((oreDecimal - h) * 60);
-    return `${h}h ${min}min`;
+  const h = Math.floor(oreDecimal);
+  const min = Math.round((oreDecimal - h) * 60);
+  return `${h}h ${min}min`;
 }
 
-async function getMaxMonth(logs){
-    const minValue = 4;
-    let max = 0.0;
-    logs.forEach( log => {
-        const date = log.data;
-        let sum = 0.0;
-        for(const l of logs){
-            if(date === l.data){
-                sum += l.ore;
-            }
-        }
-        if(sum > max){
-            max = sum;
-        }
-    })
-    if(max > minValue){
-        return Math.ceil(max);
-    }else{
-        return minValue;
+async function getMaxMonth(logs) {
+  const minValue = 4;
+  let max = 0.0;
+  logs.forEach((log) => {
+    const date = log.data;
+    let sum = 0.0;
+    for (const l of logs) {
+      if (date === l.data) {
+        sum += l.ore;
+      }
     }
+    if (sum > max) {
+      max = sum;
+    }
+  });
+  if (max > minValue) {
+    return Math.ceil(max);
+  } else {
+    return minValue;
+  }
 }
 
-async function getMaxDay(logs){
-    const minValue = 4;
-    let max = 0.0;
-    logs.forEach( log => {
+async function getMaxDay(logs) {
+  const minValue = 4;
+  let max = 0.0;
+  logs.forEach((log) => {
     const mat = log.materia;
-        let sum = 0.0;
-        for(const l of logs){
-            if(mat === l.materia){
-                sum += l.ore;
-            }
-        }
-        if(sum > max){
-            max = sum;
-        }
-    })
-    if(max > minValue){
-        return Math.ceil(max) + Math.ceil(max/5) + 2;
-    }else{
-        if(max > 3) return 5;
-        return minValue;
+    let sum = 0.0;
+    for (const l of logs) {
+      if (mat === l.materia) {
+        sum += l.ore;
+      }
     }
+    if (sum > max) {
+      max = sum;
+    }
+  });
+  if (max > minValue) {
+    return Math.ceil(max) + Math.ceil(max / 5) + 2;
+  } else {
+    if (max > 3) return 5;
+    return minValue;
+  }
 }
 
 async function drawChart() {
-    const echarts = window.echarts;
-    const chart = echarts.init(document.getElementById('myChart'));
-    const selectedMonth = monthSelect.value;
-    const nomeMese = await capitalizeFirstLetter(await getNomeMeseItaliano(selectedMonth));
-    let logs = await getStudyLogsByMonth(selectedMonth);
-    materie = await getAllMaterie();
-    const nomeMaterie = materie.map(m => m.nome);
-    const maxValue = await getMaxMonth(logs);
-    const year = parseInt(selectedMonth.split('-')[0]);
-    const month = parseInt(selectedMonth.split('-')[1]) - 1;
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const giorniDelMese = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+  const echarts = window.echarts;
+  const chart = echarts.init(document.getElementById("myChart"));
+  const selectedMonth = monthSelect.value;
+  const nomeMese = await capitalizeFirstLetter(
+    await getNomeMeseItaliano(selectedMonth)
+  );
+  let logs = await getStudyLogsByMonth(selectedMonth);
+  materie = await getAllMaterie();
+  const nomeMaterie = materie.map((m) => m.nome);
+  const maxValue = await getMaxMonth(logs);
+  const year = parseInt(selectedMonth.split("-")[0]);
+  const month = parseInt(selectedMonth.split("-")[1]) - 1;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const giorniDelMese = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
-    const datiMaterie = {};
-    nomeMaterie.forEach(m => {
-        datiMaterie[m] = Array(daysInMonth).fill(0);
-    });
+  const datiMaterie = {};
+  nomeMaterie.forEach((m) => {
+    datiMaterie[m] = Array(daysInMonth).fill(0);
+  });
 
-    logs.forEach(log => {
-        const giorno = new Date(log.data).getDate();
-        const idx = giorno - 1;
-        const val = parseFloat(log.ore) || 0;
-        if(val > 0){
-            datiMaterie[log.materia][idx] = (datiMaterie[log.materia][idx] || 0) + val;
-        }
-    });
-
-    const materieConDati = nomeMaterie.filter(m =>
-        datiMaterie[m].some(val => val > 0)
-    );
-
-
-    const series = materieConDati.map(m => ({
-        name: m,
-        type: 'bar',
-        stack: 'total',
-        emphasis: { focus: 'series' },
-        data: datiMaterie[m]
-    }));
-
-    // Configurazione grafico
-    const option = {
-        tooltip: {
-            trigger: 'axis',
-            axisPointer: { type: 'shadow' },
-            formatter: params => {
-                let str = `${params[0].axisValue}<br/>`;
-                params.forEach(p => {
-                if(p.value !== 0){
-                    str += `${p.seriesName}: ${formatOreMin(p.value)}<br/>`;
-                }
-
-                });
-                return str;
-            }
-        },
-        legend: {
-            data: materieConDati,
-            orient: 'horizontal',
-            type: 'scroll',
-            right: 10,
-            top: 10,
-            pageButtonGap: 5,
-            pageIconColor: '#2f4554',
-            pageIconInactiveColor: '#aaa',
-            pageTextStyle: { color: '#333' }
-        },
-
-        xAxis: {
-            type: 'value',
-            min: 0,
-            max: maxValue,
-            axisLabel: {
-                formatter: val => `${val}h`
-            }
-        },
-        yAxis: {
-            type: 'category',
-            data: giorniDelMese.map(g => `${g}`),
-            name: nomeMese,
-            nameGap: 5
-        },
-        grid: { bottom: '10%'},
-        series: series
-    };
-    chart.clear();
-    chart.setOption(option);
-
-}
-
-async function lineMediaChart(){
-
-    const echarts = window.echarts;
-    const lineChart = echarts.init(document.getElementById("lineChart"));
-    const allEsami = await getAllEsami();
-    const allDataEsami = allEsami.map(esame => esame.data).sort((a,b) => new Date(a) - new Date(b));
-    const allDataFormatted = allDataEsami.map(data => dataInFormatoInterfaccia(data));
-    const allMedie = [];
-    let product = 0;
-    let sumCrediti = 0;
-    let min = parseInt(allEsami[0].voto, 10);
-    for(const esame of allEsami){
-        const voto = parseInt(esame.voto, 10);
-        sumCrediti += parseInt(esame.crediti, 10);
-        const productVotoCrediti = voto * parseInt(esame.crediti, 10);
-        product += productVotoCrediti;
-        const media = product / sumCrediti;
-        allMedie.push(media);
-        if(media < min){
-            min = media;
-        }
+  logs.forEach((log) => {
+    const giorno = new Date(log.data).getDate();
+    const idx = giorno - 1;
+    const val = parseFloat(log.ore) || 0;
+    if (val > 0) {
+      datiMaterie[log.materia][idx] =
+        (datiMaterie[log.materia][idx] || 0) + val;
     }
+  });
 
+  const materieConDati = nomeMaterie.filter((m) =>
+    datiMaterie[m].some((val) => val > 0)
+  );
 
-    const option = {
-      xAxis: {
-        type: 'category',
-        data: allDataFormatted
-      },
-      yAxis: {
-        type: 'value',
-        min: Math.floor(min - 1),
-        max: 30,
-        interval: 1,
-      },
-      series: [
-        {
-          data: allMedie,
-          type: 'line'
-        }
-      ],
-      graphic: [
-          {
-            type: 'text',
-            left: "37%",
-            top: '10%',
-            style: {
-              text: 'Media nel tempo',
-              font: '0.8rem sans-serif',
-              fill: '#333'
-            }
+  const series = materieConDati.map((m) => ({
+    name: m,
+    type: "bar",
+    stack: "total",
+    emphasis: { focus: "series" },
+    data: datiMaterie[m],
+  }));
+
+  // Configurazione grafico
+  const option = {
+    tooltip: {
+      trigger: "axis",
+      axisPointer: { type: "shadow" },
+      formatter: (params) => {
+        let str = `${params[0].axisValue}<br/>`;
+        params.forEach((p) => {
+          if (p.value !== 0) {
+            str += `${p.seriesName}: ${formatOreMin(p.value)}<br/>`;
           }
-        ]
-    };
-    lineChart.clear();
-    lineChart.setOption(option);
+        });
+        return str;
+      },
+    },
+    legend: {
+      data: materieConDati,
+      orient: "horizontal",
+      type: "scroll",
+      right: 10,
+      top: 10,
+      pageButtonGap: 5,
+      pageIconColor: "#2f4554",
+      pageIconInactiveColor: "#aaa",
+      pageTextStyle: { color: "#333" },
+    },
+
+    xAxis: {
+      type: "value",
+      min: 0,
+      max: maxValue,
+      axisLabel: {
+        formatter: (val) => `${val}h`,
+      },
+    },
+    yAxis: {
+      type: "category",
+      data: giorniDelMese.map((g) => `${g}`),
+      name: nomeMese,
+      nameGap: 5,
+    },
+    grid: { bottom: "10%" },
+    series: series,
+  };
+  chart.clear();
+  chart.setOption(option);
 }
 
-async function drawPieChart(){
-    const echarts = window.echarts;
-    const pieChart = echarts.init(document.getElementById('myChartPie'));
-
-    const aggregate = {};
-    const selectedMonth = monthSelect.value;
-    const nameMese = getNomeMeseItaliano(selectedMonth);
-    let logs = await getStudyLogsByMonth(selectedMonth);
-    logs.forEach(item =>{
-        const materia = item.materia;
-        if(!aggregate[materia]){
-            aggregate[materia] = 0;
-        }
-        aggregate[materia] += item.ore;
-    });
-
-    const data = Object.entries(aggregate).map(([name, value]) => ({name, value})).sort((a, b) => a.name.localeCompare(b.name));
-    const totale = data.reduce((acc, item) => acc + item.value, 0);
-
-    const option = {
-        tooltip: {
-        trigger: 'item',
-        formatter: function (params) {
-                return `${params.name}: ${formatOreMin(params.value)}`
-            }
-        },
-
-        legend: {
-            orient: 'horizontal',
-            type: 'scroll',
-            right: 10,
-            top: 10,
-            pageButtonGap: 5,
-            pageIconColor: '#2f4554',
-            pageIconInactiveColor: '#aaa',
-            pageTextStyle: { color: '#333' }
-        },
-        series: [
-            {
-                name: nameMese,
-                type: 'pie',
-                radius: ['40%','70%'],
-                center: ['50%', '60%'],
-                avoidLabelOverlap: false,
-                itemStyle: {
-                    borderRadius: 10,
-                    borderColor: '#fff',
-                    borderWidth: 2
-                },
-                label: {
-                    show: true,
-                    position: 'center',
-                    formatter: ()=> `${formatOreMin(totale)}`,
-                    fontSize: 18,
-                    fontWeight: 'bold',
-                    lineHeight: 22
-                },
-                labelLine: {
-                    show:false
-                },
-                data: data
-            }
-          ],
-          grid: { left: '2.5%', right: '2.5%', top: '10%', bottom: '0%'}
+async function lineMediaChart() {
+  const echarts = window.echarts;
+  const lineChart = echarts.init(document.getElementById("lineChart"));
+  const allEsami = await getAllEsami();
+  const allDataEsami = allEsami
+    .map((esame) => esame.data)
+    .sort((a, b) => new Date(a) - new Date(b));
+  const allDataFormatted = allDataEsami.map((data) =>
+    dataInFormatoInterfaccia(data)
+  );
+  const allMedie = [];
+  let product = 0;
+  let sumCrediti = 0;
+  let min = parseInt(allEsami[0].voto, 10);
+  for (const esame of allEsami) {
+    const voto = parseInt(esame.voto, 10);
+    sumCrediti += parseInt(esame.crediti, 10);
+    const productVotoCrediti = voto * parseInt(esame.crediti, 10);
+    product += productVotoCrediti;
+    const media = product / sumCrediti;
+    allMedie.push(media);
+    if (media < min) {
+      min = media;
     }
+  }
 
-    pieChart.setOption(option);
-    attachLegendHandler(pieChart);
-
+  const option = {
+    xAxis: {
+      type: "category",
+      data: allDataFormatted,
+    },
+    yAxis: {
+      type: "value",
+      min: Math.floor(min - 1),
+      max: 30,
+      interval: 1,
+    },
+    series: [
+      {
+        data: allMedie,
+        type: "line",
+      },
+    ],
+    graphic: [
+      {
+        type: "text",
+        left: "37%",
+        top: "10%",
+        style: {
+          text: "Media nel tempo",
+          font: "0.8rem sans-serif",
+          fill: "#333",
+        },
+      },
+    ],
+  };
+  lineChart.clear();
+  lineChart.setOption(option);
 }
 
-function attachLegendHandler(chart){
-    chart.on('legendselectchanged', function (params){
-        const option = chart.getOption();
-        const selected = params.selected;
-        const data = option.series[0].data;
-        const newTotal = data.reduce((acc, item) => {return selected[item.name] ? acc + item.value : acc; }, 0);
-        option.series[0].label.formatter = () => `${formatOreMin(newTotal)}`;
-        chart.setOption(option);
-    });
+async function drawPieChart() {
+  const echarts = window.echarts;
+  const pieChart = echarts.init(document.getElementById("myChartPie"));
 
+  const aggregate = {};
+  const selectedMonth = monthSelect.value;
+  const nameMese = getNomeMeseItaliano(selectedMonth);
+  let logs = await getStudyLogsByMonth(selectedMonth);
+  logs.forEach((item) => {
+    const materia = item.materia;
+    if (!aggregate[materia]) {
+      aggregate[materia] = 0;
+    }
+    aggregate[materia] += item.ore;
+  });
+
+  const data = Object.entries(aggregate)
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  const totale = data.reduce((acc, item) => acc + item.value, 0);
+
+  const option = {
+    tooltip: {
+      trigger: "item",
+      formatter: function (params) {
+        return `${params.name}: ${formatOreMin(params.value)}`;
+      },
+    },
+
+    legend: {
+      orient: "horizontal",
+      type: "scroll",
+      right: 10,
+      top: 10,
+      pageButtonGap: 5,
+      pageIconColor: "#2f4554",
+      pageIconInactiveColor: "#aaa",
+      pageTextStyle: { color: "#333" },
+    },
+    series: [
+      {
+        name: nameMese,
+        type: "pie",
+        radius: ["40%", "70%"],
+        center: ["50%", "60%"],
+        avoidLabelOverlap: false,
+        itemStyle: {
+          borderRadius: 10,
+          borderColor: "#fff",
+          borderWidth: 2,
+        },
+        label: {
+          show: true,
+          position: "center",
+          formatter: () => `${formatOreMin(totale)}`,
+          fontSize: 18,
+          fontWeight: "bold",
+          lineHeight: 22,
+        },
+        labelLine: {
+          show: false,
+        },
+        data: data,
+      },
+    ],
+    grid: { left: "2.5%", right: "2.5%", top: "10%", bottom: "0%" },
+  };
+
+  pieChart.setOption(option);
+  attachLegendHandler(pieChart);
 }
 
+function attachLegendHandler(chart) {
+  chart.on("legendselectchanged", function (params) {
+    const option = chart.getOption();
+    const selected = params.selected;
+    const data = option.series[0].data;
+    const newTotal = data.reduce((acc, item) => {
+      return selected[item.name] ? acc + item.value : acc;
+    }, 0);
+    option.series[0].label.formatter = () => `${formatOreMin(newTotal)}`;
+    chart.setOption(option);
+  });
+}
 
 function getNomeMeseItaliano(ym) {
-    const [year, month] = ym.split('-').map(Number);
-    const date = new Date(year, month - 1);
-    return date.toLocaleString('it-IT', { month: 'long' });
+  const [year, month] = ym.split("-").map(Number);
+  const date = new Date(year, month - 1);
+  return date.toLocaleString("it-IT", { month: "long" });
 }
 
 async function drawDayChart() {
-    const echarts = window.echarts;
-    const chart = echarts.init(document.getElementById('dayChart'));
-    const selectedDay = daySelect.value;
-    let logs = await getStudyLogsByDay(selectedDay);
-    materie = await getAllMaterie();
-    const maxValue = await getMaxDay(logs);
+  const echarts = window.echarts;
+  const chart = echarts.init(document.getElementById("dayChart"));
+  const selectedDay = daySelect.value;
+  let logs = await getStudyLogsByDay(selectedDay);
+  materie = await getAllMaterie();
+  const maxValue = await getMaxDay(logs);
 
-    const dati = {};
-    logs.forEach(log => {
-        const val = parseFloat(log.ore) || 0;
-            if(dati[log.materia] !== undefined){
-            dati[log.materia] += val;
-            } else{
-               dati[log.materia] = val;
-            }
-    });
+  const dati = {};
+  logs.forEach((log) => {
+    const val = parseFloat(log.ore) || 0;
+    if (dati[log.materia] !== undefined) {
+      dati[log.materia] += val;
+    } else {
+      dati[log.materia] = val;
+    }
+  });
 
-    const sortedDati = Object.entries(dati).sort((a, b) => a[0].localeCompare(b[0]));
+  const sortedDati = Object.entries(dati).sort((a, b) =>
+    a[0].localeCompare(b[0])
+  );
 
-    const filteredMaterie = sortedDati.map(([materia, ore]) => materia);
-    const defaultColors = ['#5470C6', '#91CC75','#FAC858', '#EE6666', '#73C0DE',  '#3BA272', '#FC8452', '#9A60B4', '#EA7CCC'];
+  const filteredMaterie = sortedDati.map(([materia, ore]) => materia);
+  const defaultColors = [
+    "#5470C6",
+    "#91CC75",
+    "#FAC858",
+    "#EE6666",
+    "#73C0DE",
+    "#3BA272",
+    "#FC8452",
+    "#9A60B4",
+    "#EA7CCC",
+  ];
 
-    const series = [{
-      name: 'Ore di studio',
-      type: 'bar',
-      data: filteredMaterie.map(m => dati[m]),
+  const series = [
+    {
+      name: "Ore di studio",
+      type: "bar",
+      data: filteredMaterie.map((m) => dati[m]),
       label: {
         show: true,
-        position: 'right',
-        formatter: params => formatOreMin(params.value)
+        position: "right",
+        formatter: (params) => formatOreMin(params.value),
       },
       itemStyle: {
-        color: (params) => defaultColors[params.dataIndex % defaultColors.length]
-      }
-    }];
+        color: (params) =>
+          defaultColors[params.dataIndex % defaultColors.length],
+      },
+    },
+  ];
 
-    let zeroLog = '';
-    if(filteredMaterie.length === 0) zeroLog = 'Nessuna sessione registrata'
+  let zeroLog = "";
+  if (filteredMaterie.length === 0) zeroLog = "Nessuna sessione registrata";
 
-    const option = {
-        tooltip: {
-            trigger: 'item',
-            formatter: params => `${params.name}: ${formatOreMin(params.value)}`
-        },
-        xAxis: {
-            type: 'value',
-            min: 0,
-            max: maxValue,
-            axisLabel: {
-                formatter: val => `${val}h`
-            }
-        },
-        yAxis: {
-            type: 'category',
-            name: zeroLog,
-            nameLocation: 'middle',
-            nameRotate: 0,
-            nameGap: -250,
-            nameTextStyle: {
-                fontSize: 14,
-                fontWeight: 'bold',
-                color: '#333'
-            },
-            data: filteredMaterie,
-            axisLabel: { show: false }
-        },
-        grid: { left: '2.5%', right: '2.5%', top: '10%', bottom: '9%'},
-        series: series
-    };
-    chart.clear();
-    chart.setOption(option);
-    dayChart.classList.remove('hidden');
+  const option = {
+    tooltip: {
+      trigger: "item",
+      formatter: (params) => `${params.name}: ${formatOreMin(params.value)}`,
+    },
+    xAxis: {
+      type: "value",
+      min: 0,
+      max: maxValue,
+      axisLabel: {
+        formatter: (val) => `${val}h`,
+      },
+    },
+    yAxis: {
+      type: "category",
+      name: zeroLog,
+      nameLocation: "middle",
+      nameRotate: 0,
+      nameGap: -250,
+      nameTextStyle: {
+        fontSize: 14,
+        fontWeight: "bold",
+        color: "#333",
+      },
+      data: filteredMaterie,
+      axisLabel: { show: false },
+    },
+    grid: { left: "2.5%", right: "2.5%", top: "10%", bottom: "9%" },
+    series: series,
+  };
+  chart.clear();
+  chart.setOption(option);
+  dayChart.classList.remove("hidden");
 
+  let pressTimer;
+  const pressDuration = 700;
 
-let pressTimer;
-const pressDuration = 700;
+  chart.on("mousedown", function (params) {
+    pressTimer = setTimeout(() => {
+      const materia = params.name;
+      const giorno = selectedDay;
+      const valoreAttuale = params.value;
+      const ore = Math.floor(valoreAttuale);
+      const minuti = Math.round((valoreAttuale - ore) * 60);
+      document.getElementById("materiaDisplay").textContent = `${materia}`;
+      document.getElementById("giornoDisplay").textContent =
+        dataInFormatoInterfaccia(`${giorno}`);
+      document.getElementById("nuoveOre").value = ore;
+      document.getElementById("nuoviMinuti").value = minuti;
 
-chart.on('mousedown', function(params) {
-  pressTimer = setTimeout(() => {
-        const materia = params.name;
-        const giorno = selectedDay;
-        const valoreAttuale = params.value;
-        const ore = Math.floor(valoreAttuale);
-        const minuti = Math.round((valoreAttuale - ore) * 60);
-        document.getElementById('materiaDisplay').textContent = `${materia}`;
-        document.getElementById('giornoDisplay').textContent = dataInFormatoInterfaccia(`${giorno}`);
-        document.getElementById('nuoveOre').value = ore;
-        document.getElementById('nuoviMinuti').value = minuti;
-
-        const form = document.getElementById('editform');
-        form.classList.remove('hidden')
-        document.getElementById('saveBtn').onclick = async function() {
-        const nuoveOre = parseFloat(document.getElementById('nuoveOre').value);
-        const nuoviMinuti = parseFloat(document.getElementById('nuoviMinuti').value) / 60;
+      const form = document.getElementById("editform");
+      form.classList.remove("hidden");
+      document.getElementById("saveBtn").onclick = async function () {
+        const nuoveOre = parseFloat(document.getElementById("nuoveOre").value);
+        const nuoviMinuti =
+          parseFloat(document.getElementById("nuoviMinuti").value) / 60;
         const oreDecimale = nuoveOre + nuoviMinuti;
-            if(isValid(nuoveOre) && nuoviMinuti < 0.999 && nuoveOre < 24){
-                await updateOreInLogs(oreDecimale - valoreAttuale, giorno, materia);
-                drawDayChart();
-            }else{
-                showErrorToast('Valore inserito non valido','error')
-            }
-            form.classList.add('hidden');
+        if (isValid(nuoveOre) && nuoviMinuti < 0.999 && nuoveOre < 24) {
+          await updateOreInLogs(oreDecimale - valoreAttuale, giorno, materia);
+          drawDayChart();
+        } else {
+          showErrorToast("Valore inserito non valido", "error");
         }
+        form.classList.add("hidden");
+      };
 
-        document.getElementById('cancelBtn').onclick = function() {
-            form.classList.add('hidden');
-        }
-        document.getElementById('deleteBtn').onclick = async function() {
-            await deleteLogByMateriaData(giorno, materia);
-            await drawDayChart();
-            form.classList.add('hidden');
-        }
-     }, pressDuration);
-    });
+      document.getElementById("cancelBtn").onclick = function () {
+        form.classList.add("hidden");
+      };
+      document.getElementById("deleteBtn").onclick = async function () {
+        await deleteLogByMateriaData(giorno, materia);
+        await drawDayChart();
+        form.classList.add("hidden");
+      };
+    }, pressDuration);
+  });
 
-    chart.on('mouseup', function() {
-      clearTimeout(pressTimer);
-    });
+  chart.on("mouseup", function () {
+    clearTimeout(pressTimer);
+  });
 
-    chart.on('mouseleave', function() {
-      clearTimeout(pressTimer);
-    });
-
+  chart.on("mouseleave", function () {
+    clearTimeout(pressTimer);
+  });
 }
-
-

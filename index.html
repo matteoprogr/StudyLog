@@ -1,222 +1,402 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <title>StudyLog</title>
-    <link rel="stylesheet" href="css/style.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="./libs/lucide.js"></script>
-    <script src="./libs/echarts.min.js"></script>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#333333">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<DOCTYPE html>
+  <html lang="it">
+    <head>
+      <meta charset="UTF-8" />
+      <title>StudyLog</title>
+      <link rel="stylesheet" href="css/style.css" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <script src="./libs/lucide.js"></script>
+      <script src="./libs/echarts.min.js"></script>
+      <link rel="manifest" href="manifest.json" />
+      <meta name="theme-color" content="#333333" />
+      <script
+        src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js"
+        defer
+      ></script>
+      <script>
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        OneSignalDeferred.push(async function (OneSignal) {
+          await OneSignal.init({
+            appId: "5c10ef76-9410-45f5-a026-ef8956262f1a",
+          });
+        });
+      </script>
+      <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+      />
 
-
-    <!-- Per iOS -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-orientation" content="portrait">
-    <link rel="apple-touch-icon" href="icons/icon-192.png">
-
-</head>
-<body>
-
-<main id="app">
-    <!-- Pagina Registra -->
-    <section id="registra" class="page-section active">
-        <div class="section-container">
+      <!-- Per iOS -->
+      <meta name="apple-mobile-web-app-capable" content="yes" />
+      <meta
+        name="apple-mobile-web-app-status-bar-style"
+        content="black-translucent"
+      />
+      <meta name="apple-mobile-web-app-orientation" content="portrait" />
+      <link rel="apple-touch-icon" href="icons/icon-192.png" />
+    </head>
+    <body>
+      <main id="app">
+        <!-- Pagina Registra -->
+        <section id="registra" class="page-section active">
+          <div class="section-container">
             <h4>Timer</h4>
             <form id="study-form">
-                <input  type="text"  class="inputMateria" id="ricerca-materie" maxlength="20"  placeholder="Es. Matematica" required>
-                <div class="categorie-cards" id="categorieCardsEntrata"></div>
+              <input
+                type="text"
+                class="inputMateria"
+                id="ricerca-materie"
+                maxlength="20"
+                placeholder="Es. Matematica"
+                required
+              />
+              <div class="categorie-cards" id="categorieCardsEntrata"></div>
 
-                <label for="minutes" id="minutes-value">0</label>
-                <input type="range" id="minutes" min="0" max="180" value="0" required>
-                <div class="row width100">
-                    <button type="submit" id="avvia">Avvia Cronometro</button>
-                    <button  type="button" id="addReg">+</button>
-                </div>
+              <label for="minutes" id="minutes-value">0</label>
+              <input
+                type="range"
+                id="minutes"
+                min="0"
+                max="180"
+                value="0"
+                required
+              />
+              <div class="row width100">
+                <button type="submit" id="avvia">Avvia Cronometro</button>
+                <button type="button" id="addReg">+</button>
+              </div>
             </form>
 
             <div id="timer-container" class="hidden">
-                <h2 id="timer-display">00:00</h2>
-                <button id="stop-btn">Interrompi</button>
+              <h2 id="timer-display">00:00</h2>
+              <button id="stop-btn">Interrompi</button>
             </div>
 
             <div id="dayChart"></div>
             <div class="date-picker">
-            <input type="date" id="day-select">
+              <input type="date" id="day-select" />
             </div>
 
             <div id="editform" class="hidden">
-                <div class="overlay">
-                    <div class="form-container">
-                        <div>
-                            <button id="cancelBtn">x</button>
-                            <p id="materiaDisplay" class="fontBold1Rem"></p>
-                            <p id="giornoDisplay" class="fontBold1Rem"></p>
-                        </div>
-                        <input type="number" id="nuoveOre" placeholder="ore" step="1" min="0" max="23">
-                        <input type="number" id="nuoviMinuti" placeholder="minuti" step="1" min="0" max="59">
-                        <button id="saveBtn">Salva</button>
-                        <button id="deleteBtn">Elimina Registrazione</button>
-                        </div>
+              <div class="overlay">
+                <div class="form-container">
+                  <div>
+                    <button id="cancelBtn">x</button>
+                    <p id="materiaDisplay" class="fontBold1Rem"></p>
+                    <p id="giornoDisplay" class="fontBold1Rem"></p>
+                  </div>
+                  <input
+                    type="number"
+                    id="nuoveOre"
+                    placeholder="ore"
+                    step="1"
+                    min="0"
+                    max="23"
+                  />
+                  <input
+                    type="number"
+                    id="nuoviMinuti"
+                    placeholder="minuti"
+                    step="1"
+                    min="0"
+                    max="59"
+                  />
+                  <button id="saveBtn">Salva</button>
+                  <button id="deleteBtn">Elimina Registrazione</button>
                 </div>
+              </div>
             </div>
-        </div>
-    </section>
+          </div>
+        </section>
 
-    <!-- Pagina Grafici -->
-    <section id="grafici" class="page-section">
-        <div class="section-container">
+        <!-- Pagina Grafici -->
+        <section id="grafici" class="page-section">
+          <div class="section-container">
             <h4>Grafici</h4>
-                <div class="chart-carousel">
-                    <div class="chart-item" id="myChart"></div>
-                <div>
+            <div class="chart-carousel">
+              <div class="chart-item" id="myChart"></div>
+              <div>
                 <div class="chart-item" id="lineChart"></div>
                 <div class="chart-item" id="myChartPie"></div>
-            </div>
+              </div>
             </div>
 
             <div class="month-picker">
-                <button id="prev-month">‹</button>
-                <input type="month" id="month-select">
-                <button id="next-month">›</button>
+              <button id="prev-month">‹</button>
+              <input type="month" id="month-select" />
+              <button id="next-month">›</button>
             </div>
-        </div>
-    </section>
+          </div>
+        </section>
 
-    <!-- ESAMI ------------------------------ -->
-    <section id="esami" class="page-section">
-        <h4>Esami</h4>
-        <div class="esami-container">
+        <!-- ESAMI ------------------------------ -->
+        <section id="esami" class="page-section">
+          <h4>Esami</h4>
+          <div class="esami-container">
             <div id="media"></div>
             <div id="esamiCards"></div>
             <div class="btn-container">
-                <div id="newEsamiCard"></div>
-                <button id="deleteEsami" class="elimina-btn">-</button>
+              <div id="newEsamiCard"></div>
+              <button id="deleteEsami" class="elimina-btn">-</button>
             </div>
-        </div>
-    </section>
+          </div>
+        </section>
 
-    <!-- Pagina Impostazioni -->
-    <section id="settings" class="page-section">
-            <h4>Gestione dati</h4>
-            <div class="btn marginBtn">
-                <h3>Cancella dati</h3>
-                <button id="delete-db-btn">Cancella tutti i dati</button>
-            </div>
-            <div id="spinnerOverlay" class="spinner-overlay">
-                <div class="spinner"></div>
-            </div>
-            <div class="btn">
-                <h3>Esporta dati</h3>
-                <button id="btnExportDB">Esporta</button>
-            </div>
-            <div class="btn">
-                <h3>Importa dati</h3>
-                <input type="file" id="fileImport" name="file" accept=".json,application/json" required/>
-                <button id="btnImportDB">Importa</button>
+        <!-- Sezione Login (Opzionale per notifiche) -->
+        <section id="account" class="page-section">
+          <div class="section-container">
+            <h4>Account</h4>
+
+            <!-- Quando NON è loggato -->
+            <div id="auth-section">
+              <div class="info-box">
+                <i data-lucide="bell" class="icon-bell"></i>
+                <p>
+                  <strong>Notifiche Push</strong><br />
+                  Crea un account per ricevere notifiche quando termini una
+                  sessione di studio, anche quando l'app è chiusa.
+                </p>
+              </div>
+
+              <!-- Form di LOGIN -->
+              <div id="login-container">
+                <form id="login-form" class="auth-form">
+                  <div id="login-error" class="error-message hidden"></div>
+
+                  <input
+                    type="email"
+                    id="login-email"
+                    placeholder="Email"
+                    required
+                    autocomplete="email"
+                  />
+
+                  <input
+                    type="password"
+                    id="login-password"
+                    placeholder="Password"
+                    required
+                    autocomplete="current-password"
+                  />
+
+                  <button type="submit" class="btn-primary">Accedi</button>
+                </form>
+
+                <p id="toggle-auth-mode" class="toggle-text">
+                  Non hai un account? <span class="auth-link">Registrati</span>
+                </p>
+              </div>
+
+              <!-- Form di REGISTRAZIONE (nascosto inizialmente) -->
+              <div id="register-container" class="hidden">
+                <form id="register-form" class="auth-form">
+                  <div id="register-error" class="error-message hidden"></div>
+                  <div
+                    id="register-success"
+                    class="success-message hidden"
+                  ></div>
+
+                  <input
+                    type="email"
+                    id="register-email"
+                    placeholder="Email"
+                    required
+                    autocomplete="email"
+                  />
+
+                  <input
+                    type="password"
+                    id="register-password"
+                    placeholder="Password (min. 6 caratteri)"
+                    required
+                    autocomplete="new-password"
+                  />
+
+                  <input
+                    type="password"
+                    id="register-confirm-password"
+                    placeholder="Conferma Password"
+                    required
+                    autocomplete="new-password"
+                  />
+
+                  <button type="submit" class="btn-primary">Registrati</button>
+                </form>
+
+                <p id="toggle-login-mode" class="toggle-text">
+                  Hai già un account? <span class="auth-link">Accedi</span>
+                </p>
+              </div>
             </div>
 
-            <!-- Modale di conferma -->
-            <div id="confirm-modal" class="modal hidden">
-                <div class="modal-content">
-                    <h2>Sei sicuro?</h2>
-                    <p>Tutti i dati verranno eliminati in modo permanente.</p>
-                    <div class="modal-actions">
-                        <button id="confirm-delete">Sì, elimina</button>
-                        <button id="cancel-delete">Annulla</button>
-                    </div>
+            <!-- Quando è loggato -->
+            <div id="user-section" class="hidden">
+              <div class="user-info">
+                <i data-lucide="user" class="icon-user"></i>
+                <div>
+                  <p><strong>Account connesso</strong></p>
+                  <p id="user-email" class="user-email"></p>
                 </div>
-            </div>
-    </section>
+              </div>
 
-    <section id="info" class="page-section">
-        <div class="section-container">
+              <div class="notification-status">
+                <i data-lucide="bell-ring" class="icon-bell-ring"></i>
+                <p id="notification-status-text">Notifiche push attive</p>
+              </div>
+
+              <button id="logout-btn" class="btn-secondary">Disconnetti</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Pagina Impostazioni -->
+        <section id="settings" class="page-section">
+          <h4>Gestione dati</h4>
+          <div class="btn marginBtn">
+            <h3>Cancella dati</h3>
+            <button id="delete-db-btn">Cancella tutti i dati</button>
+          </div>
+          <div id="spinnerOverlay" class="spinner-overlay">
+            <div class="spinner"></div>
+          </div>
+          <div class="btn">
+            <h3>Esporta dati</h3>
+            <button id="btnExportDB">Esporta</button>
+          </div>
+          <div class="btn">
+            <h3>Importa dati</h3>
+            <input
+              type="file"
+              id="fileImport"
+              name="file"
+              accept=".json,application/json"
+              required
+            />
+            <button id="btnImportDB">Importa</button>
+          </div>
+
+          <!-- Modale di conferma -->
+          <div id="confirm-modal" class="modal hidden">
+            <div class="modal-content">
+              <h2>Sei sicuro?</h2>
+              <p>Tutti i dati verranno eliminati in modo permanente.</p>
+              <div class="modal-actions">
+                <button id="confirm-delete">Sì, elimina</button>
+                <button id="cancel-delete">Annulla</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="info" class="page-section">
+          <div class="section-container">
             <h4>Info</h4>
             <ul class="info-list">
-                <li>
-                    <i data-lucide="shield" class="iconShield"></i>
-                    <div>
-                        <strong>Privacy</strong>
-                        <p>Con StudyLog puoi avere sempre sotto controllo le tue sessioni di studio, senza complicazioni e con la massima attenzione alla privacy.
-                            L’app non salva alcun dato al di fuori del tuo dispositivo. Tutto rimane solo a te.</p>
-                    </div>
-                </li>
+              <li>
+                <i data-lucide="shield" class="iconShield"></i>
+                <div>
+                  <strong>Privacy</strong>
+                  <p>
+                    Con StudyLog puoi avere sempre sotto controllo le tue
+                    sessioni di studio, senza complicazioni e con la massima
+                    attenzione alla privacy. L’app non salva alcun dato al di
+                    fuori del tuo dispositivo. Tutto rimane solo a te.
+                  </p>
+                </div>
+              </li>
 
-                <li>
-                    <i data-lucide="clock" class="iconTimer"></i>
-                    <div>
-                        <strong>Timer</strong>
-                        <p>Imposta una materia e un tempo di studio. Se imposti il tempo a zero, il timer continua finché non lo interrompi manualmente.
-                            Al termine il tempo viene salvato e sarà visibile nel grafico. Puoi aggiungere una nuova sessione impostando la materia, il tempo e la data, poi premi il pulsante +.</p>
-                    </div>
-                </li>
+              <li>
+                <i data-lucide="clock" class="iconTimer"></i>
+                <div>
+                  <strong>Timer</strong>
+                  <p>
+                    Imposta una materia e un tempo di studio. Se imposti il
+                    tempo a zero, il timer continua finché non lo interrompi
+                    manualmente. Al termine il tempo viene salvato e sarà
+                    visibile nel grafico. Puoi aggiungere una nuova sessione
+                    impostando la materia, il tempo e la data, poi premi il
+                    pulsante +.
+                  </p>
+                </div>
+              </li>
 
-                <li>
-                    <i data-lucide="book-open" class="iconMaterie"></i>
-                    <div>
-                        <strong>Materie</strong>
-                        <p>Tieni premuta una card per rinominare una materia. Con la ❌ puoi rimuovere la materia e i relativi tempi registrati.</p>
-                    </div>
-                </li>
+              <li>
+                <i data-lucide="book-open" class="iconMaterie"></i>
+                <div>
+                  <strong>Materie</strong>
+                  <p>
+                    Tieni premuta una card per rinominare una materia. Con la ❌
+                    puoi rimuovere la materia e i relativi tempi registrati.
+                  </p>
+                </div>
+              </li>
 
-                <li>
-                    <i data-lucide="database" class="iconDB"></i>
-                    <div>
-                        <strong>Dati</strong>
-                        <p>Puoi esportare o importare i dati, oppure eliminare tutti i dati inseriti.</p>
-                    </div>
-                </li>
+              <li>
+                <i data-lucide="database" class="iconDB"></i>
+                <div>
+                  <strong>Dati</strong>
+                  <p>
+                    Puoi esportare o importare i dati, oppure eliminare tutti i
+                    dati inseriti.
+                  </p>
+                </div>
+              </li>
 
-                <li>
-                    <i data-lucide="bar-chart-2" class="iconGrafico"></i>
-                    <div>
-                        <strong>Grafico</strong>
-                        <p>Visualizza le sessioni di studio registrate in ogni mese. Nella home puoi modificare le ore di una sessione già registrata tenendo premuta la barra corrispondente oppure eliminare la sessione.</p>
-                    </div>
-                </li>
+              <li>
+                <i data-lucide="bar-chart-2" class="iconGrafico"></i>
+                <div>
+                  <strong>Grafico</strong>
+                  <p>
+                    Visualizza le sessioni di studio registrate in ogni mese.
+                    Nella home puoi modificare le ore di una sessione già
+                    registrata tenendo premuta la barra corrispondente oppure
+                    eliminare la sessione.
+                  </p>
+                </div>
+              </li>
 
-                <li>
-                    <i data-lucide="clipboard" class="iconEsami"></i>
-                    <div>
-                        <strong>Esami</strong>
-                        <p>Nella sezione Esami puoi modificare un esame tenendo premuta la card corrispondente.</p>
-                    </div>
-                </li>
+              <li>
+                <i data-lucide="clipboard" class="iconEsami"></i>
+                <div>
+                  <strong>Esami</strong>
+                  <p>
+                    Nella sezione Esami puoi modificare un esame tenendo premuta
+                    la card corrispondente.
+                  </p>
+                </div>
+              </li>
             </ul>
-        </div>
-    </section>
+          </div>
+        </section>
+      </main>
 
-
-</main>
-
-
-
-<!-- Navbar -->
-<nav class="mobile-nav">
-    <div class="nav-links">
-        <a href="#" data-target="registra" class="active">
+      <!-- Navbar -->
+      <nav class="mobile-nav">
+        <div class="nav-links">
+          <a href="#" data-target="registra" class="active">
             <i data-lucide="book-open"></i>
-        </a>
-        <a href="#" data-target="grafici">
+          </a>
+          <a href="#" data-target="grafici">
             <i data-lucide="bar-chart-2"></i>
-        </a>
-        <a href="#" data-target="esami">
+          </a>
+          <a href="#" data-target="esami">
             <i data-lucide="clipboard"></i>
-        </a>
-        <a href="#" data-target="settings">
+          </a>
+          <a href="#" data-target="account">
+            <i data-lucide="user"></i>
+          </a>
+          <a href="#" data-target="settings">
             <i data-lucide="settings"></i>
-        </a>
-        <a href="#" data-target="info">
+          </a>
+          <a href="#" data-target="info">
             <i data-lucide="help-circle"></i>
-        </a>
-    </div>
-</nav>
+          </a>
+        </div>
+      </nav>
 
-
-<script type="module" src="main.js"></script>
-
-</body>
-</html>
+      <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+      <script src="./auth.js"></script>
+      <script type="module" src="main.js"></script>
+    </body>
+  </html>
+</DOCTYPE>

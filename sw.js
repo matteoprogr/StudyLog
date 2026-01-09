@@ -105,11 +105,10 @@ self.addEventListener("push", (event) => {
   if (!event.data) return;
 
   const data = event.data.json();
-  const materia = payload?.custom?.a?.materia;
 
   event.waitUntil(
     self.registration.showNotification("Sessione completata", {
-      body: `Hai terminato lo studio di ${materia}`,
+      body: `Hai terminato lo studio di ${data}`,
       icon: "/icons/icon-192.png",
       badge: "/icons/icon-192.png",
       tag: "study-timer",

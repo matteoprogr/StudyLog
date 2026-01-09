@@ -2,7 +2,7 @@ console.log("🚀 Service Worker v60 caricato");
 
 importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 
-const CACHE_NAME = "studylog-cache-v62"; // Cambia versione
+const CACHE_NAME = "studylog-cache-v64";
 const urlsToCache = [
   "/",
   "/index.html",

@@ -104,11 +104,11 @@ self.addEventListener("push", (event) => {
   console.log("📬 Push ricevuto:", event.data);
   if (!event.data) return;
 
-  const data = event.data.json().materia;
+  const data = event.data.json();
 
   event.waitUntil(
     self.registration.showNotification("Sessione completata", {
-      body: `Hai terminato lo studio di ${data}`,
+      body: `Hai terminato lo studio di ${data.materia}`,
       icon: "/icons/icon-192.png",
       badge: "/icons/icon-192.png",
       tag: "study-timer",

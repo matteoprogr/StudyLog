@@ -102,35 +102,3 @@ if (event.request.method !== "GET") return;
   );
 });
 
-//self.addEventListener("push", (event) => {
-//  console.log("📬 Push ricevuto:", event.data);
-//  if (!event.data) return;
-//
-//  const data = event.data.json();
-//
-//  event.waitUntil(
-//    self.registration.showNotification("Sessione completata", {
-//      body: `Hai terminato lo studio di ${data.materia}`,
-//      icon: "/icons/icon-192.png",
-//      badge: "/icons/icon-192.png",
-//      tag: "study-timer",
-//    })
-//  );
-//});
-
-
-//self.addEventListener("notificationclick", (event) => {
-//  event.notification.close();
-//
-//  event.waitUntil(
-//    self.clients
-//      .matchAll({ type: "window", includeUncontrolled: true })
-//      .then((clients) => {
-//        if (clients.length > 0) {
-//          clients[0].focus();
-//        } else {
-//          self.clients.openWindow("/");
-//        }
-//      })
-//  );
-//});

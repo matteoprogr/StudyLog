@@ -47,7 +47,7 @@ if ("serviceWorker" in navigator) {
           }catch(error){
                 console.error("❌ Errore Service Worker:", error);
               // Registra il service worker con OneSignal
-              const registration = await navigator.serviceWorker.register("/StudyLog/sw.js");
+              const registration = await navigator.serviceWorker.register("/sw.js");
 
               console.log("✅ Service Worker registrato:", registration);
 

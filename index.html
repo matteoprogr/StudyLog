@@ -17,7 +17,6 @@
             appId: "5c10ef76-9410-45f5-a026-ef8956262f1a",
           });
 
-          // Gestione click sulla notifica
           OneSignal.Notifications.addEventListener("click", (event) => {
             const data = event.notification.additionalData;
 
@@ -27,9 +26,6 @@
                 ? data.materia
                 : JSON.stringify(data.materia);
 
-              console.log("📘 Materia cliccata:", materia);
-
-              // Apri la sezione "registra" (puoi mappare materia → sezione se serve)
               const section = document.getElementById("registra");
               if (section) {
                 document.querySelectorAll(".page-section").forEach(s =>

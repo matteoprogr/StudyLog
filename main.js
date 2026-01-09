@@ -334,19 +334,21 @@ async function startTimer() {
   daySelect.classList.add("hidden");
 
   //salvataggio timer su Supabase
-  try {
-    const { error } = await supabaseClient.from("study_timers").insert({
-      materia,
-      end_time: endTime,
-      notified: false,
-      user_id: user.id,
-    });
+  if(isValid(user)){
+      try {
+        const { error } = await supabaseClient.from("study_timers").insert({
+          materia,
+          end_time: endTime,
+          notified: false,
+          user_id: user.id,
+        });
 
-    if (error) {
-      console.error("Errore Supabase:", error);
-    }
-  } catch (err) {
-    console.error("Errore rete:", err);
+        if (error) {
+          console.error("Errore Supabase:", error);
+        }
+      } catch (err) {
+        console.error("Errore rete:", err);
+      }
   }
 }
 

@@ -35,21 +35,39 @@ if ("serviceWorker" in navigator) {
     try {
       console.log("🔄 Registrazione Service Worker...");
 
-      // Registra il service worker
-      const registration = await navigator.serviceWorker.register("/sw.js");
-      console.log("✅ Service Worker registrato:", registration);
-      console.log("📊 Stato SW:");
-      console.log("  - installing:", registration.installing);
-      console.log("  - waiting:", registration.waiting);
-      console.log("  - active:", registration.active);
-      console.log("  - controller:", navigator.serviceWorker.controller);
+        try{
+              // Registra il service worker
+              const registration = await navigator.serviceWorker.register("/sw.js");
+              console.log("✅ Service Worker registrato:", registration);
+              console.log("📊 Stato SW:");
+              console.log("  - installing:", registration.installing);
+              console.log("  - waiting:", registration.waiting);
+              console.log("  - active:", registration.active);
+              console.log("  - controller:", navigator.serviceWorker.controller);
 
-      // Aspetta che sia completamente pronto
-      await navigator.serviceWorker.ready;
-      console.log("🎉 Service Worker pronto e attivo!");
+              // Aspetta che sia completamente pronto
+              await navigator.serviceWorker.ready;
+              console.log("🎉 Service Worker pronto e attivo!");
 
-      // IMPORTANTE: Ora puoi registrare le push notifications
-      await registerPushSubscription();
+              // IMPORTANTE: Ora puoi registrare le push notifications
+              await registerPushSubscription();
+            }catch(error){
+                console.error("❌ Errore Service Worker:", err);
+                const registration = await navigator.serviceWorker.register("/StudyLog/sw.js");
+                console.log("✅ Service Worker registrato:", registration);
+                console.log("📊 Stato SW:");
+                console.log("  - installing:", registration.installing);
+                console.log("  - waiting:", registration.waiting);
+                console.log("  - active:", registration.active);
+                console.log("  - controller:", navigator.serviceWorker.controller);
+
+                // Aspetta che sia completamente pronto
+                await navigator.serviceWorker.ready;
+                console.log("🎉 Service Worker pronto e attivo!");
+
+                // IMPORTANTE: Ora puoi registrare le push notifications
+                await registerPushSubscription();
+            }
     } catch (err) {
       console.error("❌ Errore Service Worker:", err);
     }

@@ -52,7 +52,7 @@ if ("serviceWorker" in navigator) {
               // IMPORTANTE: Ora puoi registrare le push notifications
               await registerPushSubscription();
             }catch(error){
-                console.error("❌ Errore Service Worker:", err);
+                console.error("❌ Errore Service Worker:", error);
                 const registration = await navigator.serviceWorker.register("/StudyLog/sw.js");
                 console.log("✅ Service Worker registrato:", registration);
                 console.log("📊 Stato SW:");

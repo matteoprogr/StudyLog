@@ -51,14 +51,53 @@ function showAuthSection() {
 }
 
 // Mostra sezione utente loggato
-function showUserSection(user) {
-  const authSection = document.getElementById("auth-section");
-  const userSection = document.getElementById("user-section");
-  const userEmail = document.getElementById("user-email");
+//function showUserSection(user) {
+//  const authSection = document.getElementById("auth-section");
+//  const userSection = document.getElementById("user-section");
+//  const userEmail = document.getElementById("user-email");
+//
+//  if (authSection) authSection.classList.add("hidden");
+//  if (userSection) userSection.classList.remove("hidden");
+//  if (userEmail) userEmail.textContent = user.email;
+//}
 
-  if (authSection) authSection.classList.add("hidden");
-  if (userSection) userSection.classList.remove("hidden");
+// In auth.js, nella funzione showUserSection
+async function showUserSection(user) {
+  const authSection = document.getElementById('auth-section');
+  const userSection = document.getElementById('user-section');
+  const userEmail = document.getElementById('user-email');
+
+  if (authSection) authSection.classList.add('hidden');
+  if (userSection) userSection.classList.remove('hidden');
   if (userEmail) userEmail.textContent = user.email;
+
+  // IMPORTANTE: Collega l'utente a OneSignal
+  console.log("🔔 Collegamento utente a OneSignal...");
+
+  OneSignalDeferred.push(async function(OneSignal) {
+    try {
+      // Login con external_id
+      await OneSignal.login(user.id);
+      console.log("✅ Utente collegato a OneSignal:", user.id);
+
+      // Richiedi permesso notifiche se non già concesso
+      const permission = await OneSignal.Notifications.permission;
+      if (!permission) {
+        await OneSignal.Notifications.requestPermission();
+      }
+
+      // Verifica subscription
+      const isSubscribed = await OneSignal.User.PushSubscription.optedIn;
+      console.log("📬 Subscription attiva:", isSubscribed);
+
+      if (!isSubscribed) {
+        console.warn("⚠️ Utente non iscritto alle notifiche");
+      }
+
+    } catch (error) {
+      console.error("❌ Errore OneSignal:", error);
+    }
+  });
 }
 
 // Gestisci il LOGIN

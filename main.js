@@ -39,7 +39,7 @@ if ("serviceWorker" in navigator) {
           try{
                 // Registra il service worker con OneSignal
                 const registration = await navigator.serviceWorker.register(
-                  "/OneSignalSDKWorker.js",
+                  "/sw.js",
                   { scope: "/" }
                 );
 
@@ -51,7 +51,7 @@ if ("serviceWorker" in navigator) {
                 console.error("❌ Errore Service Worker:", error);
               // Registra il service worker con OneSignal
               const registration = await navigator.serviceWorker.register(
-                "/StudyLog/OneSignalSDKWorker.js",
+                "/StudyLog/sw.js",
                 { scope: "/" }
               );
 

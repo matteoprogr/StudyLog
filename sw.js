@@ -117,6 +117,26 @@ if (event.request.method !== "GET") return;
 //  );
 //});
 
+self.addEventListener("push", (event) => {
+  if (!event.data) return;
+
+  const payload = event.data.json();
+
+  // OneSignal structure
+  const materia = payload?.custom?.a?.materia;
+
+  event.waitUntil(
+    self.registration.showNotification("Sessione completata", {
+      body: `Hai terminato lo studio di ${materia}`,
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
+      tag: "study-timer",
+      data: payload?.custom?.a, // utile per notificationclick
+    })
+  );
+});
+
+
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 

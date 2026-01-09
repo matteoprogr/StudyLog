@@ -90,6 +90,13 @@ async function showUserSection(user) {
       const isSubscribed = await OneSignal.User.PushSubscription.optedIn;
       console.log("📬 Subscription attiva:", isSubscribed);
 
+      const deviceId = await OneSignal.getUserId();
+      console.log("Device registrato su OneSignal:", deviceId);
+
+      const tags = await OneSignal.getTags();
+      console.log("Tags attuali sul device:", tags);
+
+
       if (!isSubscribed) {
         console.warn("⚠️ Utente non iscritto alle notifiche");
       }

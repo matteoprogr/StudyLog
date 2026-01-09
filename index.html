@@ -17,14 +17,20 @@
             appId: "5c10ef76-9410-45f5-a026-ef8956262f1a",
           });
 
-          // Qui aggiungi l'event listener per il click delle notifiche
+          // Gestione click sulla notifica
           OneSignal.Notifications.addEventListener("click", (event) => {
-            const materia = event.notification.additionalData?.materia;
-            console.log("📘 Materia cliccata:", materia);
+            const data = event.notification.additionalData;
 
-            // Se vuoi aprire la sezione corretta basata sulla materia
-            if (materia) {
-              const section = document.getElementById("registra"); // esempio, puoi fare mappa materia → id sezione
+            if (data) {
+              // Materia: se è oggetto, lo trasformiamo in stringa
+              const materia = typeof data.materia === "string"
+                ? data.materia
+                : JSON.stringify(data.materia);
+
+              console.log("📘 Materia cliccata:", materia);
+
+              // Apri la sezione "registra" (puoi mappare materia → sezione se serve)
+              const section = document.getElementById("registra");
               if (section) {
                 document.querySelectorAll(".page-section").forEach(s =>
                   s.classList.remove("active")

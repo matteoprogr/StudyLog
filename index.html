@@ -16,6 +16,23 @@
           await OneSignal.init({
             appId: "5c10ef76-9410-45f5-a026-ef8956262f1a",
           });
+
+          // Qui aggiungi l'event listener per il click delle notifiche
+          OneSignal.Notifications.addEventListener("click", (event) => {
+            const materia = event.notification.additionalData?.materia;
+            console.log("📘 Materia cliccata:", materia);
+
+            // Se vuoi aprire la sezione corretta basata sulla materia
+            if (materia) {
+              const section = document.getElementById("registra"); // esempio, puoi fare mappa materia → id sezione
+              if (section) {
+                document.querySelectorAll(".page-section").forEach(s =>
+                  s.classList.remove("active")
+                );
+                section.classList.add("active");
+              }
+            }
+          });
         });
       </script>
       <meta

@@ -51,93 +51,32 @@ if ("serviceWorker" in navigator) {
 }
 
 
-// Funzione per registrare le push notifications
-export async function registerPushSubscription() {
-  // Controlla se l'utente è loggato
-  const currentUser = window.getCurrentUser ? window.getCurrentUser() : null;
+//////// OneSignal /////////
+window.OneSignalDeferred = window.OneSignalDeferred || [];
+        OneSignalDeferred.push(async function (OneSignal) {
+          await OneSignal.init({
+            appId: "5c10ef76-9410-45f5-a026-ef8956262f1a",
+          });
 
-  if (!currentUser) {
-    console.log("ℹ️ Push notifications disponibili solo con account");
-    return;
-  } else {
-    console.log("currentUser:", currentUser);
-  }
+          OneSignal.Notifications.addEventListener("click", (event) => {
+            const data = event.notification.additionalData;
 
-  if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-    console.log("❌ Push notifications non supportate");
-    return;
-  }
+            if (data) {
+              // Materia: se è oggetto, lo trasformiamo in stringa
+              const materia = typeof data.materia === "string"
+                ? data.materia
+                : JSON.stringify(data.materia);
 
-  try {
-    // Verifica se l'utente è autenticato
-    const {
-      data: { user },
-      error: authError,
-    } = await supabaseClient.auth.getUser();
-
-    if (authError || !user) {
-      console.error("⚠️ Utente non autenticato. Effettua il login prima.");
-      return;
-    }
-
-    console.log("📬 Registrazione push notification per utente:", user.id);
-
-    const registration = await navigator.serviceWorker.ready;
-
-    const existingSub = await registration.pushManager.getSubscription();
-    if (existingSub) {
-      console.log("✅ Push subscription già esistente", existingSub);
-      return existingSub;
-    }
-
-    const permission = await Notification.requestPermission();
-    if (permission !== "granted") {
-      console.log("⚠️ Permesso notifiche negato");
-      return;
-    }
-
-    const subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(
-        "BAYBaa5RHouKeRnhTeVb06ki3MW7gKs8DJoUiqS7BBmeGPoLsTw1_zqBShfsx_fVswBYpcq835w1Ylhttw0dldI"
-      ),
-    });
-
-    const subscriptionJSON = subscription.toJSON();
-
-    let clientUUID = localStorage.getItem("client_uuid");
-    if (!clientUUID) {
-      clientUUID = crypto.randomUUID();
-      localStorage.setItem("client_uuid", clientUUID);
-    }
-
-    // Salva con user_id
-    const { data, error } = await supabaseClient
-      .from("push_subscriptions")
-      .insert({
-        subscription: subscriptionJSON,
-        client_uuid: clientUUID,
-        user_id: user.id, // Associa all'utente autenticato
-      });
-
-    if (error) {
-      console.error("❌ Errore Supabase:", error);
-    } else {
-      console.log("✅ Subscription salvata per utente", user.id);
-    }
-
-    return subscription;
-  } catch (error) {
-    console.error("❌ Errore:", error);
-  }
-}
-
-function urlBase64ToUint8Array(base64String) {
-  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
-  const rawData = atob(base64);
-  return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
-}
+              const section = document.getElementById("registra");
+              if (section) {
+                document.querySelectorAll(".page-section").forEach(s =>
+                  s.classList.remove("active")
+                );
+                section.classList.add("active");
+              }
+            }
+          });
+        });
 
 /////////////  VARIABILi GLOBALI ///////////////////
 const form = document.getElementById("study-form");

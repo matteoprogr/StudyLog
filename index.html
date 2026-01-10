@@ -10,33 +10,6 @@
       <link rel="manifest" href="manifest.json"/>
       <meta name="theme-color" content="#333333" />
       <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-      <script>
-        window.OneSignalDeferred = window.OneSignalDeferred || [];
-        OneSignalDeferred.push(async function (OneSignal) {
-          await OneSignal.init({
-            appId: "5c10ef76-9410-45f5-a026-ef8956262f1a",
-          });
-
-          OneSignal.Notifications.addEventListener("click", (event) => {
-            const data = event.notification.additionalData;
-
-            if (data) {
-              // Materia: se è oggetto, lo trasformiamo in stringa
-              const materia = typeof data.materia === "string"
-                ? data.materia
-                : JSON.stringify(data.materia);
-
-              const section = document.getElementById("registra");
-              if (section) {
-                document.querySelectorAll(".page-section").forEach(s =>
-                  s.classList.remove("active")
-                );
-                section.classList.add("active");
-              }
-            }
-          });
-        });
-      </script>
       <meta
         name="viewport"
         content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"

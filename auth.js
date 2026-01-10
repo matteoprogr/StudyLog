@@ -54,6 +54,7 @@ async function enablePushForUser(userId) {
       if (!pushSubscription.optedIn) {
         console.warn("⚠️ Subscription non attiva!");
       } else {
+      showUserSection(currentUser)
         console.log("✅ Subscription attiva e pronta!");
       }
 

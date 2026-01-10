@@ -127,12 +127,24 @@ async function showUserSection(user) {
   if (userSection) userSection.classList.remove("hidden");
   if (userEmail) userEmail.textContent = user.email;
 
-  // Mostra bottone per attivare notifiche
-  const pushBtn = document.getElementById("enable-push-btn");
-  if (pushBtn) {
-    pushBtn.classList.remove("hidden");
-    pushBtn.onclick = () => enablePushForUser(user.id);
-  }
+  // Verifica stato subscription
+  OneSignalDeferred.push(async (OneSignal) => {
+    const pushSubscription = OneSignal.User.PushSubscription;
+    const isSubscribed = pushSubscription.optedIn;
+
+    const enableBtn = document.getElementById("enable-push-btn");
+    const disableBtn = document.getElementById("disable-push-btn");
+
+    if (isSubscribed) {
+      // Già iscritto: mostra "disattiva"
+      if (enableBtn) enableBtn.classList.add("hidden");
+      if (disableBtn) disableBtn.classList.remove("hidden");
+    } else {
+      // Non iscritto: mostra "attiva"
+      if (enableBtn) enableBtn.classList.remove("hidden");
+      if (disableBtn) disableBtn.classList.add("hidden");
+    }
+  });
 }
 
 // ---------------- LOGIN ----------------

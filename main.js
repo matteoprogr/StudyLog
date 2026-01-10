@@ -58,8 +58,8 @@ OneSignalDeferred.push(async (OneSignal) => {
   try {
     await OneSignal.init({
       appId: "5c10ef76-9410-45f5-a026-ef8956262f1a",
-      serviceWorkerParam: { scope: './' },
-      serviceWorkerPath: './StudyLog/OneSignalSDKWorker.js',
+      serviceWorkerParam: { scope: '/StudyLog/' },
+      serviceWorkerPath: '/StudyLog/OneSignalSDKWorker.js',
       allowLocalhostAsSecureOrigin: true,
     });
 

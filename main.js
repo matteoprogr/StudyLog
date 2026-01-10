@@ -200,8 +200,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         alert("Effettua il login prima di attivare le notifiche");
         return;
       }
-      await OneSignal.registerForPushNotifications();
-
       // Attiva push per l'utente loggato
       await enablePushForUser(currentUser.id);
 

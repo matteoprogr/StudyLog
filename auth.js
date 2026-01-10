@@ -87,12 +87,12 @@ async function showUserSection(user) {
           return;
         }
 
-        try {
-          await OneSignal.Notifications.requestPermission();
-          console.log("🔔 Permessi richiesti");
-        } catch (err) {
-          console.error("❌ Errore richiesta permessi:", err);
-        }
+//        try {
+//          await OneSignal.Notifications.requestPermission();
+//          console.log("🔔 Permessi richiesti");
+//        } catch (err) {
+//          console.error("❌ Errore richiesta permessi:", err);
+//        }
 
         // Stato subscription (può essere null inizialmente)
         const pushSubscription = OneSignal.User.PushSubscription;

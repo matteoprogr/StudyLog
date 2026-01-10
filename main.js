@@ -34,26 +34,15 @@ const supabaseClient = createClient(
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", async () => {
     try {
-      console.log("🔄 Registrazione Service Worker OneSignal...");
+        console.log("🔄 Registrazione Service Worker OneSignal...");
 
-          try{
-                // Registra il service worker con OneSignal
-                const registration = await navigator.serviceWorker.register("/sw.js");
+        // Registra il service worker con OneSignal
+        const registration = await navigator.serviceWorker.register("/StudyLog/sw.js");
 
-                console.log("✅ Service Worker registrato:", registration);
+        console.log("✅ Service Worker registrato:", registration);
 
-                await navigator.serviceWorker.ready;
-                console.log("🎉 Service Worker pronto!");
-          }catch(error){
-                console.error("❌ Errore Service Worker:", error);
-              // Registra il service worker con OneSignal
-              const registration = await navigator.serviceWorker.register("/StudyLog/sw.js");
-
-              console.log("✅ Service Worker registrato:", registration);
-
-              await navigator.serviceWorker.ready;
-              console.log("🎉 Service Worker pronto!");
-              }
+        await navigator.serviceWorker.ready;
+        console.log("🎉 Service Worker pronto!");
 
     } catch (err) {
       console.error("❌ Errore Service Worker:", err);

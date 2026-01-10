@@ -1,5 +1,4 @@
 // auth.js - Gestione autenticazione opzionale
-//import { registerPushSubscription } from "./main.js";
 
 let currentUser = null;
 let isLoginMode = true;
@@ -50,16 +49,6 @@ function showAuthSection() {
   if (userSection) userSection.classList.add("hidden");
 }
 
-// Mostra sezione utente loggato
-//function showUserSection(user) {
-//  const authSection = document.getElementById("auth-section");
-//  const userSection = document.getElementById("user-section");
-//  const userEmail = document.getElementById("user-email");
-//
-//  if (authSection) authSection.classList.add("hidden");
-//  if (userSection) userSection.classList.remove("hidden");
-//  if (userEmail) userEmail.textContent = user.email;
-//}
 
 // In auth.js, nella funzione showUserSection
 async function showUserSection(user) {

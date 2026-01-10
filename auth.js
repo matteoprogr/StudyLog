@@ -62,49 +62,6 @@ async function showUserSection(user) {
   if (userSection) userSection.classList.remove("hidden");
   if (userEmail) userEmail.textContent = user.email;
 
-  console.log("🔔 Inizializzazione OneSignal...");
-  if (!window.OneSignalDeferred) {
-    console.warn("⚠️ OneSignal non disponibile");
-    return;
-  }
-
-  try {
-    OneSignalDeferred.push(async (OneSignal) => {
-      try {
-        // Login con external_id (user.id Supabase)
-        await OneSignal.login(user.id);
-        console.log("✅ Utente collegato a OneSignal:", user.id);
-
-        // Gestione permessi notifiche
-        const permission = OneSignal.Notifications.permission;
-        if (isPermissionGranted(permission)) {
-          console.log("✅ Notifiche già abilitate");
-          return;
-        }
-
-        if (permission === "denied") {
-          console.warn("🚫 Notifiche bloccate dal browser");
-          return;
-        }
-
-//        try {
-//          await OneSignal.Notifications.requestPermission();
-//          console.log("🔔 Permessi richiesti");
-//        } catch (err) {
-//          console.error("❌ Errore richiesta permessi:", err);
-//        }
-
-        // Stato subscription (può essere null inizialmente)
-        const pushSubscription = OneSignal.User.PushSubscription;
-        console.log("📬 PushSubscription:", pushSubscription);
-
-      } catch (err) {
-        console.error("❌ Errore OneSignal:", err);
-      }
-    });
-  } catch (err) {
-    console.error("❌ Errore inizializzazione OneSignal:", err);
-  }
 }
 
 
@@ -130,9 +87,11 @@ async function handleLogin(e) {
 
     if (error) throw error;
 
-    console.log("✅ Login effettuato:", data.user.email);
     currentUser = data.user;
-    showUserSection(data.user);
+    console.log("✅ Login effettuato:", currentUser.email);
+
+    showUserSection(currentUser);
+    oneSignalLogin(currentUser)
 
   } catch (error) {
     console.error("❌ Errore login:", error);
@@ -141,6 +100,53 @@ async function handleLogin(e) {
   } finally {
     submitBtn.disabled = false;
     submitBtn.textContent = "Accedi";
+  }
+}
+
+async function oneSignalLogin(user){
+
+  console.log("🔔 Inizializzazione OneSignal...");
+  if (!window.OneSignalDeferred) {
+    console.warn("⚠️ OneSignal non disponibile");
+    return;
+  }
+
+  try {
+    OneSignalDeferred.push(async (OneSignal) => {
+      try {
+        // Login con external_id (user.id Supabase)
+        await OneSignal.login(user.id);
+        console.log("✅ Utente collegato a OneSignal:", user.id);
+
+        // Gestione permessi notifiche
+        const permission = OneSignal.Notifications.permission;
+        if (isPermissionGranted(permission)) {
+          console.log("✅ Notifiche già abilitate");
+          return;
+        }
+
+        if (permission === "denied") {
+          console.warn("🚫 Notifiche bloccate dal browser");
+          return;
+        }
+
+        try {
+          await OneSignal.Notifications.requestPermission();
+          console.log("🔔 Permessi richiesti");
+        } catch (err) {
+          console.error("❌ Errore richiesta permessi:", err);
+        }
+
+        // Stato subscription (può essere null inizialmente)
+        const pushSubscription = OneSignal.User.PushSubscription;
+        console.log("📬 PushSubscription:", pushSubscription);
+
+      } catch (err) {
+        console.error("❌ Errore OneSignal:", err);
+      }
+    });
+  } catch (err) {
+    console.error("❌ Errore inizializzazione OneSignal:", err);
   }
 }
 

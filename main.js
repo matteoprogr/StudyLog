@@ -37,7 +37,7 @@ if ("serviceWorker" in navigator) {
         console.log("🔄 Registrazione Service Worker OneSignal...");
 
         // Registra il service worker con OneSignal
-        const registration = await navigator.serviceWorker.register("/sw.js");
+        const registration = await navigator.serviceWorker.register("/StudyLog/sw.js");
 
         console.log("✅ Service Worker registrato:", registration);
 

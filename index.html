@@ -134,109 +134,44 @@
 
         <!-- Sezione Login (Opzionale per notifiche) -->
         <section id="account" class="page-section">
-          <div class="section-container">
-            <h4>Account</h4>
-
-            <!-- Quando NON è loggato -->
-            <div id="auth-section">
-              <div class="info-box">
-                <i data-lucide="bell" class="icon-bell"></i>
-                <p>
-                  <strong>Notifiche Push</strong><br />
-                  Crea un account per ricevere notifiche quando termini una
-                  sessione di studio, anche quando l'app è chiusa.
-                </p>
-              </div>
-
-              <!-- Form di LOGIN -->
-              <div id="login-container">
-                <form id="login-form" class="auth-form">
-                  <div id="login-error" class="error-message hidden"></div>
-
-                  <input
-                    type="email"
-                    id="login-email"
-                    placeholder="Email"
-                    required
-                    autocomplete="email"
-                  />
-
-                  <input
-                    type="password"
-                    id="login-password"
-                    placeholder="Password"
-                    required
-                    autocomplete="current-password"
-                  />
-
-                  <button type="submit" class="btn-primary">Accedi</button>
-                </form>
-
-                <p id="toggle-auth-mode" class="toggle-text">
-                  Non hai un account? <span class="auth-link">Registrati</span>
-                </p>
-              </div>
-
-              <!-- Form di REGISTRAZIONE (nascosto inizialmente) -->
-              <div id="register-container" class="hidden">
-                <form id="register-form" class="auth-form">
-                  <div id="register-error" class="error-message hidden"></div>
-                  <div
-                    id="register-success"
-                    class="success-message hidden"
-                  ></div>
-
-                  <input
-                    type="email"
-                    id="register-email"
-                    placeholder="Email"
-                    required
-                    autocomplete="email"
-                  />
-
-                  <input
-                    type="password"
-                    id="register-password"
-                    placeholder="Password (min. 6 caratteri)"
-                    required
-                    autocomplete="new-password"
-                  />
-
-                  <input
-                    type="password"
-                    id="register-confirm-password"
-                    placeholder="Conferma Password"
-                    required
-                    autocomplete="new-password"
-                  />
-
-                  <button type="submit" class="btn-primary">Registrati</button>
-                </form>
-
-                <p id="toggle-login-mode" class="toggle-text">
-                  Hai già un account? <span class="auth-link">Accedi</span>
-                </p>
-              </div>
+          <section id="auth-section">
+            <div id="login-container">
+              <form id="login-form">
+                <input type="email" id="login-email" placeholder="Email" required>
+                <input type="password" id="login-password" placeholder="Password" required>
+                <button type="submit">Accedi</button>
+                <p id="login-error" class="hidden"></p>
+              </form>
+              <button id="toggle-auth-mode">Vai a registrazione</button>
             </div>
 
-            <!-- Quando è loggato -->
-            <div id="user-section" class="hidden">
-              <div class="user-info">
-                <i data-lucide="user" class="icon-user"></i>
-                <div>
-                  <p><strong>Account connesso</strong></p>
-                  <p id="user-email" class="user-email"></p>
-                </div>
-              </div>
-
-              <div class="notification-status">
-                <i data-lucide="bell-ring" class="icon-bell-ring"></i>
-                <p id="notification-status-text">Notifiche push attive</p>
-              </div>
-
-              <button id="logout-btn" class="btn-secondary">Disconnetti</button>
+            <div id="register-container" class="hidden">
+              <form id="register-form">
+                <input type="email" id="register-email" placeholder="Email" required>
+                <input type="password" id="register-password" placeholder="Password" required>
+                <input type="password" id="register-confirm-password" placeholder="Conferma password" required>
+                <button type="submit">Registrati</button>
+                <p id="register-error" class="hidden"></p>
+                <p id="register-success" class="hidden"></p>
+              </form>
+              <button id="toggle-login-mode">Vai al login</button>
             </div>
-          </div>
+          </section>
+
+          <!-- ================= SEZIONE UTENTE LOGGATO ================= -->
+          <section id="user-section" class="hidden">
+            <p>Benvenuto, <span id="user-email"></span></p>
+            <button id="logout-btn">Logout</button>
+
+            <!-- Bottone per attivare notifiche OneSignal -->
+            <button id="enable-push-btn" class="hidden">Attiva notifiche</button>
+          </section>
+
+          <!-- ================= SEZIONE PAGINA / REGISTRA ================= -->
+          <section id="registraOneSignal" class="page-section">
+            <!-- Esempio di contenuto per notifiche cliccate -->
+            <p>Sezione registro notifiche</p>
+          </section>
         </section>
 
         <!-- Pagina Impostazioni -->

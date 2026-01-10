@@ -31,44 +31,94 @@ const supabaseClient = createClient(
 
 /////////  SERVICE WORKER ////////////////
 
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", async () => {
-    try {
-        console.log("🔄 Registrazione Service Worker OneSignal...");
+//if ("serviceWorker" in navigator) {
+//  window.addEventListener("load", async () => {
+//    try {
+//        console.log("🔄 Registrazione Service Worker OneSignal...");
+//
+//        // Registra il service worker con OneSignal
+//        const registration = await navigator.serviceWorker.register("./sw.js");
+//
+//        console.log("✅ Service Worker registrato:", registration);
+//
+//        await navigator.serviceWorker.ready;
+//        console.log("🎉 Service Worker pronto!");
+//
+//    } catch (err) {
+//      console.error("❌ Errore Service Worker:", err);
+//    }
+//  });
+//}
 
-        // Registra il service worker con OneSignal
-        const registration = await navigator.serviceWorker.register("./sw.js");
 
-        console.log("✅ Service Worker registrato:", registration);
+// ----------------- INIT ONESIGNAL -----------------
+window.OneSignalDeferred = window.OneSignalDeferred || [];
 
-        await navigator.serviceWorker.ready;
-        console.log("🎉 Service Worker pronto!");
-
-    } catch (err) {
-      console.error("❌ Errore Service Worker:", err);
-    }
-  });
-}
-
-
-//////// CONFIGURAZIONE ONESIGNAL /////////
 OneSignalDeferred.push(async (OneSignal) => {
   await OneSignal.init({
     appId: "5c10ef76-9410-45f5-a026-ef8956262f1a",
   });
 
-  OneSignal.Notifications.addEventListener("click", (event) => {
-    const data = event.notification.additionalData;
-    if (!data) return;
+  console.log("✅ OneSignal inizializzato");
 
-    const section = document.getElementById("registra");
-    if (section) {
-      document.querySelectorAll(".page-section").forEach(s =>
-        s.classList.remove("active")
-      );
-      section.classList.add("active");
+  // Evento clic su notifica
+  OneSignal.Notifications.addEventListener("click", (event) => {
+    console.log("📬 Notifica cliccata:", event.notification);
+
+    // Esempio: mostra sezione registro in pagina
+    const data = event.notification.additionalData;
+    if (data) {
+      const section = document.getElementById("registraOneSignal");
+      if (section) {
+        document.querySelectorAll(".page-section").forEach(s => s.classList.remove("active"));
+        section.classList.add("active");
+      }
     }
   });
+});
+
+// ----------------- FUNZIONE VERIFICA SUBSCRIPTION -----------------
+async function logCurrentSubscription() {
+  OneSignalDeferred.push(async (OneSignal) => {
+    const sub = OneSignal.User.PushSubscription;
+    console.log("📬 Subscription attuale:", sub);
+
+    if (sub && sub.optedIn) {
+      console.log("✅ Subscription attiva e pronta per ricevere notifiche");
+    } else {
+      console.warn("⚠️ Nessuna subscription attiva");
+    }
+  });
+}
+
+// ----------------- EVENT LISTENER CLICK PER ATTIVARE PUSH -----------------
+//document.addEventListener("DOMContentLoaded", () => {
+//  const pushBtn = document.getElementById("enable-push-btn");
+//
+//  if (pushBtn) {
+//    pushBtn.addEventListener("click", async () => {
+//      const currentUser = window.getCurrentUser ? window.getCurrentUser() : null;
+//      if (!currentUser) {
+//        alert("Effettua il login prima di attivare le notifiche");
+//        return;
+//      }
+//
+//      // Attiva push per l'utente loggato
+//      await enablePushForUser(currentUser.id);
+//
+//      // Log subscription aggiornata
+//      await logCurrentSubscription();
+//    });
+//  }
+//});
+
+// ----------------- UTILITY PER DEBUG -----------------
+window.checkPushSubscription = logCurrentSubscription;
+
+// ----------------- OPTIONAL: FORCE INIT -----------------
+// Se vuoi forzare la verifica subscription all'avvio
+document.addEventListener("DOMContentLoaded", async () => {
+  await logCurrentSubscription();
 });
 
 
@@ -140,6 +190,27 @@ links.forEach((link) => {
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
+
+  const pushBtn = document.getElementById("enable-push-btn");
+
+  if (pushBtn) {
+    pushBtn.addEventListener("click", async () => {
+      const currentUser = window.getCurrentUser ? window.getCurrentUser() : null;
+      if (!currentUser) {
+        alert("Effettua il login prima di attivare le notifiche");
+        return;
+      }
+
+      // Attiva push per l'utente loggato
+      await enablePushForUser(currentUser.id);
+
+      // Log subscription aggiornata
+      await logCurrentSubscription();
+    });
+  }
+
+
+
   prevBtn.addEventListener("click", () => changeMonth(-1));
   nextBtn.addEventListener("click", () => changeMonth(1));
 

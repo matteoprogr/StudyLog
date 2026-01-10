@@ -63,6 +63,30 @@ async function enablePushForUser(userId) {
   });
 }
 
+
+async function disablePushForUser() {
+  if (!window.OneSignalDeferred) {
+    console.log("❌ OneSignal non caricato");
+    return;
+  }
+
+  OneSignalDeferred.push(async (OneSignal) => {
+    try {
+      // Opt-out dalle notifiche push
+      await OneSignal.User.PushSubscription.optOut();
+      console.log("✅ Opt-out dalle notifiche completato");
+
+      // Logout da OneSignal
+      await OneSignal.logout();
+      console.log("✅ Logout OneSignal completato");
+
+      alert("✅ Notifiche disattivate con successo");
+    } catch (err) {
+      console.error("❌ Errore disattivazione push:", err);
+    }
+  });
+}
+
 // ---------------- CHECK AUTH ----------------
 async function checkAuth() {
   try {
@@ -199,6 +223,10 @@ async function handleRegister(e) {
 // ---------------- LOGOUT ----------------
 async function handleLogout() {
   try {
+    // Prima disattiva le notifiche
+    await disablePushForUser();
+
+    // Poi logout da Supabase
     const { error } = await supabaseClient.auth.signOut();
     if (error) throw error;
 
@@ -211,6 +239,9 @@ async function handleLogout() {
     alert("Errore durante il logout");
   }
 }
+
+// Esporta per uso esterno
+window.disablePushNotifications = disablePushForUser;
 
 // ---------------- TOGGLE LOGIN/REGISTER ----------------
 function toggleAuthForm() {
@@ -269,7 +300,11 @@ document.addEventListener("DOMContentLoaded", () => {
   if (toggleAuthMode) toggleAuthMode.addEventListener("click", toggleAuthForm);
   if (toggleLoginMode) toggleLoginMode.addEventListener("click", toggleAuthForm);
 
-  // Controlla autenticazione all'avvio
+    const disablePushBtn = document.getElementById("disable-push-btn");
+    if (disablePushBtn) {
+      disablePushBtn.addEventListener("click", disablePushForUser);
+    }
+
   checkAuth();
 });
 

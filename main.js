@@ -89,26 +89,6 @@ async function logCurrentSubscription() {
   });
 }
 
-// ----------------- EVENT LISTENER CLICK PER ATTIVARE PUSH -----------------
-//document.addEventListener("DOMContentLoaded", () => {
-//  const pushBtn = document.getElementById("enable-push-btn");
-//
-//  if (pushBtn) {
-//    pushBtn.addEventListener("click", async () => {
-//      const currentUser = window.getCurrentUser ? window.getCurrentUser() : null;
-//      if (!currentUser) {
-//        alert("Effettua il login prima di attivare le notifiche");
-//        return;
-//      }
-//
-//      // Attiva push per l'utente loggato
-//      await enablePushForUser(currentUser.id);
-//
-//      // Log subscription aggiornata
-//      await logCurrentSubscription();
-//    });
-//  }
-//});
 
 // ----------------- UTILITY PER DEBUG -----------------
 window.checkPushSubscription = logCurrentSubscription;

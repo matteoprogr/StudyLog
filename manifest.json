@@ -2,7 +2,7 @@
   "name": "StudyLog",
   "short_name": "StudyLog",
   "start_url": "./",
-  "scope": "./",
+  "scope": "./Studylog/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#ffffff",

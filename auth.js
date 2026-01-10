@@ -127,24 +127,24 @@ async function showUserSection(user) {
   if (userSection) userSection.classList.remove("hidden");
   if (userEmail) userEmail.textContent = user.email;
 
-  // Verifica stato subscription
-  OneSignalDeferred.push(async (OneSignal) => {
-    const pushSubscription = OneSignal.User.PushSubscription;
-    const isSubscribed = pushSubscription.optedIn;
+    try{
+      OneSignalDeferred.push(async (OneSignal) => {
+        const pushSubscription = OneSignal.User.PushSubscription;
+        const isSubscribed = pushSubscription.optedIn;
 
-    const enableBtn = document.getElementById("enable-push-btn");
-    const disableBtn = document.getElementById("disable-push-btn");
+        const enableBtn = document.getElementById("enable-push-btn");
+        const disableBtn = document.getElementById("disable-push-btn");
 
-    if (isSubscribed) {
-      // Già iscritto: mostra "disattiva"
-      if (enableBtn) enableBtn.classList.add("hidden");
-      if (disableBtn) disableBtn.classList.remove("hidden");
-    } else {
-      // Non iscritto: mostra "attiva"
-      if (enableBtn) enableBtn.classList.remove("hidden");
-      if (disableBtn) disableBtn.classList.add("hidden");
-    }
-  });
+        if (isSubscribed) {
+          if (enableBtn) enableBtn.classList.add("hidden");
+          if (disableBtn) disableBtn.classList.remove("hidden");
+        } else {
+          if (enableBtn) enableBtn.classList.remove("hidden");
+          if (disableBtn) disableBtn.classList.add("hidden");
+        }
+      });
+    }catch(err){}
+
 }
 
 // ---------------- LOGIN ----------------
@@ -299,7 +299,7 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
 });
 
 // ---------------- EVENT LISTENERS ----------------
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   const loginForm = document.getElementById("login-form");
   const registerForm = document.getElementById("register-form");
   const logoutBtn = document.getElementById("logout-btn");
@@ -319,6 +319,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   checkAuth();
 });
+
 
 // ---------------- EXPORT CURRENT USER ----------------
 window.getCurrentUser = () => currentUser;

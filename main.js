@@ -29,29 +29,7 @@ const supabaseClient = createClient(
 );
 
 
-/////////  SERVICE WORKER ////////////////
-
-//if ("serviceWorker" in navigator) {
-//  window.addEventListener("load", async () => {
-//    try {
-//        console.log("🔄 Registrazione Service Worker OneSignal...");
-//
-//        // Registra il service worker con OneSignal
-//        const registration = await navigator.serviceWorker.register("./sw.js");
-//
-//        console.log("✅ Service Worker registrato:", registration);
-//
-//        await navigator.serviceWorker.ready;
-//        console.log("🎉 Service Worker pronto!");
-//
-//    } catch (err) {
-//      console.error("❌ Errore Service Worker:", err);
-//    }
-//  });
-//}
-
-
-// ----------------- INIT ONESIGNAL -----------------
+/////////  SERVICE WORKER /////// ----------------- INIT ONESIGNAL -----------------
 window.OneSignalDeferred = window.OneSignalDeferred || [];
 
 OneSignalDeferred.push(async (OneSignal) => {
@@ -65,10 +43,8 @@ OneSignalDeferred.push(async (OneSignal) => {
 
     console.log("✅ OneSignal inizializzato");
 
-    // Evento clic su notifica
     OneSignal.Notifications.addEventListener("click", (event) => {
       console.log("📬 Notifica cliccata:", event.notification);
-      // ... resto del codice ...
     });
   } catch (error) {
     console.error("❌ Errore inizializzazione OneSignal:", error);

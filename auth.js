@@ -16,33 +16,49 @@ function isPermissionGranted(permission) {
 }
 
 async function enablePushForUser(userId) {
-  if (!window.OneSignalDeferred) return;
+  if (!window.OneSignalDeferred) {
+    console.error("❌ OneSignal non caricato");
+    return;
+  }
 
   OneSignalDeferred.push(async (OneSignal) => {
-    const permission = OneSignal.Notifications.permission;
-
-    if (isPermissionGranted(permission)) {
-      console.log("🔔 Notifiche già attive");
-    } else if (permission === "denied") {
-      console.warn("🚫 Hai bloccato le notifiche. Riattivale nelle impostazioni del browser.");
-      return;
-    } else {
-      try {
-        await OneSignal.Notifications.requestPermission();
-        console.log("✅ Permesso notifiche concesso");
-      } catch (err) {
-        console.error("❌ Errore richiesta permessi:", err);
-        return;
-      }
-    }
-
-    // Collega l'utente OneSignal (external_id)
     try {
+      // Verifica permessi
+      const permission = await OneSignal.Notifications.permission;
+      console.log("📬 Permesso attuale:", permission);
+
+      if (!isPermissionGranted(permission)) {
+        if (permission === "denied") {
+          alert("⚠️ Hai bloccato le notifiche. Riattivale nelle impostazioni del browser.");
+          return;
+        }
+
+        // Richiedi permesso
+        const granted = await OneSignal.Notifications.requestPermission();
+        if (!granted) {
+          console.warn("⚠️ Permesso negato");
+          return;
+        }
+      }
+
+      // Collega l'utente
       await OneSignal.login(userId);
       console.log("✅ Utente OneSignal collegato:", userId);
-      console.log("📬 Subscription:", OneSignal.User.PushSubscription);
+
+      // Verifica subscription
+      const pushSubscription = OneSignal.User.PushSubscription;
+      console.log("📬 Subscription:", pushSubscription);
+      console.log("📬 Opted in:", pushSubscription.optedIn);
+      console.log("📬 Token:", pushSubscription.token);
+
+      if (!pushSubscription.optedIn) {
+        console.warn("⚠️ Subscription non attiva!");
+      } else {
+        console.log("✅ Subscription attiva e pronta!");
+      }
+
     } catch (err) {
-      console.error("❌ Errore login OneSignal:", err);
+      console.error("❌ Errore abilitazione push:", err);
     }
   });
 }

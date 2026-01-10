@@ -1,7 +1,8 @@
 {
   "name": "StudyLog",
   "short_name": "StudyLog",
-  "start_url": "/StudyLog/index.html",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#ffffff",

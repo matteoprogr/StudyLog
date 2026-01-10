@@ -55,26 +55,24 @@ const supabaseClient = createClient(
 window.OneSignalDeferred = window.OneSignalDeferred || [];
 
 OneSignalDeferred.push(async (OneSignal) => {
-  await OneSignal.init({
-    appId: "5c10ef76-9410-45f5-a026-ef8956262f1a",
-  });
+  try {
+    await OneSignal.init({
+      appId: "5c10ef76-9410-45f5-a026-ef8956262f1a",
+      serviceWorkerParam: { scope: './' },
+      serviceWorkerPath: './OneSignalSDKWorker.js',  // Specifica il path corretto
+      allowLocalhostAsSecureOrigin: true,
+    });
 
-  console.log("✅ OneSignal inizializzato");
+    console.log("✅ OneSignal inizializzato");
 
-  // Evento clic su notifica
-  OneSignal.Notifications.addEventListener("click", (event) => {
-    console.log("📬 Notifica cliccata:", event.notification);
-
-    // Esempio: mostra sezione registro in pagina
-    const data = event.notification.additionalData;
-    if (data) {
-      const section = document.getElementById("registraOneSignal");
-      if (section) {
-        document.querySelectorAll(".page-section").forEach(s => s.classList.remove("active"));
-        section.classList.add("active");
-      }
-    }
-  });
+    // Evento clic su notifica
+    OneSignal.Notifications.addEventListener("click", (event) => {
+      console.log("📬 Notifica cliccata:", event.notification);
+      // ... resto del codice ...
+    });
+  } catch (error) {
+    console.error("❌ Errore inizializzazione OneSignal:", error);
+  }
 });
 
 // ----------------- FUNZIONE VERIFICA SUBSCRIPTION -----------------

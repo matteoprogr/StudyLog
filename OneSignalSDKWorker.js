@@ -1,18 +1,22 @@
-console.log("🚀 Service Worker v60 caricato");
-
+// OneSignalSDKWorker.js
 importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 
-const CACHE_NAME = "studylog-cache-v66";
+console.log("✅ OneSignal Service Worker caricato");
+
+const CACHE_NAME = "studylog-cache-v67";
 const urlsToCache = [
-  "/",
-  "/index.html",
-  "/styles.css",
-  "/main.js",
-  "/assets/sounds/alarm.mp3",
-  "/icons/icon-192.png",
-  "/libs/dexie.mjs",
-  "/libs/lucide.js",
-  "/libs/echarts.min.js",
+  "./",
+  "./index.html",
+  "./css/style.css",
+  "./main.js",
+  "./auth.js",
+  "./query.js",
+  "./card.js",
+  "./icons/icon-192.png",
+  "./icons/icon-512.png",
+  "./libs/dexie.mjs",
+  "./libs/lucide.js",
+  "./libs/echarts.min.js",
 ];
 
 self.addEventListener("install", (event) => {
@@ -22,34 +26,27 @@ self.addEventListener("install", (event) => {
     caches
       .open(CACHE_NAME)
       .then((cache) => {
-        console.log("📦 Cache aperta, tento di cachare i file...");
-
-        // Cacha i file uno per uno per identificare quale fallisce
+        console.log("📦 Cache aperta");
         const promises = urlsToCache.map((url) => {
           return fetch(url)
             .then((response) => {
               if (!response.ok) {
                 console.warn(`⚠️ ${url} - Status: ${response.status}`);
-                return null; // Non bloccare per file mancanti
+                return null;
               }
               console.log(`✅ ${url} - OK`);
               return cache.put(url, response);
             })
             .catch((err) => {
               console.error(`❌ Errore su ${url}:`, err.message);
-              return null; // Non bloccare per errori di rete
+              return null;
             });
         });
-
         return Promise.all(promises);
       })
       .then(() => {
-        console.log("✅ Install completato - skipWaiting");
+        console.log("✅ Install completato");
         return self.skipWaiting();
-      })
-      .catch((err) => {
-        console.error("💥 ERRORE CRITICO install:", err);
-        throw err; // Questo renderà il SW redundant
       })
   );
 });
@@ -61,44 +58,39 @@ self.addEventListener("activate", (event) => {
     caches
       .keys()
       .then((keys) => {
-        console.log("🗑️ Cache esistenti:", keys);
         return Promise.all(
           keys.map((key) => {
             if (key !== CACHE_NAME) {
-              console.log(`🗑️ Elimino cache vecchia: ${key}`);
+              console.log(`🗑️ Elimino cache: ${key}`);
               return caches.delete(key);
             }
           })
         );
       })
       .then(() => {
-        console.log("✅ Activate completato - claiming clients");
+        console.log("✅ Activate completato");
         return self.clients.claim();
       })
   );
 });
 
 self.addEventListener("fetch", (event) => {
-
-if (event.request.method !== "GET") return;
+  if (event.request.method !== "GET") return;
 
   event.respondWith(
     caches.match(event.request).then((response) => {
       return (
         response ||
-        fetch(event.request)
-          .then((networkResponse) => {
-            if (networkResponse && networkResponse.ok) {
-              return caches.open(CACHE_NAME).then((cache) => {
-                cache.put(event.request, networkResponse.clone());
-                return networkResponse;
-              });
-            }
-            return networkResponse;
-          })
-          .catch(() => response)
+        fetch(event.request).then((networkResponse) => {
+          if (networkResponse && networkResponse.ok) {
+            return caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, networkResponse.clone());
+              return networkResponse;
+            });
+          }
+          return networkResponse;
+        })
       );
     })
   );
 });
-

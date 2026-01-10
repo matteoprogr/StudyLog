@@ -22,23 +22,20 @@ async function checkAuth() {
       return;
     }
 
-    if (session && session.user) {
+    if (session?.user) {
       console.log("✅ Utente già autenticato:", session.user.email);
       currentUser = session.user;
-      showUserSection(session.user);
 
-      // Registra automaticamente le push notifications
-      if ("serviceWorker" in navigator) {
-        registerPushSubscription();
-      }
+      showUserSection(session.user);
     } else {
-      console.log("ℹ️ Nessun utente autenticato (modalità offline)");
+      console.log("ℹ️ Nessun utente autenticato");
       showAuthSection();
     }
   } catch (err) {
-    console.error("❌ Errore inaspettato:", err);
+    console.error("❌ Errore imprevisto:", err);
   }
 }
+
 
 // Mostra sezione login/registrazione
 function showAuthSection() {
@@ -52,43 +49,49 @@ function showAuthSection() {
 
 // In auth.js, nella funzione showUserSection
 async function showUserSection(user) {
-  const authSection = document.getElementById('auth-section');
-  const userSection = document.getElementById('user-section');
-  const userEmail = document.getElementById('user-email');
+  const authSection = document.getElementById("auth-section");
+  const userSection = document.getElementById("user-section");
+  const userEmail = document.getElementById("user-email");
 
-  if (authSection) authSection.classList.add('hidden');
-  if (userSection) userSection.classList.remove('hidden');
+  if (authSection) authSection.classList.add("hidden");
+  if (userSection) userSection.classList.remove("hidden");
   if (userEmail) userEmail.textContent = user.email;
 
-  // IMPORTANTE: Collega l'utente a OneSignal
-  console.log("🔔 Collegamento utente a OneSignal...");
+  console.log("🔔 Inizializzazione OneSignal...");
+  if (!window.OneSignalDeferred) {
+    console.warn("⚠️ OneSignal non disponibile");
+    return;
+  }
 
-  OneSignalDeferred.push(async function(OneSignal) {
-    try {
-      // Login con external_id
-      await OneSignal.login(user.id);
-      console.log("✅ Utente collegato a OneSignal:", user.id);
+  try {
+    OneSignalDeferred.push(async (OneSignal) => {
+      try {
 
-      // Richiedi permesso notifiche se non già concesso
-      const permission = await OneSignal.Notifications.permission;
-      if (!permission) {
-        await OneSignal.Notifications.requestPermission();
+        //await OneSignal.init();
+
+        // Login con external_id (user.id Supabase)
+        await OneSignal.login(user.id);
+        console.log("✅ Utente collegato a OneSignal:", user.id);
+
+        // Gestione permessi notifiche
+        const permission = OneSignal.Notifications.permission;
+        if (permission !== "granted") {
+          await OneSignal.Notifications.requestPermission();
+        }
+
+        // Stato subscription (può essere null inizialmente)
+        const pushSubscription = OneSignal.User.PushSubscription;
+        console.log("📬 PushSubscription:", pushSubscription);
+
+      } catch (err) {
+        console.error("❌ Errore OneSignal:", err);
       }
-
-      // Verifica subscription
-      const isSubscribed = await OneSignal.User.PushSubscription.optedIn;
-      console.log("📬 Subscription attiva:", isSubscribed);
-
-
-      if (!isSubscribed) {
-        console.warn("⚠️ Utente non iscritto alle notifiche");
-      }
-
-    } catch (error) {
-      console.error("❌ Errore OneSignal:", error);
-    }
-  });
+    });
+  } catch (err) {
+    console.error("❌ Errore inizializzazione OneSignal:", err);
+  }
 }
+
 
 // Gestisci il LOGIN
 async function handleLogin(e) {
@@ -116,10 +119,6 @@ async function handleLogin(e) {
     currentUser = data.user;
     showUserSection(data.user);
 
-    // Registra push notifications
-    if ("serviceWorker" in navigator) {
-      await registerPushSubscription();
-    }
   } catch (error) {
     console.error("❌ Errore login:", error);
     errorEl.textContent = getErrorMessage(error);
@@ -199,29 +198,30 @@ async function handleRegister(e) {
 // Gestisci il LOGOUT
 async function handleLogout() {
   try {
+    // Logout Supabase
     const { error } = await supabaseClient.auth.signOut();
-
     if (error) throw error;
 
-    console.log("✅ Logout effettuato");
-    currentUser = null;
+    console.log("✅ Logout Supabase effettuato");
 
-    // Rimuovi la push subscription
-    if ("serviceWorker" in navigator) {
-      const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.getSubscription();
-      if (subscription) {
-        await subscription.unsubscribe();
-        console.log("✅ Push subscription rimossa");
+    // Logout OneSignal
+    OneSignalDeferred.push(async (OneSignal) => {
+      try {
+        await OneSignal.logout();
+        console.log("🔕 Utente scollegato da OneSignal");
+      } catch (err) {
+        console.error("❌ Errore logout OneSignal:", err);
       }
-    }
+    });
 
+    currentUser = null;
     showAuthSection();
   } catch (error) {
     console.error("❌ Errore logout:", error);
     alert("Errore durante il logout");
   }
 }
+
 
 // Cambia tra modalità login e registrazione
 function toggleAuthForm() {
@@ -259,17 +259,19 @@ function getErrorMessage(error) {
 
 // Ascolta i cambiamenti di stato dell'autenticazione
 if (typeof supabaseClient !== "undefined") {
-  supabaseClient.auth.onAuthStateChange((event, session) => {
-    console.log("🔄 Auth state changed:", event);
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+      console.log("🔄 Auth state changed:", event);
 
-    if (event === "SIGNED_IN" && session) {
-      currentUser = session.user;
-      showUserSection(session.user);
-    } else if (event === "SIGNED_OUT") {
-      currentUser = null;
-      showAuthSection();
-    }
-  });
+      if (event === "SIGNED_IN" && session?.user) {
+        currentUser = session.user;
+        showUserSection(session.user);
+      }
+
+      if (event === "SIGNED_OUT") {
+        currentUser = null;
+        showAuthSection();
+      }
+    });
 }
 
 // Event Listeners
@@ -308,90 +310,3 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // Esporta per uso in altri moduli
 window.getCurrentUser = () => currentUser;
-
-async function registerPushSubscription() {
-  // Controlla se l'utente è loggato
-  const currentUser = window.getCurrentUser ? window.getCurrentUser() : null;
-
-  if (!currentUser) {
-    console.log("ℹ️ Push notifications disponibili solo con account");
-    return;
-  } else {
-    console.log("currentUser:", currentUser);
-  }
-
-  if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-    console.log("❌ Push notifications non supportate");
-    return;
-  }
-
-  try {
-    // Verifica se l'utente è autenticato
-    const {
-      data: { user },
-      error: authError,
-    } = await supabaseClient.auth.getUser();
-
-    if (authError || !user) {
-      console.error("⚠️ Utente non autenticato. Effettua il login prima.");
-      return;
-    }
-
-    console.log("📬 Registrazione push notification per utente:", user.id);
-
-    const registration = await navigator.serviceWorker.ready;
-
-    const existingSub = await registration.pushManager.getSubscription();
-    if (existingSub) {
-      console.log("✅ Push subscription già esistente");
-      return existingSub;
-    }
-
-    const permission = await Notification.requestPermission();
-    if (permission !== "granted") {
-      console.log("⚠️ Permesso notifiche negato");
-      return;
-    }
-
-    const subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(
-        "BAYBaa5RHouKeRnhTeVb06ki3MW7gKs8DJoUiqS7BBmeGPoLsTw1_zqBShfsx_fVswBYpcq835w1Ylhttw0dldI"
-      ),
-    });
-
-    const subscriptionJSON = subscription.toJSON();
-
-    let clientUUID = localStorage.getItem("client_uuid");
-    if (!clientUUID) {
-      clientUUID = crypto.randomUUID();
-      localStorage.setItem("client_uuid", clientUUID);
-    }
-
-    // Salva con user_id
-    const { data, error } = await supabaseClient
-      .from("push_subscriptions")
-      .insert({
-        subscription: subscriptionJSON,
-        // client_uuid: clientUUID,
-        user_id: user.id, // Associa all'utente autenticato
-      });
-
-    if (error) {
-      console.error("❌ Errore Supabase:", error);
-    } else {
-      console.log("✅ Subscription salvata per utente", user.id);
-    }
-
-    return subscription;
-  } catch (error) {
-    console.error("❌ Errore:", error);
-  }
-}
-
-function urlBase64ToUint8Array(base64String) {
-  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
-  const rawData = atob(base64);
-  return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
-}

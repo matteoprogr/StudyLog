@@ -51,32 +51,26 @@ if ("serviceWorker" in navigator) {
 }
 
 
-//////// OneSignal /////////
-window.OneSignalDeferred = window.OneSignalDeferred || [];
-        OneSignalDeferred.push(async function (OneSignal) {
-          await OneSignal.init({
-            appId: "5c10ef76-9410-45f5-a026-ef8956262f1a",
-          });
+//////// CONFIGURAZIONE ONESIGNAL /////////
+OneSignalDeferred.push(async (OneSignal) => {
+  await OneSignal.init({
+    appId: "5c10ef76-9410-45f5-a026-ef8956262f1a",
+  });
 
-          OneSignal.Notifications.addEventListener("click", (event) => {
-            const data = event.notification.additionalData;
+  OneSignal.Notifications.addEventListener("click", (event) => {
+    const data = event.notification.additionalData;
+    if (!data) return;
 
-            if (data) {
-              // Materia: se è oggetto, lo trasformiamo in stringa
-              const materia = typeof data.materia === "string"
-                ? data.materia
-                : JSON.stringify(data.materia);
+    const section = document.getElementById("registra");
+    if (section) {
+      document.querySelectorAll(".page-section").forEach(s =>
+        s.classList.remove("active")
+      );
+      section.classList.add("active");
+    }
+  });
+});
 
-              const section = document.getElementById("registra");
-              if (section) {
-                document.querySelectorAll(".page-section").forEach(s =>
-                  s.classList.remove("active")
-                );
-                section.classList.add("active");
-              }
-            }
-          });
-        });
 
 /////////////  VARIABILi GLOBALI ///////////////////
 const form = document.getElementById("study-form");

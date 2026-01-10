@@ -47,6 +47,11 @@ function showAuthSection() {
 }
 
 
+function isPermissionGranted(permission) {
+  return permission === true || permission === "granted";
+}
+
+
 // In auth.js, nella funzione showUserSection
 async function showUserSection(user) {
   const authSection = document.getElementById("auth-section");
@@ -66,17 +71,27 @@ async function showUserSection(user) {
   try {
     OneSignalDeferred.push(async (OneSignal) => {
       try {
-
-        //await OneSignal.init();
-
         // Login con external_id (user.id Supabase)
         await OneSignal.login(user.id);
         console.log("✅ Utente collegato a OneSignal:", user.id);
 
         // Gestione permessi notifiche
         const permission = OneSignal.Notifications.permission;
-        if (permission !== "granted") {
+        if (isPermissionGranted(permission)) {
+          console.log("✅ Notifiche già abilitate");
+          return;
+        }
+
+        if (permission === "denied") {
+          console.warn("🚫 Notifiche bloccate dal browser");
+          return;
+        }
+
+        try {
           await OneSignal.Notifications.requestPermission();
+          console.log("🔔 Permessi richiesti");
+        } catch (err) {
+          console.error("❌ Errore richiesta permessi:", err);
         }
 
         // Stato subscription (può essere null inizialmente)

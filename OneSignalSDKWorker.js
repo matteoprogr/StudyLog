@@ -3,7 +3,7 @@ importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 
 console.log("✅ OneSignal Service Worker caricato");
 
-const CACHE_NAME = "studylog-cache-v68";
+const CACHE_NAME = "studylog-cache-v69";
 const urlsToCache = [
   "./",
   "./index.html",

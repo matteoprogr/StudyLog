@@ -100,7 +100,7 @@ async function disablePushForUser() {
 
       // Logout da OneSignal
       await OneSignal.logout();
-      console.log("✅ Logout OneSignal completato");
+      showUserSection(currentUser);
 
       alert("✅ Notifiche disattivate con successo");
     } catch (err) {

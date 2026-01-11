@@ -52,14 +52,33 @@ async function enablePushForUser(userId) {
       console.log("📬 Token:", pushSubscription.token);
 
       if (!pushSubscription.optedIn) {
-        console.warn("⚠️ Subscription non attiva!");
-      } else {
-      showUserSection(currentUser)
+       console.warn("⚠️ Subscription non attiva, attivazione in corso...");
+
+       await OneSignal.User.PushSubscription.optIn();
+       console.log("✅ Opt-in eseguito!");
+
+       await new Promise(resolve => setTimeout(resolve, 1000));
+
+       // 6. Verifica di nuovo
+       const updatedSubscription = OneSignal.User.PushSubscription;
+       console.log("📬 Subscription dopo opt-in:", updatedSubscription.optedIn);
+       console.log("📬 Token:", updatedSubscription.token);
+
+       if (updatedSubscription.optedIn && updatedSubscription.token) {
+         console.log("✅ Subscription attiva e pronta!");
+         alert("✅ Notifiche attivate con successo!");
+       } else {
+         console.error("❌ Subscription ancora non attiva");
+         alert("⚠️ Errore nell'attivazione delle notifiche. Riprova.");
+         return;
+       } else {
+        showUserSection(currentUser)
         console.log("✅ Subscription attiva e pronta!");
       }
 
     } catch (err) {
       console.error("❌ Errore abilitazione push:", err);
+      alert("❌ Errore nell'attivazione delle notifiche: " + err.message);
     }
   });
 }

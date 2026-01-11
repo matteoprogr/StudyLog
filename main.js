@@ -69,13 +69,6 @@ async function logCurrentSubscription() {
 // ----------------- UTILITY PER DEBUG -----------------
 window.checkPushSubscription = logCurrentSubscription;
 
-// ----------------- OPTIONAL: FORCE INIT -----------------
-// Se vuoi forzare la verifica subscription all'avvio
-document.addEventListener("DOMContentLoaded", async () => {
-  await logCurrentSubscription();
-});
-
-
 /////////////  VARIABILi GLOBALI ///////////////////
 const form = document.getElementById("study-form");
 document
@@ -144,7 +137,7 @@ links.forEach((link) => {
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
-
+  await logCurrentSubscription();
   const pushBtn = document.getElementById("enable-push-btn");
 
   if (pushBtn) {

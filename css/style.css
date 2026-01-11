@@ -135,7 +135,9 @@ h4 {
 }
 
 .versione{
+margin-top: 0.2rem;
 font-weight: lighter;
+font-size: 0.8rem;
 }
 
 .info-list {

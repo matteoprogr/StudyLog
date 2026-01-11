@@ -22,9 +22,9 @@ async function enablePushForUser(userId) {
   }
 
   OneSignalDeferred.push(async (OneSignal) => {
-    try {
-      // Verifica permessi
-      const permission = await OneSignal.Notifications.permission;
+  try {
+      // 1. Verifica permessi browser
+      let permission = await OneSignal.Notifications.permission;
       console.log("📬 Permesso attuale:", permission);
 
       if (!isPermissionGranted(permission)) {
@@ -33,50 +33,59 @@ async function enablePushForUser(userId) {
           return;
         }
 
-        // Richiedi permesso
-        const granted = await OneSignal.Notifications.requestPermission();
-        if (!granted) {
-          console.warn("⚠️ Permesso negato");
+        console.log("📬 Richiesta permesso...");
+        await OneSignal.Notifications.requestPermission();
+
+        permission = await OneSignal.Notifications.permission;
+        if (!isPermissionGranted(permission)) {
+          console.warn("⚠️ Permesso negato dall'utente");
           return;
         }
+        console.log("✅ Permesso concesso");
       }
 
-      // Collega l'utente
+      // LOGIN ONESIGNAL
       await OneSignal.login(userId);
       console.log("✅ Utente OneSignal collegato:", userId);
 
-      // Verifica subscription
       const pushSubscription = OneSignal.User.PushSubscription;
-      console.log("📬 Subscription:", pushSubscription);
-      console.log("📬 Opted in:", pushSubscription.optedIn);
-      console.log("📬 Token:", pushSubscription.token);
+      console.log("Subscription:", pushSubscription);
+      console.log("Opted in:", pushSubscription.optedIn);
+      console.log("Token:", pushSubscription.token);
 
       if (!pushSubscription.optedIn) {
        console.warn("⚠️ Subscription non attiva, attivazione in corso...");
 
        await OneSignal.User.PushSubscription.optIn();
-       console.log("✅ Opt-in eseguito!");
+       console.log("✅ Opt-in richiesto, attendo conferma...");
+       let attempts = 0;
+       const maxAttempts = 20;
+       let isActive = false;
 
-       await new Promise(resolve => setTimeout(resolve, 1000));
+        while (attempts < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+            const updatedSubscription = OneSignal.User.PushSubscription;
+            if (updatedSubscription.optedIn && updatedSubscription.token) {
+                isActive = true;
+                console.log("✅ Subscription attiva!");
+                console.log("📬 Token:", pushSubscription.token);
+                break;
+            }
+            attempts++;
+            console.log(`⏳ Tentativo ${attempts}/${maxAttempts}...`);
+        }
 
-       // 6. Verifica di nuovo
-       const updatedSubscription = OneSignal.User.PushSubscription;
-       console.log("📬 Subscription dopo opt-in:", updatedSubscription.optedIn);
-       console.log("📬 Token:", updatedSubscription.token);
-
-       if (updatedSubscription.optedIn && updatedSubscription.token) {
-         console.log("✅ Subscription attiva e pronta!");
-         alert("✅ Notifiche attivate con successo!");
-         showUserSection(currentUser);
+        if (!isActive) {
+          console.error("❌ Timeout: subscription non attivata");
+          alert("⚠️ Errore nell'attivazione. Riprova tra qualche secondo.");
+          return;
+        }
        } else {
-         console.error("❌ Subscription ancora non attiva");
-         alert("⚠️ Errore nell'attivazione delle notifiche. Riprova.");
-         return;
-         }
-       } else {
-        showUserSection(currentUser);
-        console.log("✅ Subscription attiva e pronta!");
+            console.log("✅ Subscription attiva e pronta!");
       }
+
+        alert("✅ Notifiche attivate con successo!");
+        showUserSection(currentUser);
 
     } catch (err) {
       console.error("❌ Errore abilitazione push:", err);
@@ -98,13 +107,11 @@ async function disablePushForUser() {
       await OneSignal.User.PushSubscription.optOut();
       console.log("✅ Opt-out dalle notifiche completato");
 
-      // Logout da OneSignal
-      await OneSignal.logout();
       showUserSection(currentUser);
-
       alert("✅ Notifiche disattivate con successo");
     } catch (err) {
       console.error("❌ Errore disattivazione push:", err);
+      alert("❌ Errore nella disattivazione: " + err.message);
     }
   });
 }
@@ -257,20 +264,31 @@ async function handleRegister(e) {
 // ---------------- LOGOUT ----------------
 async function handleLogout() {
   try {
-    // Prima disattiva le notifiche
-    await disablePushForUser();
+    console.log("🔄 Logout in corso...");
+    if (window.OneSignalDeferred) {
+      await new Promise((resolve) => {
+        OneSignalDeferred.push(async (OneSignal) => {
+          try {
+            await OneSignal.User.PushSubscription.optOut();
+            await OneSignal.logout();
+            console.log("✅ Logout OneSignal completato");
+          } catch (err) {
+            console.error("⚠️ Errore OneSignal logout:", err);
+          }
+           resolve();
+        });
+      });
+    }
 
-    // Poi logout da Supabase
     const { error } = await supabaseClient.auth.signOut();
     if (error) throw error;
-
-    console.log("✅ Logout effettuato");
     currentUser = null;
-
     showAuthSection();
+    console.log("✅ Logout completato");
+
   } catch (error) {
     console.error("❌ Errore logout:", error);
-    alert("Errore durante il logout");
+    alert("Errore durante il logout: " + error.message);
   }
 }
 

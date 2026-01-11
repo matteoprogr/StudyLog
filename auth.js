@@ -67,13 +67,14 @@ async function enablePushForUser(userId) {
        if (updatedSubscription.optedIn && updatedSubscription.token) {
          console.log("✅ Subscription attiva e pronta!");
          alert("✅ Notifiche attivate con successo!");
+         showUserSection(currentUser);
        } else {
          console.error("❌ Subscription ancora non attiva");
          alert("⚠️ Errore nell'attivazione delle notifiche. Riprova.");
          return;
          }
        } else {
-        showUserSection(currentUser)
+        showUserSection(currentUser);
         console.log("✅ Subscription attiva e pronta!");
       }
 

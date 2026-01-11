@@ -71,6 +71,7 @@ async function enablePushForUser(userId) {
          console.error("❌ Subscription ancora non attiva");
          alert("⚠️ Errore nell'attivazione delle notifiche. Riprova.");
          return;
+         }
        } else {
         showUserSection(currentUser)
         console.log("✅ Subscription attiva e pronta!");

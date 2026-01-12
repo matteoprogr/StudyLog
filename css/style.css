@@ -505,6 +505,14 @@ font-size: 0.8rem;
   background: #ff3b30;
 }
 
+.toast.warning {
+  background: #f39c12;
+}
+
+.toast.success {
+  background: #2ecc71;
+}
+
 #btnExportDB,
 #btnImportDB {
   background: #333;

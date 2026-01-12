@@ -1,5 +1,4 @@
 // auth.js – Gestione autenticazione + notifiche OneSignal
-
 let currentUser = null;
 let isLoginMode = true;
 
@@ -29,7 +28,7 @@ async function enablePushForUser(userId) {
 
       if (!isPermissionGranted(permission)) {
         if (permission === "denied") {
-          alert("⚠️ Hai bloccato le notifiche. Riattivale nelle impostazioni del browser.");
+          showToast("⚠️ Hai bloccato le notifiche. Riattivale nelle impostazioni del browser.","warning")
           return;
         }
 
@@ -77,19 +76,19 @@ async function enablePushForUser(userId) {
 
         if (!isActive) {
           console.error("❌ Timeout: subscription non attivata");
-          alert("⚠️ Errore nell'attivazione. Riprova tra qualche secondo.");
+          showToast("⚠️ Errore nell'attivazione. Riprova tra qualche secondo.", "warning");
           return;
         }
        } else {
             console.log("✅ Subscription attiva e pronta!");
       }
 
-        alert("✅ Notifiche attivate con successo!");
+        showToast("✅ Notifiche attivate con successo!","success");
         showUserSection(currentUser);
 
     } catch (err) {
       console.error("❌ Errore abilitazione push:", err);
-      alert("❌ Errore nell'attivazione delle notifiche: " + err.message);
+      showToast("❌ Errore nell'attivazione delle notifiche: ","error");
     }
   });
 }
@@ -108,10 +107,10 @@ async function disablePushForUser() {
       console.log("✅ Opt-out dalle notifiche completato");
 
       showUserSection(currentUser);
-      alert("✅ Notifiche disattivate con successo");
+      showToast("✅ Notifiche disattivate con successo","success");
     } catch (err) {
       console.error("❌ Errore disattivazione push:", err);
-      alert("❌ Errore nella disattivazione: " + err.message);
+      showToast("❌ Errore nella disattivazione: " + err.message, "error");
     }
   });
 }
@@ -288,7 +287,7 @@ async function handleLogout() {
 
   } catch (error) {
     console.error("❌ Errore logout:", error);
-    alert("Errore durante il logout: " + error.message);
+    showToast("Errore durante il logout: " + error.message,"success");
   }
 }
 
@@ -359,6 +358,21 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   checkAuth();
 });
+
+
+// --------- TOAST ---------- //
+async function showToast(message, type = "success") {
+  const toast = document.createElement("div");
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+
+  setTimeout(() => toast.classList.add("show"), 100);
+  setTimeout(() => {
+    toast.classList.remove("show");
+    setTimeout(() => toast.remove(), 400);
+  }, 3000);
+}
 
 
 // ---------------- EXPORT CURRENT USER ----------------

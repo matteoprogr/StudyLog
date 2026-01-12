@@ -272,9 +272,11 @@ async function startTimer() {
 
         if (error) {
           console.error("Errore Supabase:", error);
+          showErrorToast("Errore Supabase:", error);
         }
       } catch (err) {
         console.error("Errore rete:", err);
+        showErrorToast("Errore Supabase:", error);
       }
   }
 }

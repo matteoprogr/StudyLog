@@ -287,7 +287,7 @@ async function handleLogout() {
 
   } catch (error) {
     console.error("❌ Errore logout:", error);
-    showToast("Errore durante il logout: " + error.message,"success");
+    showToast("Errore durante il logout: " + error.message,"error");
   }
 }
 

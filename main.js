@@ -144,7 +144,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     pushBtn.addEventListener("click", async () => {
       const currentUser = window.getCurrentUser ? window.getCurrentUser() : null;
       if (!currentUser) {
-        alert("Effettua il login prima di attivare le notifiche");
+        showErrorToast("Effettua il login prima di attivare le notifiche", "warning");
         return;
       }
       // Attiva push per l'utente loggato

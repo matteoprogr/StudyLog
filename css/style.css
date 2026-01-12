@@ -857,65 +857,109 @@ input[type="file"] {
 /* ================= SEZIONE AUTENTICAZIONE ================= */
 #auth-section {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
-  background: #f5f5f5;
-  font-family: Arial, sans-serif;
+  min-height: 80vh; /* Adattato per non coprire la navbar */
+  padding: 1rem;
+  font-family: system-ui, sans-serif;
+  width: 100%;
+}
+
+/* Contenitori Form (Login/Register) */
+#login-container,
+#register-container {
+  width: 100%;
+  max-width: 25rem; /* circa 400px */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 #auth-section form {
-  background: #fff;
-  padding: 30px 40px;
-  border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  /* Stile coerente con le card esistenti (.esame o .info-list li) */
+  background: linear-gradient(135deg, rgba(236, 244, 251, 0.4), #ffffff);
+  backdrop-filter: blur(5px);
+  padding: clamp(1.5rem, 2rem, 2.5rem);
+  border-radius: clamp(0.5rem, 0.75rem, 1rem);
+  box-shadow: 0 0.125rem 0.375rem rgba(0, 0, 0, 0.05),
+              0 8px 24px rgba(0,0,0,0.05); /* Ombra leggermente più profonda per il focus */
+  border: 1px solid rgba(255, 255, 255, 0.6);
   width: 100%;
-  max-width: 400px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: clamp(0.8rem, 1rem, 1.2rem);
 }
 
+/* Input Fields */
 #auth-section input[type="email"],
 #auth-section input[type="password"] {
-  padding: 12px 15px;
+  width: 100%;
+  padding: clamp(0.6rem, 0.7rem, 0.8rem);
   border: 1px solid #ccc;
-  border-radius: 8px;
-  font-size: 16px;
-  transition: border-color 0.2s;
+  border-radius: clamp(0.3rem, 0.4rem, 0.5rem);
+  font-size: clamp(0.95rem, 1rem, 1.05rem);
+  background-color: rgba(255, 255, 255, 0.8);
+  transition: all 0.3s ease;
+  outline: none;
 }
 
 #auth-section input[type="email"]:focus,
 #auth-section input[type="password"]:focus {
-  border-color: #007bff;
-  outline: none;
+  border-color: #aaa;
+  box-shadow: 0 0 clamp(0.3rem, 0.4rem, 0.5rem) rgba(74, 144, 226, 0.3);
+  background-color: #fff;
 }
 
-#auth-section button {
-  padding: 12px;
+/* Pulsanti Submit (Login/Registrati) */
+#auth-section button[type="submit"] {
+  background: #333; /* Colore primario dell'app */
+  color: white;
+  width: 100%;
+  padding: clamp(0.6rem, 0.75rem, 0.9rem);
   border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  background-color: #007bff;
-  color: #fff;
+  border-radius: clamp(0.3rem, 0.4rem, 0.5rem);
+  font-size: clamp(1rem, 1.05rem, 1.1rem);
+  font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background 0.2s ease, transform 0.1s ease;
+  margin-top: 0.5rem;
 }
 
-#auth-section button:hover {
-  background-color: #0056b3;
+#auth-section button[type="submit"]:hover {
+  background: #555;
+}
+
+#auth-section button[type="submit"]:active {
+  transform: scale(0.98);
 }
 
 #auth-section button:disabled {
   background-color: #999;
   cursor: not-allowed;
+  opacity: 0.7;
 }
 
+/* Messaggi di errore/successo */
 #auth-section p {
   margin: 0;
-  font-size: 14px;
-  color: #d9534f;
+  font-size: clamp(0.85rem, 0.9rem, 0.95rem);
+  text-align: center;
+  padding: 0.5rem;
+  border-radius: 4px;
+}
+
+#login-error, #register-error {
+  color: #c0392b; /* Rosso usato per il delete */
+  background: rgba(192, 57, 43, 0.1);
+  width: 100%;
+}
+
+#register-success {
+  color: #27ae60;
+  background: rgba(39, 174, 96, 0.1);
+  width: 100%;
 }
 
 .hidden {
@@ -927,16 +971,20 @@ input[type="file"] {
 #toggle-login-mode {
   background: none;
   border: none;
-  color: #007bff;
+  color: #555;
   cursor: pointer;
-  font-size: 14px;
-  text-decoration: underline;
-  margin-top: 10px;
+  font-size: clamp(0.85rem, 0.9rem, 1rem);
+  text-decoration: none;
+  margin-top: clamp(1rem, 1.2rem, 1.5rem);
+  font-weight: 500;
+  padding: 0.5rem;
+  transition: color 0.3s;
 }
 
 #toggle-auth-mode:hover,
 #toggle-login-mode:hover {
-  color: #0056b3;
+  color: #000;
+  text-decoration: underline;
 }
 
 /* ================= SEZIONE UTENTE LOGGATO ================= */
@@ -944,50 +992,65 @@ input[type="file"] {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 50px 20px;
-  font-family: Arial, sans-serif;
-  gap: 20px;
+  justify-content: center;
+  padding: 2rem 1rem;
+  width: 100%;
+  max-width: 25rem;
+  margin: 0 auto;
+  gap: clamp(1rem, 1.5rem, 2rem);
+  /* Card effect per la sezione utente */
+  background: linear-gradient(135deg, rgba(236, 244, 251, 0.4), #ffffff);
+  border-radius: 1rem;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+#user-section p {
+  font-size: clamp(1.1rem, 1.25rem, 1.4rem);
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.5rem;
 }
 
 #user-section button {
-  padding: 12px 25px;
+  width: 100%;
+  padding: clamp(0.6rem, 0.75rem, 0.9rem);
   border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  background-color: #28a745;
-  color: #fff;
+  border-radius: clamp(0.3rem, 0.4rem, 0.5rem);
+  font-size: clamp(0.95rem, 1rem, 1.05rem);
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: opacity 0.2s;
+  color: #fff;
 }
 
-#user-section button:hover {
-  background-color: #1e7e34;
+#logout-btn {
+  background-color: #c0392b; /* Rosso coerente con il tasto Stop/Delete */
+}
+
+#logout-btn:hover {
+  background-color: #e74c3c;
 }
 
 /* ================= BOTTONE PUSH NOTIFICHE ================= */
 #enable-push-btn {
-  background-color: #ffc107;
+  background-color: #333; /* Grigio scuro coerente */
 }
 
 #enable-push-btn:hover {
-  background-color: #e0a800;
+  background-color: #555;
+}
+
+#disable-push-btn {
+  background-color: #7f8c8d; /* Grigio neutro per disattivare */
 }
 
 /* ================= RESPONSIVE ================= */
 @media screen and (max-width: 480px) {
+  #auth-section {
+    padding: 1rem 0.5rem;
+  }
+
   #auth-section form {
-    padding: 20px;
-  }
-
-  #auth-section input[type="email"],
-  #auth-section input[type="password"],
-  #auth-section button {
-    font-size: 14px;
-    padding: 10px;
-  }
-
-  #user-section button {
-    font-size: 14px;
-    padding: 10px 20px;
+    padding: 1.5rem;
   }
 }

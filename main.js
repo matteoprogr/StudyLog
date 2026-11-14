@@ -59,10 +59,14 @@ async function refresh() {
 }
 
 async function navigate() {
-  if (location.hash === alarmFallback) {
+  if (location.hash.startsWith(alarmFallback + '=')) {
+    const time = location.hash.slice(alarmFallback.length + 1);
     history.replaceState(history.state, '', '#registra');
     clearTimeout(alarmCheck);
-    showAlarmStatus('Collegamento rifiutato o non supportato [INTENT_NON_DISPONIBILE]. Il browser o l’app Orologio non ha aperto la richiesta di sveglia.');
+    const manual = /^\d{2}:\d{2}$/.test(time)
+      ? ' Imposta manualmente la sveglia per le ' + time + ' in Orologio.'
+      : ' Imposta la sveglia manualmente in Orologio.';
+    showAlarmStatus('Orologio non raggiungibile dal browser [INTENT_NON_DISPONIBILE].' + manual);
   }
   const pages = [...document.querySelectorAll('#app > section')];
   const requested = location.hash.slice(1);
@@ -196,7 +200,7 @@ alarmButton.addEventListener('click', () => {
     return;
   }
   const time = alarm.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
-  const fallback = encodeURIComponent(new URL(alarmFallback, location.href).href);
+  const fallback = encodeURIComponent(new URL(alarmFallback + '=' + time, location.href).href);
   const intent = 'intent:#Intent;action=android.intent.action.SET_ALARM;'
     + 'category=android.intent.category.BROWSABLE;'
     + 'i.android.intent.extra.alarm.HOUR=' + alarm.getHours() + ';'

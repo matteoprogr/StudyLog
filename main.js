@@ -167,8 +167,13 @@ studyForm.addEventListener('submit', async event => {
       await data.saveActiveTimer(timer);
       const result = androidTimer.schedule(timer.start, timer.duration, settings.sound);
       timer.nativeScheduled = result === 'scheduled';
-      if (timer.nativeScheduled) await data.saveActiveTimer(timer);
-      else notify(androidNotificationMessage(result));
+      if (timer.nativeScheduled) {
+        await data.saveActiveTimer(timer);
+        notify('Avviso Android programmato.');
+      } else {
+        notify(androidNotificationMessage(result));
+      }
+      refreshAndroidNotificationStatus();
     } catch (error) {
       report(error);
     } finally {
@@ -191,11 +196,13 @@ function androidNotificationMessage(status) {
 function refreshAndroidNotificationStatus() {
   if (!androidTimer) return;
   byId('android-notification-status').textContent = androidNotificationMessage(androidTimer.status());
+  byId('android-notification-diagnostic').textContent = androidTimer.diagnostic();
 }
 
 if (androidTimer) {
   byId('android-notifications').hidden = false;
   byId('enable-android-notifications').onclick = () => androidTimer.configure();
+  byId('refresh-android-diagnostic').onclick = refreshAndroidNotificationStatus;
   window.addEventListener('android-notification-status', refreshAndroidNotificationStatus);
   refreshAndroidNotificationStatus();
 }

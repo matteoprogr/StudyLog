@@ -124,6 +124,10 @@ public final class MainActivity extends Activity {
             return "scheduled";
         }
 
+        @JavascriptInterface public String diagnostic() {
+            return TimerNotification.diagnostic(MainActivity.this);
+        }
+
         @JavascriptInterface public void configure() {
             runOnUiThread(() -> {
                 String status = status();
@@ -146,19 +150,35 @@ public final class MainActivity extends Activity {
 
         @JavascriptInterface public String schedule(long start, long duration, boolean sound) {
             String status = status();
-            if (!status.equals("scheduled")) return status;
+            if (!status.equals("scheduled")) {
+                TimerNotification.record(MainActivity.this, status.equals("exact")
+                    ? "[PERMESSO_AVVISI_ESATTI] Android non consente di programmare avvisi esatti."
+                    : "[NOTIFICHE_DISATTIVATE] Abilita le notifiche Android di StudyLog.");
+                return status;
+            }
             long remaining = start + duration - System.currentTimeMillis();
-            if (remaining <= 0 || duration <= 0 || duration > 86400000) return "invalid";
+            if (remaining <= 0 || duration <= 0 || duration > 86400000) {
+                TimerNotification.record(MainActivity.this, "[SCADENZA_NON_VALIDA] L’avviso non è stato programmato.");
+                return "invalid";
+            }
             try {
                 TimerNotification.schedule(MainActivity.this, start, remaining, sound);
+                String time = java.text.DateFormat.getDateTimeInstance().format(new java.util.Date(start + duration));
+                TimerNotification.record(MainActivity.this, "[PROGRAMMATO] Scadenza prevista: " + time);
                 return "scheduled";
             } catch (SecurityException error) {
+                TimerNotification.record(MainActivity.this, "[PERMESSO_AVVISI_ESATTI] Android ha rifiutato la programmazione.");
                 return "exact";
+            } catch (RuntimeException error) {
+                android.util.Log.e("StudyLogTimer", "Scheduling failed", error);
+                TimerNotification.record(MainActivity.this, "[ERRORE_PROGRAMMAZIONE] " + error.getClass().getSimpleName());
+                return "error";
             }
         }
 
         @JavascriptInterface public void cancel(long start) {
             TimerNotification.cancel(MainActivity.this, start);
+            TimerNotification.record(MainActivity.this, "[INTERROTTO] Richiesta di annullamento inviata ad Android.");
         }
 
         @JavascriptInterface public void exportBackup(String json) {

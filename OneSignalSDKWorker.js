@@ -1,5 +1,5 @@
 // Keep the existing worker URL so installed copies receive the local update.
-const CACHE = 'studylog-cache-local-v7';
+const CACHE = 'studylog-cache-local-v8';
 const APP = [
   './index.html',
   './css/style.css',

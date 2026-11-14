@@ -120,6 +120,14 @@
 
     <section id="info" class="page" hidden>
       <h1>Info</h1>
+      <p class="app-version">v.1.0.3 <span id="app-edition">· Web</span></p>
+      <script>
+        if (location.origin === 'https://studylog.local') {
+          document.getElementById('app-edition').textContent = window.StudyLogAndroid
+            ? '· App Android'
+            : '· App Android · collegamento nativo assente';
+        }
+      </script>
       <div class="panel guide">
         <h2>Dati e privacy</h2>
         <p>Sessioni, categorie, esami e impostazioni sono salvati nel browser. In Impostazioni puoi esportarli, ripristinarli da un backup o cancellarli.</p>

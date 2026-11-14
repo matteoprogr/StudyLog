@@ -145,6 +145,7 @@ th, td { padding: .45rem; border-bottom: 1px solid var(--border); text-align: le
 .metrics dd { margin: .3rem 0 0; font-size: clamp(.9rem, 3vw, 1.3rem); font-weight: 750; }
 
 .guide { display: grid; gap: .55rem; line-height: 1.5; }
+.app-version { margin: -.45rem 0 .8rem; font-size: .78rem; color: var(--muted); }
 .guide h2:not(:first-child) { margin-top: .55rem; }
 
 .navigation {

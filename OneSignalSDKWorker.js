@@ -1,96 +1,49 @@
-// OneSignalSDKWorker.js
-importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
-
-console.log("✅ OneSignal Service Worker caricato");
-
-const CACHE_NAME = "studylog-cache-v73";
-const urlsToCache = [
-  "./",
-  "./index.html",
-  "./css/style.css",
-  "./main.js",
-  "./auth.js",
-  "./query.js",
-  "./card.js",
-  "./icons/icon-192.png",
-  "./icons/icon-512.png",
-  "./libs/dexie.mjs",
-  "./libs/lucide.js",
-  "./libs/echarts.min.js",
+// Keep the existing worker URL so installed copies receive the local update.
+const CACHE = 'studylog-cache-local-v4';
+const APP = [
+  './index.html',
+  './css/style.css',
+  './main.js',
+  './query.js',
+  './card.js',
+  './charts.js',
+  './manifest.json',
+  './icons/icon-192.png',
+  './libs/dexie.mjs',
+  './libs/lucide.js',
+  './libs/echarts.min.js',
+  './assets/sounds/alarm.mp3',
 ];
 
-self.addEventListener("install", (event) => {
-  console.log("🔧 INSTALL iniziato");
-
-  event.waitUntil(
-    caches
-      .open(CACHE_NAME)
-      .then((cache) => {
-        console.log("📦 Cache aperta");
-        const promises = urlsToCache.map((url) => {
-          return fetch(url)
-            .then((response) => {
-              if (!response.ok) {
-                console.warn(`⚠️ ${url} - Status: ${response.status}`);
-                return null;
-              }
-              console.log(`✅ ${url} - OK`);
-              return cache.put(url, response);
-            })
-            .catch((err) => {
-              console.error(`❌ Errore su ${url}:`, err.message);
-              return null;
-            });
-        });
-        return Promise.all(promises);
-      })
-      .then(() => {
-        console.log("✅ Install completato");
-        return self.skipWaiting();
-      })
-  );
+self.addEventListener('install', event => {
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE);
+    await cache.addAll(APP.map(path => new Request(path, { cache: 'reload' })));
+    await self.skipWaiting();
+  })());
 });
 
-self.addEventListener("activate", (event) => {
-  console.log("🎯 ACTIVATE iniziato");
-
-  event.waitUntil(
-    caches
-      .keys()
-      .then((keys) => {
-        return Promise.all(
-          keys.map((key) => {
-            if (key !== CACHE_NAME) {
-              console.log(`🗑️ Elimino cache: ${key}`);
-              return caches.delete(key);
-            }
-          })
-        );
-      })
-      .then(() => {
-        console.log("✅ Activate completato");
-        return self.clients.claim();
-      })
-  );
+self.addEventListener('activate', event => {
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.filter(key => key.startsWith('studylog-cache-') && key !== CACHE)
+      .map(key => caches.delete(key)));
+    try {
+      const subscription = await self.registration.pushManager?.getSubscription();
+      if (subscription) await subscription.unsubscribe();
+    } catch (error) {
+      console.warn(error);
+    }
+    await self.clients.claim();
+  })());
 });
 
-self.addEventListener("fetch", (event) => {
-  if (event.request.method !== "GET") return;
-
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      return (
-        response ||
-        fetch(event.request).then((networkResponse) => {
-          if (networkResponse && networkResponse.ok) {
-            return caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, networkResponse.clone());
-              return networkResponse;
-            });
-          }
-          return networkResponse;
-        })
-      );
-    })
-  );
+self.addEventListener('fetch', event => {
+  const { request } = event;
+  if (request.method !== 'GET' || new URL(request.url).origin !== self.location.origin) return;
+  if (request.mode === 'navigate') {
+    event.respondWith(fetch(request).catch(() => caches.match(new URL('./index.html', self.registration.scope), { cacheName: CACHE })));
+    return;
+  }
+  event.respondWith(caches.match(request, { cacheName: CACHE }).then(response => response ?? fetch(request)));
 });

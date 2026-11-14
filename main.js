@@ -1,1031 +1,285 @@
-import {
-  saveStudyLog,
-  getAllStudyLogs,
-  saveMateria,
-  getAllMaterie,
-  getStudyLogsByMonth,
-  deleteDatabase,
-  updateMateria,
-  deleteMaterie,
-  isValid,
-  updateOreInLogs,
-  getStudyLogsByDay,
-  showErrorToast,
-  getAllEsami,
-  deleteEsame,
-  deleteLogByMateriaData,
-} from "./query.js";
+import * as data from './query.js';
+import { createCharts } from './charts.js';
+import { createEditors } from './card.js';
 
-import {
-  creaEsameComponent,
-  creaCardInsEsame,
-  mediaComponent,
-} from "./card.js";
+const byId = id => document.getElementById(id);
+const today = () => {
+  const date = new Date();
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+};
+const categorySelect = byId('category');
+const minutes = byId('minutes');
+const slider = byId('minutes-slider');
+const studyForm = byId('study-form');
+const dateSelect = byId('day-select');
+const audio = new Audio('assets/sounds/alarm.mp3');
 
-const { createClient } = supabase;
-const supabaseClient = createClient(
-  "https://mwfyrjedrqgtprcgtgti.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im13ZnlyamVkcnFndHByY2d0Z3RpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3MTk0NjQsImV4cCI6MjA4MzI5NTQ2NH0.uwA7ifZSKw-ZA7QpbcOkLHodHc9YTgezzexTc5A25TI"
-);
+let categories = [];
+let settings = data.defaultSettings;
+let activeTimer;
+let timerInterval;
+let busy = false;
+let statusTimeout;
 
-
-/////////  SERVICE WORKER /////// ----------------- INIT ONESIGNAL -----------------
-window.OneSignalDeferred = window.OneSignalDeferred || [];
-
-OneSignalDeferred.push(async (OneSignal) => {
-  try {
-    await OneSignal.init({
-      appId: "5c10ef76-9410-45f5-a026-ef8956262f1a",
-      serviceWorkerParam: { scope: '/StudyLog/' },
-      serviceWorkerPath: '/StudyLog/OneSignalSDKWorker.js',
-      allowLocalhostAsSecureOrigin: true,
-    });
-
-    console.log("✅ OneSignal inizializzato");
-
-    OneSignal.Notifications.addEventListener("click", (event) => {
-      console.log("📬 Notifica cliccata:", event.notification);
-    });
-  } catch (error) {
-    console.error("❌ Errore inizializzazione OneSignal:", error);
-  }
-});
-
-// ----------------- FUNZIONE VERIFICA SUBSCRIPTION -----------------
-async function logCurrentSubscription() {
-  OneSignalDeferred.push(async (OneSignal) => {
-    const sub = OneSignal.User.PushSubscription;
-    console.log("📬 Subscription attuale:", sub);
-
-    if (sub && sub.optedIn) {
-      console.log("✅ Subscription attiva e pronta per ricevere notifiche");
-    } else {
-      console.warn("⚠️ Nessuna subscription attiva");
-    }
-  });
+function notify(message) {
+  const status = byId('status');
+  status.hidden = false;
+  status.textContent = message;
+  clearTimeout(statusTimeout);
+  statusTimeout = setTimeout(() => { status.hidden = true; }, 4500);
 }
 
-
-// ----------------- UTILITY PER DEBUG -----------------
-window.checkPushSubscription = logCurrentSubscription;
-
-/////////////  VARIABILi GLOBALI ///////////////////
-const form = document.getElementById("study-form");
-document
-  .getElementById("addReg")
-  .addEventListener("click", aggiungiRegistrazione);
-const materiaInput = document.getElementById("ricerca-materie");
-const minutesSlider = document.getElementById("minutes");
-const minutesValue = document.getElementById("minutes-value");
-const timerContainer = document.getElementById("timer-container");
-const timerDisplay = document.getElementById("timer-display");
-const stopBtn = document.getElementById("stop-btn");
-const daySelect = document.getElementById("day-select");
-const monthSelect = document.getElementById("month-select");
-const prevBtn = document.getElementById("prev-month");
-const nextBtn = document.getElementById("next-month");
-const deleteBtn = document.getElementById("delete-db-btn");
-const modal = document.getElementById("confirm-modal");
-const confirmDelete = document.getElementById("confirm-delete");
-const cancelDelete = document.getElementById("cancel-delete");
-const audioFile = new Audio("assets/sounds/alarm.mp3");
-const carousel = document.querySelector(".chart-carousel");
-document.getElementById("deleteEsami").addEventListener("click", deleteEsami);
-let countdown;
-let remainingTime;
-let startTime = null;
-let durationMs = 0;
-let timerInterval = null;
-let materia;
-let minutes;
-let materie;
-let time;
-
-const links = document.querySelectorAll(".nav-links a");
-const sections = document.querySelectorAll(".page-section");
-
-lucide.createIcons();
-
-// --- Navigation ---
-links.forEach((link) => {
-  link.addEventListener("click", async (e) => {
-    e.preventDefault();
-    links.forEach((l) => l.classList.remove("active"));
-    link.classList.add("active");
-
-    const targetId = link.getAttribute("data-target");
-    if (targetId === "grafici") {
-      await setDate();
-      drawChart();
-      drawPieChart();
-      lineMediaChart();
-    }
-    if (targetId === "registra") {
-      materie = await getAllMaterie();
-      materieCreateComponent(materie);
-      drawDayChart();
-    }
-    if (targetId === "esami") {
-      creaEsamiPage();
-    }
-
-    sections.forEach((section) => {
-      section.classList.remove("active");
-      if (section.id === targetId) section.classList.add("active");
-    });
-  });
-});
-
-document.addEventListener("DOMContentLoaded", async () => {
-  await logCurrentSubscription();
-  const pushBtn = document.getElementById("enable-push-btn");
-
-  if (pushBtn) {
-    pushBtn.addEventListener("click", async () => {
-      const currentUser = window.getCurrentUser ? window.getCurrentUser() : null;
-      if (!currentUser) {
-        showErrorToast("Effettua il login prima di attivare le notifiche", "warning");
-        return;
-      }
-      // Attiva push per l'utente loggato
-      await enablePushForUser(currentUser.id);
-
-      // Log subscription aggiornata
-      await logCurrentSubscription();
-    });
-  }
-
-
-
-  prevBtn.addEventListener("click", () => changeMonth(-1));
-  nextBtn.addEventListener("click", () => changeMonth(1));
-
-  await setDay();
-
-  if ("Notification" in window && Notification.permission !== "granted") {
-    await Notification.requestPermission();
-  }
-
-  minutesSlider.addEventListener("input", () => {
-    minutesValue.textContent = minutesSlider.value;
-  });
-  monthSelect.addEventListener("change", drawChart);
-  daySelect.addEventListener("change", drawDayChart);
-  materie = await getAllMaterie();
-  materieCreateComponent(materie);
-
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
-    minutes = parseInt(minutesValue.innerText, 10);
-    if (minutes === 0) {
-      startInfiniteTimer();
-    } else {
-      startTimer();
-    }
-
-    form.classList.add("hidden");
-    timerContainer.classList.remove("hidden");
-    materia = materiaInput.value.trim();
-  });
-
-  stopBtn.addEventListener("click", async () => {
-    await stopTimer();
-    resetForm();
-    form.classList.remove("hidden");
-    timerContainer.classList.add("hidden");
-  });
-
-  deleteBtn.addEventListener("click", () => {
-    modal.classList.remove("hidden");
-  });
-
-  cancelDelete.addEventListener("click", () => {
-    modal.classList.add("hidden");
-  });
-
-  confirmDelete.addEventListener("click", () => {
-    modal.classList.add("hidden");
-    deleteDatabase();
-  });
-});
-
-///////////  FUNZIONI //////////////////////
-
-async function aggiungiRegistrazione() {
-  const minutes = parseInt(minutesSlider.value, 10);
-  materia = materiaInput.value.trim();
-  if (minutes !== 0 && isValid(materia) && isValid(daySelect.value)) {
-    await saveLog(materia, minutes, daySelect.value);
-    resetForm();
-    drawDayChart();
-    minutesValue.textContent = 0;
-  } else {
-    showErrorToast("Valori non validi", "error");
-    return;
-  }
-  return;
+function report(error) {
+  console.error(error);
+  notify(error.message || 'Non è stato possibile completare l’operazione.');
 }
 
-async function deleteEsami() {
-  const selectedCards = document.querySelectorAll(".selected");
-  if (selectedCards.length === 0) {
-    showErrorToast("Selezionare almeno un esame", "error");
-    return;
+const charts = createCharts(byId, data);
+const editors = createEditors(byId, data, today, refresh);
+
+function option(label, value) {
+  return new Option(label, value);
+}
+
+async function refresh() {
+  const selected = categorySelect.value;
+  categories = (await data.getAllMaterie()).sort((a, b) => a.nome.localeCompare(b.nome, 'it'));
+  categorySelect.replaceChildren(option(categories.length ? 'Scegli una categoria' : 'Nessuna categoria', ''));
+  for (const category of categories) categorySelect.add(option(category.nome, category.nome));
+  if (categories.some(category => category.nome === selected)) categorySelect.value = selected;
+  editors.renderCategories(categories, Boolean(activeTimer));
+  syncDuration();
+  if (!byId('registra').hidden) await charts.day(categories);
+  if (!byId('grafici').hidden) await charts.overview(categories);
+  if (!byId('esami').hidden) await editors.renderExams();
+}
+
+async function navigate() {
+  const pages = [...document.querySelectorAll('#app > section')];
+  const requested = location.hash.slice(1);
+  const page = pages.find(section => section.id === requested) ?? pages[0];
+  for (const section of pages) section.hidden = section !== page;
+  for (const link of document.querySelectorAll('.navigation a')) {
+    if (link.hash === '#' + page.id) link.setAttribute('aria-current', 'page');
+    else link.removeAttribute('aria-current');
   }
-
-  for (const card of selectedCards) {
-    await deleteEsame(parseInt(card.id, 10));
-  }
-  await creaEsamiPage();
+  await refresh();
 }
 
-
-async function startTimer() {
-  const {
-    data: { user },
-  } = await supabaseClient.auth.getUser();
-  console.log(user);
-
-  const minutes = parseInt(minutesSlider.value, 10);
-  if (!minutes || minutes <= 0) return;
-
-  durationMs = minutes * 60 * 1000;
-  startTime = Date.now();
-  const endTime = new Date(startTime + durationMs).toISOString();
-
-  // Avvio timer UI (come prima)
-  timerInterval = setInterval(updateTimer, 1000);
-  updateTimer();
-
-  dayChart.classList.add("hidden");
-  daySelect.classList.add("hidden");
-
-  //salvataggio timer su Supabase
-  if(isValid(user)){
-      try {
-        const { error } = await supabaseClient.from("study_timers").insert({
-          materia,
-          end_time: endTime,
-          notified: false,
-          user_id: user.id,
-        });
-
-        if (error) {
-          console.error("Errore Supabase:", error);
-          showErrorToast("Errore Supabase:", error);
-        }
-      } catch (err) {
-        console.error("Errore rete:", err);
-        showErrorToast("Errore Supabase:", error);
-      }
-  }
+function syncDuration() {
+  const value = minutes.valueAsNumber;
+  if (Number.isFinite(value)) slider.value = Math.min(value, settings.limit);
+  const countdown = Number.isFinite(value) && value > 0;
+  minutes.setCustomValidity(countdown && value > settings.limit
+    ? 'Per avviare il timer, inserisci al massimo ' + settings.limit + ' minuti.'
+    : '');
+  byId('start').textContent = countdown ? 'Avvia timer' : 'Avvia cronometro';
+  byId('start').disabled = busy || !categories.length;
+  byId('add-log').disabled = busy || !categories.length;
 }
 
-function startInfiniteTimer() {
-  startTime = Date.now();
-  timerInterval = setInterval(updateInfiniteTimer, 1000);
-  updateInfiniteTimer();
-  dayChart.classList.add("hidden");
-  daySelect.classList.add("hidden");
+function applySettings() {
+  byId('timer-limit').value = settings.limit;
+  byId('timer-sound').checked = settings.sound;
+  slider.max = settings.limit;
+  syncDuration();
 }
 
-function updateInfiniteTimer() {
-  const elapsed = Date.now() - startTime;
-  updateTimerDisplay(elapsed);
-  time = elapsed;
+function timeLabel(ms, roundUp = false) {
+  const seconds = roundUp ? Math.ceil(ms / 1000) : Math.floor(ms / 1000);
+  return [Math.floor(seconds / 3600), Math.floor(seconds / 60) % 60, seconds % 60]
+    .map(value => String(value).padStart(2, '0')).join(':');
 }
 
-async function stopTimer() {
+function tick() {
+  if (!activeTimer || busy) return;
+  const elapsed = Math.max(0, Date.now() - activeTimer.start);
+  const remaining = Math.max(0, activeTimer.duration - elapsed);
+  byId('timer-display').textContent = timeLabel(activeTimer.duration ? remaining : elapsed, Boolean(activeTimer.duration));
+  if (activeTimer.duration && remaining === 0) finishTimer(true);
+}
+
+async function finishTimer(expired) {
+  if (!activeTimer || busy) return;
+  const timer = activeTimer;
+  const elapsed = Math.max(0, Date.now() - timer.start);
+  timer.savedDuration ??= timer.duration ? Math.min(elapsed, timer.duration) : elapsed;
+  timer.expired ??= expired || (timer.duration > 0 && elapsed >= timer.duration);
+  busy = true;
+  byId('stop').disabled = true;
   clearInterval(timerInterval);
-  startTime = null;
-  durationMs = 0;
-  updateTimerDisplay(0);
-  minutesValue.textContent = 0;
-  const audio = audioFile;
-  audio.play().catch((err) => console.log("Errore audio:", err));
-  const minutiPassati = time / (1000 * 60);
-  await saveLog(materia, minutiPassati);
-  minutesValue.textContent = 0;
-  form.classList.remove("hidden");
-  timerContainer.classList.add("hidden");
-  materie = await getAllMaterie();
-  materieCreateComponent(materie);
-  daySelect.classList.remove("hidden");
-  drawDayChart();
-}
-
-async function updateTimer() {
-  const elapsed = Date.now() - startTime;
-  const remaining = durationMs - elapsed;
-  time = elapsed;
-
-  if (remaining <= 0) {
-    clearInterval(timerInterval);
-    updateTimerDisplay(0);
-    const audio = audioFile;
-    audio.play().catch((err) => console.log("Errore audio:", err));
-    await saveLog(materia, minutes);
-    minutesValue.textContent = 0;
-    resetForm();
-    form.classList.remove("hidden");
-    timerContainer.classList.add("hidden");
-    materie = await getAllMaterie();
-    materieCreateComponent(materie);
-    daySelect.classList.remove("hidden");
-    drawDayChart();
+  if (timer.expired && settings.sound && !timer.alerted) {
+    timer.alerted = true;
+    audio.play().catch(() => notify('Timer terminato. Il browser ha bloccato il suono.'));
+  }
+  try {
+    if (timer.savedDuration > 0) {
+      await data.saveSession(timer.category, timer.day, timer.savedDuration / 3600000);
+    }
+  } catch (error) {
+    busy = false;
+    byId('stop').disabled = false;
+    byId('stop').textContent = 'Riprova salvataggio';
+    report(error);
     return;
   }
-  updateTimerDisplay(remaining);
+  activeTimer = undefined;
+  busy = false;
+  byId('stop').disabled = false;
+  byId('stop').textContent = 'Interrompi';
+  byId('timer').hidden = true;
+  studyForm.hidden = false;
+  minutes.value = 0;
+  dateSelect.value = timer.day;
+  syncDuration();
+  const savedTime = timeLabel(timer.savedDuration);
+  const completion = timer.expired ? 'Timer terminato.' : 'Sessione terminata.';
+  notify(timer.savedDuration > 0 ? completion + ' Aggiunto ' + savedTime + '.' : completion);
+  await refresh().catch(report);
 }
 
-function updateTimerDisplay(ms) {
-  const totalSeconds = Math.floor(ms / 1000);
-  const h = Math.floor(totalSeconds / 3600);
-  const m = Math.floor((totalSeconds % 3600) / 60);
-  const s = totalSeconds % 60;
-  timerDisplay.textContent = `${h.toString().padStart(2, "0")}:${m
-    .toString()
-    .padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-}
+studyForm.addEventListener('submit', event => {
+  event.preventDefault();
+  if (activeTimer || busy) return;
+  activeTimer = {
+    category: categorySelect.value,
+    day: today(),
+    start: Date.now(),
+    duration: minutes.valueAsNumber * 60000,
+  };
+  byId('timer-category').textContent = activeTimer.category;
+  studyForm.hidden = true;
+  byId('timer').hidden = false;
+  editors.renderCategories(categories, true);
+  tick();
+  timerInterval = setInterval(tick, 250);
+});
 
-async function getTime(minutes) {
-  return minutes / 60;
-}
+byId('stop').addEventListener('click', () => finishTimer(false));
 
-function changeMonth(offset) {
+byId('add-log').addEventListener('click', async () => {
+  if (busy) return;
+  // Manual entries can exceed the configured countdown limit.
+  minutes.setCustomValidity('');
+  const valid = studyForm.reportValidity();
+  syncDuration();
+  if (!valid || !dateSelect.reportValidity()) return;
+  const value = minutes.valueAsNumber;
+  if (value < 1 || value > 1440) {
+    notify('Inserisci una durata tra 1 e 1.440 minuti.');
+    return;
+  }
+  busy = true;
+  syncDuration();
   try {
-    let [year, month] = monthSelect.value.split("-").map(Number);
-    if (month === 12 || month === 1) {
-      if (offset < 0 && month === 1) {
-        year += offset;
-        month = 13;
-      }
-      if (offset > 0 && month === 12) {
-        year += offset;
-        month = 0;
-      }
-    }
-    const newAnno = year;
-    const newMese = String(month + offset).padStart(2, "0");
-    monthSelect.value = `${newAnno}-${newMese}`;
-    drawChart();
-    drawPieChart();
-    lineMediaChart();
-  } catch (err) {
-    console.log(err);
+    await data.saveSession(categorySelect.value, dateSelect.value, value / 60);
+    minutes.value = 0;
+    await charts.day(categories);
+    notify('Sessione aggiunta.');
+  } catch (error) {
+    report(error);
+  } finally {
+    busy = false;
+    syncDuration();
   }
+});
+
+minutes.max = 1440;
+minutes.addEventListener('input', syncDuration);
+slider.addEventListener('input', () => {
+  minutes.value = slider.value;
+  syncDuration();
+});
+dateSelect.addEventListener('change', () => charts.day(categories).catch(report));
+for (const id of ['month-select', 'chart-view']) {
+  byId(id).addEventListener('change', () => charts.overview(categories).catch(report));
 }
 
-async function setDate() {
-  const oggi = new Date();
-  const anno = oggi.getFullYear();
-  const mese = String(oggi.getMonth() + 1).padStart(2, "0");
-  monthSelect.value = `${anno}-${mese}`;
-}
-
-async function setDay() {
-  const today = new Date();
-  const y = today.getFullYear();
-  const m = String(today.getMonth() + 1).padStart(2, "0");
-  const d = String(today.getDate()).padStart(2, "0");
-  const formatted = `${y}-${m}-${d}`;
-  daySelect.value = formatted;
-  drawDayChart();
-}
-
-export async function setDateEsami(dataEsami) {
-  const today = new Date();
-  const y = today.getFullYear();
-  const m = String(today.getMonth() + 1).padStart(2, "0");
-  const d = String(today.getDate()).padStart(2, "0");
-  const formatted = `${y}-${m}-${d}`;
-  dataEsami.value = formatted;
-}
-
-export function dataInFormatoInterfaccia(data) {
-  const [y, m, d] = data.split("-");
-  return `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${y}`;
-}
-
-export async function dateInFormatoSistema(data) {
-  const [d, m, y] = data.split("/");
-  return `${y}-${m}-${d}`;
-}
-
-async function saveLog(materiaIns, minutes, data) {
-  let formatted;
-  if (!isValid(data)) {
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, "0");
-    const dd = String(today.getDate()).padStart(2, "0");
-    formatted = `${yyyy}-${mm}-${dd}`;
-  } else {
-    formatted = data;
+byId('edit-log').addEventListener('click', async () => {
+  const day = dateSelect.value;
+  const category = byId('day-category').value;
+  try {
+    const logs = await data.getStudyLogsByDay(day);
+    const hours = logs.filter(log => log.materia === category).reduce((sum, log) => sum + log.ore, 0);
+    editors.editSession(category, day, hours);
+  } catch (error) {
+    report(error);
   }
+});
 
-  const time = await getTime(minutes);
-  const materiaCap = capitalizeFirstLetter(materiaIns);
-  const existLog = await updateOreInLogs(time, formatted, materiaCap);
-  if (!existLog) {
-    const log = {
-      data: formatted,
-      materia: materiaCap,
-      ore: time,
-    };
-    const materia = {
-      nome: materiaCap,
-    };
-    let matExist = false;
-    for (const mat of materie) {
-      if (mat.nome === materiaCap) {
-        matExist = true;
-      }
-    }
-    if (!matExist) await saveMateria(materia);
-    await saveStudyLog(log);
+byId('settings-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  const values = { limit: byId('timer-limit').valueAsNumber, sound: byId('timer-sound').checked };
+  try {
+    await data.saveSettings(values);
+    settings = values;
+    applySettings();
+    notify('Impostazioni salvate.');
+  } catch (error) {
+    report(error);
   }
-}
+});
 
-export function capitalizeFirstLetter(str) {
-  if (!str) return str;
-  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-}
-
-function resetForm() {
-  form.reset();
-  form.classList.remove("hidden");
-  timerContainer.classList.add("hidden");
-  timerDisplay.textContent = "00:00";
-}
-
-async function materieCreateComponent(mats) {
-  const materieList = document.getElementById("categorieCardsEntrata");
-  materieList.innerHTML = "";
-  for (const materia of mats) {
-    const nodo = await materiaComponent(materia.nome);
-    materieList.appendChild(nodo);
+byId('btnExportDB').addEventListener('click', async () => {
+  try {
+    const backup = await data.exportData();
+    const url = URL.createObjectURL(new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'studylog_export.json';
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  } catch (error) {
+    report(error);
   }
+});
+
+const file = byId('fileImport');
+file.addEventListener('change', () => { byId('btnImportDB').disabled = !file.files.length; });
+
+async function refreshSettings() {
+  settings = await data.getSettings();
+  applySettings();
 }
 
-async function materiaComponent(materia) {
-  const container = document.createElement("div");
-  container.classList.add("cat");
-  let pressTimer;
-  container.innerHTML = `
-        <span class="mat-name">${materia}</span>
-    `;
-
-  container.addEventListener("click", () => {
-    const materiaEl = container.querySelector("span");
-    const materiaInput = document.getElementById("ricerca-materie");
-    if (isValid(materiaEl)) materiaInput.value = materiaEl.innerText;
-  });
-
-  const span = container.querySelector(".mat-name");
-  container.addEventListener("touchstart", () => {
-    pressTimer = setTimeout(() => {
-      const input = document.createElement("input");
-      const btnDelete = document.createElement("button");
-      input.type = "text";
-      const oldValue = span.textContent.trim();
-      input.value = oldValue;
-      input.maxLength = 20;
-      input.id = "updateMat";
-      btnDelete.textContent = "❌";
-      btnDelete.id = "delMat";
-      btnDelete.classList.add("btn-delete");
-      btnDelete.setAttribute("tabindex", "-1");
-      if (!container.querySelector(".btn-delete")) {
-        container.appendChild(btnDelete);
-        btnDelete.addEventListener("click", async () => {
-          container.remove();
-          deleteMaterie(oldValue);
-          materie = await getAllMaterie();
-          materieCreateComponent(materie);
-          drawDayChart();
-        });
-      }
-
-      span.replaceWith(input);
-      input.focus();
-
-      const confirm = async () => {
-        const newValue = input.value.trim() || materia;
-        span.textContent = newValue;
-        try {
-          input.replaceWith(span);
-        } catch {}
-        if (oldValue !== newValue) {
-          await updateMateria(oldValue, newValue);
-        }
-
-        materie = await getAllMaterie();
-        materieCreateComponent(materie);
-        await drawDayChart();
-      };
-
-      const notConfirm = async () => {
-        btnDelete.remove();
-        span.textContent = oldValue;
-        try {
-          input.replaceWith(span);
-        } catch {}
-      };
-
-      input.addEventListener(
-        "blur",
-        (ev) => {
-          if (ev.relatedTarget === btnDelete) return;
-          notConfirm();
-        },
-        { once: true }
-      );
-
-      input.addEventListener("keydown", (ev) => {
-        if (ev.key === "Enter") {
-          confirm();
-        }
-      });
-    }, 600);
-  });
-
-  container.addEventListener("touchend", () => {
-    clearTimeout(pressTimer);
-  });
-
-  return container;
-}
-
-export async function creaEsamiPage() {
-  const newCardDiv = document.getElementById("newEsamiCard");
-  const esamiCards = document.getElementById("esamiCards");
-  const mediaDiv = document.getElementById("media");
-  let prodottoVotiCrediti = 0;
-  let totCrediti = 0;
-  newCardDiv.innerHTML = "";
-  esamiCards.innerHTML = "";
-  media.innerHTML = "";
-
-  const newCardComp = await creaCardInsEsame();
-  newCardDiv.appendChild(newCardComp);
-
-  const cards = (await getAllEsami()).sort(
-    (a, b) => new Date(a.data) - new Date(b.data)
-  );
-  for (const card of cards) {
-    card.data = await dataInFormatoInterfaccia(card.data);
-    const esame = creaEsameComponent(card);
-    esamiCards.appendChild(esame);
-    const creditiParse = parseInt(card.crediti, 10);
-    prodottoVotiCrediti += parseInt(card.voto, 10) * creditiParse;
-    totCrediti += creditiParse;
+function changeData(title, message, label, change) {
+  if (activeTimer) {
+    notify('Interrompi il timer prima di modificare i dati.');
+    return;
   }
-  if (cards.length !== 0) {
-    const media = prodottoVotiCrediti / totCrediti;
-    const votoLaurea = (media * 110) / 30;
-    const mediaComp = mediaComponent(
-      "Crediti: " + totCrediti,
-      "Media: " + media.toFixed(2),
-      "Voto: " + votoLaurea.toFixed(2)
-    );
-    mediaDiv.appendChild(mediaComp);
-  } else {
-    const mediaComp = mediaComponent("Nessun esame inserito", "", "");
-    mediaDiv.appendChild(mediaComp);
-  }
-}
-
-function formatOreMin(oreDecimal) {
-  const h = Math.floor(oreDecimal);
-  const min = Math.round((oreDecimal - h) * 60);
-  return `${h}h ${min}min`;
-}
-
-async function getMaxMonth(logs) {
-  const minValue = 4;
-  let max = 0.0;
-  logs.forEach((log) => {
-    const date = log.data;
-    let sum = 0.0;
-    for (const l of logs) {
-      if (date === l.data) {
-        sum += l.ore;
-      }
-    }
-    if (sum > max) {
-      max = sum;
-    }
-  });
-  if (max > minValue) {
-    return Math.ceil(max);
-  } else {
-    return minValue;
-  }
-}
-
-async function getMaxDay(logs) {
-  const minValue = 4;
-  let max = 0.0;
-  logs.forEach((log) => {
-    const mat = log.materia;
-    let sum = 0.0;
-    for (const l of logs) {
-      if (mat === l.materia) {
-        sum += l.ore;
-      }
-    }
-    if (sum > max) {
-      max = sum;
-    }
-  });
-  if (max > minValue) {
-    return Math.ceil(max) + Math.ceil(max / 5) + 2;
-  } else {
-    if (max > 3) return 5;
-    return minValue;
-  }
-}
-
-async function drawChart() {
-  const echarts = window.echarts;
-  const chart = echarts.init(document.getElementById("myChart"));
-  const selectedMonth = monthSelect.value;
-  const nomeMese = await capitalizeFirstLetter(
-    await getNomeMeseItaliano(selectedMonth)
-  );
-  let logs = await getStudyLogsByMonth(selectedMonth);
-  materie = await getAllMaterie();
-  const nomeMaterie = materie.map((m) => m.nome);
-  const maxValue = await getMaxMonth(logs);
-  const year = parseInt(selectedMonth.split("-")[0]);
-  const month = parseInt(selectedMonth.split("-")[1]) - 1;
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const giorniDelMese = Array.from({ length: daysInMonth }, (_, i) => i + 1);
-
-  const datiMaterie = {};
-  nomeMaterie.forEach((m) => {
-    datiMaterie[m] = Array(daysInMonth).fill(0);
-  });
-
-  logs.forEach((log) => {
-    const giorno = new Date(log.data).getDate();
-    const idx = giorno - 1;
-    const val = parseFloat(log.ore) || 0;
-    if (val > 0) {
-      datiMaterie[log.materia][idx] =
-        (datiMaterie[log.materia][idx] || 0) + val;
-    }
-  });
-
-  const materieConDati = nomeMaterie.filter((m) =>
-    datiMaterie[m].some((val) => val > 0)
-  );
-
-  const series = materieConDati.map((m) => ({
-    name: m,
-    type: "bar",
-    stack: "total",
-    emphasis: { focus: "series" },
-    data: datiMaterie[m],
-  }));
-
-  // Configurazione grafico
-  const option = {
-    tooltip: {
-      trigger: "axis",
-      axisPointer: { type: "shadow" },
-      formatter: (params) => {
-        let str = `${params[0].axisValue}<br/>`;
-        params.forEach((p) => {
-          if (p.value !== 0) {
-            str += `${p.seriesName}: ${formatOreMin(p.value)}<br/>`;
-          }
-        });
-        return str;
-      },
-    },
-    legend: {
-      data: materieConDati,
-      orient: "horizontal",
-      type: "scroll",
-      right: 10,
-      top: 10,
-      pageButtonGap: 5,
-      pageIconColor: "#2f4554",
-      pageIconInactiveColor: "#aaa",
-      pageTextStyle: { color: "#333" },
-    },
-
-    xAxis: {
-      type: "value",
-      min: 0,
-      max: maxValue,
-      axisLabel: {
-        formatter: (val) => `${val}h`,
-      },
-    },
-    yAxis: {
-      type: "category",
-      data: giorniDelMese.map((g) => `${g}`),
-      name: nomeMese,
-      nameGap: 5,
-    },
-    grid: { bottom: "10%" },
-    series: series,
-  };
-  chart.clear();
-  chart.setOption(option);
-}
-
-async function lineMediaChart() {
-  const echarts = window.echarts;
-  const lineChart = echarts.init(document.getElementById("lineChart"));
-  const allEsami = await getAllEsami();
-  const allDataEsami = allEsami
-    .map((esame) => esame.data)
-    .sort((a, b) => new Date(a) - new Date(b));
-  const allDataFormatted = allDataEsami.map((data) =>
-    dataInFormatoInterfaccia(data)
-  );
-  const allMedie = [];
-  let product = 0;
-  let sumCrediti = 0;
-  let min = parseInt(allEsami[0].voto, 10);
-  for (const esame of allEsami) {
-    const voto = parseInt(esame.voto, 10);
-    sumCrediti += parseInt(esame.crediti, 10);
-    const productVotoCrediti = voto * parseInt(esame.crediti, 10);
-    product += productVotoCrediti;
-    const media = product / sumCrediti;
-    allMedie.push(media);
-    if (media < min) {
-      min = media;
-    }
-  }
-
-  const option = {
-    xAxis: {
-      type: "category",
-      data: allDataFormatted,
-    },
-    yAxis: {
-      type: "value",
-      min: Math.floor(min - 1),
-      max: 30,
-      interval: 1,
-    },
-    series: [
-      {
-        data: allMedie,
-        type: "line",
-      },
-    ],
-    graphic: [
-      {
-        type: "text",
-        left: "37%",
-        top: "10%",
-        style: {
-          text: "Media nel tempo",
-          font: "0.8rem sans-serif",
-          fill: "#333",
-        },
-      },
-    ],
-  };
-  lineChart.clear();
-  lineChart.setOption(option);
-}
-
-async function drawPieChart() {
-  const echarts = window.echarts;
-  const pieChart = echarts.init(document.getElementById("myChartPie"));
-
-  const aggregate = {};
-  const selectedMonth = monthSelect.value;
-  const nameMese = getNomeMeseItaliano(selectedMonth);
-  let logs = await getStudyLogsByMonth(selectedMonth);
-  logs.forEach((item) => {
-    const materia = item.materia;
-    if (!aggregate[materia]) {
-      aggregate[materia] = 0;
-    }
-    aggregate[materia] += item.ore;
-  });
-
-  const data = Object.entries(aggregate)
-    .map(([name, value]) => ({ name, value }))
-    .sort((a, b) => a.name.localeCompare(b.name));
-  const totale = data.reduce((acc, item) => acc + item.value, 0);
-
-  const option = {
-    tooltip: {
-      trigger: "item",
-      formatter: function (params) {
-        return `${params.name}: ${formatOreMin(params.value)}`;
-      },
-    },
-
-    legend: {
-      orient: "horizontal",
-      type: "scroll",
-      right: 10,
-      top: 10,
-      pageButtonGap: 5,
-      pageIconColor: "#2f4554",
-      pageIconInactiveColor: "#aaa",
-      pageTextStyle: { color: "#333" },
-    },
-    series: [
-      {
-        name: nameMese,
-        type: "pie",
-        radius: ["40%", "70%"],
-        center: ["50%", "60%"],
-        avoidLabelOverlap: false,
-        itemStyle: {
-          borderRadius: 10,
-          borderColor: "#fff",
-          borderWidth: 2,
-        },
-        label: {
-          show: true,
-          position: "center",
-          formatter: () => `${formatOreMin(totale)}`,
-          fontSize: 18,
-          fontWeight: "bold",
-          lineHeight: 22,
-        },
-        labelLine: {
-          show: false,
-        },
-        data: data,
-      },
-    ],
-    grid: { left: "2.5%", right: "2.5%", top: "10%", bottom: "0%" },
-  };
-
-  pieChart.setOption(option);
-  attachLegendHandler(pieChart);
-}
-
-function attachLegendHandler(chart) {
-  chart.on("legendselectchanged", function (params) {
-    const option = chart.getOption();
-    const selected = params.selected;
-    const data = option.series[0].data;
-    const newTotal = data.reduce((acc, item) => {
-      return selected[item.name] ? acc + item.value : acc;
-    }, 0);
-    option.series[0].label.formatter = () => `${formatOreMin(newTotal)}`;
-    chart.setOption(option);
+  editors.confirm(title, message, label, async () => {
+    await change();
+    await refreshSettings();
   });
 }
 
-function getNomeMeseItaliano(ym) {
-  const [year, month] = ym.split("-").map(Number);
-  const date = new Date(year, month - 1);
-  return date.toLocaleString("it-IT", { month: "long" });
-}
-
-async function drawDayChart() {
-  const echarts = window.echarts;
-  const chart = echarts.init(document.getElementById("dayChart"));
-  const selectedDay = daySelect.value;
-  let logs = await getStudyLogsByDay(selectedDay);
-  materie = await getAllMaterie();
-  const maxValue = await getMaxDay(logs);
-
-  const dati = {};
-  logs.forEach((log) => {
-    const val = parseFloat(log.ore) || 0;
-    if (dati[log.materia] !== undefined) {
-      dati[log.materia] += val;
-    } else {
-      dati[log.materia] = val;
-    }
+byId('btnImportDB').addEventListener('click', () => {
+  const backup = file.files[0];
+  if (!backup) return;
+  changeData('Importa dati', 'Sostituire i dati locali con quelli di questo backup?', 'Importa', async () => {
+    await data.importData(JSON.parse(await backup.text()));
+    file.value = '';
+    byId('btnImportDB').disabled = true;
+    notify('Backup importato.');
   });
-
-  const sortedDati = Object.entries(dati).sort((a, b) =>
-    a[0].localeCompare(b[0])
-  );
-
-  const filteredMaterie = sortedDati.map(([materia, ore]) => materia);
-  const defaultColors = [
-    "#5470C6",
-    "#91CC75",
-    "#FAC858",
-    "#EE6666",
-    "#73C0DE",
-    "#3BA272",
-    "#FC8452",
-    "#9A60B4",
-    "#EA7CCC",
-  ];
-
-  const series = [
-    {
-      name: "Ore di studio",
-      type: "bar",
-      data: filteredMaterie.map((m) => dati[m]),
-      label: {
-        show: true,
-        position: "right",
-        formatter: (params) => formatOreMin(params.value),
-      },
-      itemStyle: {
-        color: (params) =>
-          defaultColors[params.dataIndex % defaultColors.length],
-      },
-    },
-  ];
-
-  let zeroLog = "";
-  if (filteredMaterie.length === 0) zeroLog = "Nessuna sessione registrata";
-
-  const option = {
-    tooltip: {
-      trigger: "item",
-      formatter: (params) => `${params.name}: ${formatOreMin(params.value)}`,
-    },
-    xAxis: {
-      type: "value",
-      min: 0,
-      max: maxValue,
-      axisLabel: {
-        formatter: (val) => `${val}h`,
-      },
-    },
-    yAxis: {
-      type: "category",
-      name: zeroLog,
-      nameLocation: "middle",
-      nameRotate: 0,
-      nameGap: -250,
-      nameTextStyle: {
-        fontSize: 14,
-        fontWeight: "bold",
-        color: "#333",
-      },
-      data: filteredMaterie,
-      axisLabel: { show: false },
-    },
-    grid: { left: "2.5%", right: "2.5%", top: "10%", bottom: "9%" },
-    series: series,
-  };
-  chart.clear();
-  chart.setOption(option);
-  dayChart.classList.remove("hidden");
-
-  let pressTimer;
-  const pressDuration = 700;
-
-  chart.on("mousedown", function (params) {
-    pressTimer = setTimeout(() => {
-      const materia = params.name;
-      const giorno = selectedDay;
-      const valoreAttuale = params.value;
-      const ore = Math.floor(valoreAttuale);
-      const minuti = Math.round((valoreAttuale - ore) * 60);
-      document.getElementById("materiaDisplay").textContent = `${materia}`;
-      document.getElementById("giornoDisplay").textContent =
-        dataInFormatoInterfaccia(`${giorno}`);
-      document.getElementById("nuoveOre").value = ore;
-      document.getElementById("nuoviMinuti").value = minuti;
-
-      const form = document.getElementById("editform");
-      form.classList.remove("hidden");
-      document.getElementById("saveBtn").onclick = async function () {
-        const nuoveOre = parseFloat(document.getElementById("nuoveOre").value);
-        const nuoviMinuti =
-          parseFloat(document.getElementById("nuoviMinuti").value) / 60;
-        const oreDecimale = nuoveOre + nuoviMinuti;
-        if (isValid(nuoveOre) && nuoviMinuti < 0.999 && nuoveOre < 24) {
-          await updateOreInLogs(oreDecimale - valoreAttuale, giorno, materia);
-          drawDayChart();
-        } else {
-          showErrorToast("Valore inserito non valido", "error");
-        }
-        form.classList.add("hidden");
-      };
-
-      document.getElementById("cancelBtn").onclick = function () {
-        form.classList.add("hidden");
-      };
-      document.getElementById("deleteBtn").onclick = async function () {
-        await deleteLogByMateriaData(giorno, materia);
-        await drawDayChart();
-        form.classList.add("hidden");
-      };
-    }, pressDuration);
+});
+byId('clear-data').addEventListener('click', () => {
+  changeData('Cancella tutti i dati', 'Eliminare sessioni, categorie, esami e impostazioni da questo dispositivo?', 'Cancella dati', async () => {
+    await data.clearData();
+    notify('Dati cancellati.');
   });
+});
 
-  chart.on("mouseup", function () {
-    clearTimeout(pressTimer);
-  });
+dateSelect.value = today();
+byId('month-select').value = today().slice(0, 7);
+window.addEventListener('hashchange', () => navigate().catch(report));
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && activeTimer && timerInterval) tick();
+});
 
-  chart.on("mouseleave", function () {
-    clearTimeout(pressTimer);
-  });
+window.lucide?.createIcons();
+refreshSettings().then(navigate).catch(report);
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./OneSignalSDKWorker.js').catch(error => console.warn(error));
 }

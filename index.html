@@ -1,323 +1,149 @@
-<!DOCTYPE html>
-  <html lang="it">
-    <head>
-      <meta charset="UTF-8" />
-      <title>StudyLog</title>
-      <link rel="stylesheet" href="css/style.css" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <script src="./libs/lucide.js"></script>
-      <script src="./libs/echarts.min.js"></script>
-      <link rel="manifest" href="manifest.json"/>
-      <meta name="theme-color" content="#333333" />
-
-      <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
-
-      <!-- Per iOS -->
-      <meta name="apple-mobile-web-app-capable" content="yes" />
-      <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-      <meta name="apple-mobile-web-app-orientation" content="portrait" />
-      <link rel="apple-touch-icon" href="icons/icon-192.png" />
-    </head>
-    <body>
-      <main id="app">
-        <!-- Pagina Registra -->
-        <section id="registra" class="page-section active">
-          <div class="section-container">
-            <h4>Timer</h4>
-            <form id="study-form">
-              <input
-                type="text"
-                class="inputMateria"
-                id="ricerca-materie"
-                maxlength="20"
-                placeholder="Es. Matematica"
-                required
-              />
-              <div class="categorie-cards" id="categorieCardsEntrata"></div>
-
-              <label for="minutes" id="minutes-value">0</label>
-              <input
-                type="range"
-                id="minutes"
-                min="0"
-                max="180"
-                value="0"
-                required
-              />
-              <div class="row width100">
-                <button type="submit" id="avvia">Avvia Cronometro</button>
-                <button type="button" id="addReg">+</button>
-              </div>
-            </form>
-
-            <div id="timer-container" class="hidden">
-              <h2 id="timer-display">00:00</h2>
-              <button id="stop-btn">Interrompi</button>
-            </div>
-
-            <div id="dayChart"></div>
-            <div class="date-picker">
-              <input type="date" id="day-select" />
-            </div>
-
-            <div id="editform" class="hidden">
-              <div class="overlay">
-                <div class="form-container">
-                  <div>
-                    <button id="cancelBtn">x</button>
-                    <p id="materiaDisplay" class="fontBold1Rem"></p>
-                    <p id="giornoDisplay" class="fontBold1Rem"></p>
-                  </div>
-                  <input
-                    type="number"
-                    id="nuoveOre"
-                    placeholder="ore"
-                    step="1"
-                    min="0"
-                    max="23"
-                  />
-                  <input
-                    type="number"
-                    id="nuoviMinuti"
-                    placeholder="minuti"
-                    step="1"
-                    min="0"
-                    max="59"
-                  />
-                  <button id="saveBtn">Salva</button>
-                  <button id="deleteBtn">Elimina Registrazione</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Pagina Grafici -->
-        <section id="grafici" class="page-section">
-          <div class="section-container">
-            <h4>Grafici</h4>
-            <div class="chart-carousel">
-              <div class="chart-item" id="myChart"></div>
-              <div>
-                <div class="chart-item" id="lineChart"></div>
-                <div class="chart-item" id="myChartPie"></div>
-              </div>
-            </div>
-
-            <div class="month-picker">
-              <button id="prev-month">‹</button>
-              <input type="month" id="month-select" />
-              <button id="next-month">›</button>
-            </div>
-          </div>
-        </section>
-
-        <!-- ESAMI ------------------------------ -->
-        <section id="esami" class="page-section">
-          <h4>Esami</h4>
-          <div class="esami-container">
-            <div id="media"></div>
-            <div id="esamiCards"></div>
-            <div class="btn-container">
-              <div id="newEsamiCard"></div>
-              <button id="deleteEsami" class="elimina-btn">-</button>
-            </div>
-          </div>
-        </section>
-
-        <!-- Sezione Login (Opzionale per notifiche) -->
-        <section id="account" class="page-section">
-          <section id="auth-section">
-            <div id="login-container">
-              <form id="login-form">
-                <input type="email" id="login-email" placeholder="Email" required>
-                <input type="password" id="login-password" placeholder="Password" required>
-                <button type="submit">Accedi</button>
-                <p id="login-error" class="hidden"></p>
-              </form>
-              <button id="toggle-auth-mode">Registrati</button>
-            </div>
-
-            <div id="register-container" class="hidden">
-              <form id="register-form">
-                <input type="email" id="register-email" placeholder="Email" required>
-                <input type="password" id="register-password" placeholder="Password" required>
-                <input type="password" id="register-confirm-password" placeholder="Conferma password" required>
-                <button type="submit">Registrati</button>
-                <p id="register-error" class="hidden"></p>
-                <p id="register-success" class="hidden"></p>
-              </form>
-              <button id="toggle-login-mode">Login</button>
-            </div>
-          </section>
-
-          <!-- ================= SEZIONE UTENTE LOGGATO ================= -->
-          <section id="user-section" class="hidden">
-            <p>Benvenuto, <span id="user-email"></span></p>
-            <button id="logout-btn">Logout</button>
-
-            <!-- Bottone per attivare notifiche OneSignal -->
-            <button id="enable-push-btn" class="hidden">Attiva notifiche</button>
-            <button id="disable-push-btn" class="hidden">Disattiva notifiche</button>
-
-          </section>
-
-          <!-- ================= SEZIONE PAGINA / REGISTRA ================= -->
-          <section id="registraOneSignal" class="page-section">
-            <p>Sezione registro notifiche</p>
-          </section>
-        </section>
-
-        <!-- Pagina Impostazioni -->
-        <section id="settings" class="page-section">
-          <h4>Gestione dati</h4>
-          <div class="btn marginBtn">
-            <h3>Cancella dati</h3>
-            <button id="delete-db-btn">Cancella tutti i dati</button>
-          </div>
-          <div id="spinnerOverlay" class="spinner-overlay">
-            <div class="spinner"></div>
-          </div>
-          <div class="btn">
-            <h3>Esporta dati</h3>
-            <button id="btnExportDB">Esporta</button>
-          </div>
-          <div class="btn">
-            <h3>Importa dati</h3>
-            <input
-              type="file"
-              id="fileImport"
-              name="file"
-              accept=".json,application/json"
-              required
-            />
-            <button id="btnImportDB">Importa</button>
-          </div>
-
-          <!-- Modale di conferma -->
-          <div id="confirm-modal" class="modal hidden">
-            <div class="modal-content">
-              <h2>Sei sicuro?</h2>
-              <p>Tutti i dati verranno eliminati in modo permanente.</p>
-              <div class="modal-actions">
-                <button id="confirm-delete">Sì, elimina</button>
-                <button id="cancel-delete">Annulla</button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section id="info" class="page-section">
-          <div class="section-container">
-            <h4>Info</h4>
-            <p class="versione">Versione 1.0.5</p>
-            <ul class="info-list">
-              <li>
-                <i data-lucide="shield" class="iconShield"></i>
-                <div>
-                  <strong>Privacy</strong>
-                  <p>
-                    Con StudyLog puoi avere sempre sotto controllo le tue
-                    sessioni di studio, senza complicazioni e con la massima
-                    attenzione alla privacy. L’app non salva alcun dato al di
-                    fuori del tuo dispositivo. Tutto rimane solo a te.
-                  </p>
-                </div>
-              </li>
-
-              <li>
-                <i data-lucide="clock" class="iconTimer"></i>
-                <div>
-                  <strong>Timer</strong>
-                  <p>
-                    Imposta una materia e un tempo di studio. Se imposti il
-                    tempo a zero, il timer continua finché non lo interrompi
-                    manualmente. Al termine il tempo viene salvato e sarà
-                    visibile nel grafico. Puoi aggiungere una nuova sessione
-                    impostando la materia, il tempo e la data, poi premi il
-                    pulsante +.
-                  </p>
-                </div>
-              </li>
-
-              <li>
-                <i data-lucide="book-open" class="iconMaterie"></i>
-                <div>
-                  <strong>Materie</strong>
-                  <p>
-                    Tieni premuta una card per rinominare una materia. Con la ❌
-                    puoi rimuovere la materia e i relativi tempi registrati.
-                  </p>
-                </div>
-              </li>
-
-              <li>
-                <i data-lucide="database" class="iconDB"></i>
-                <div>
-                  <strong>Dati</strong>
-                  <p>
-                    Puoi esportare o importare i dati, oppure eliminare tutti i
-                    dati inseriti.
-                  </p>
-                </div>
-              </li>
-
-              <li>
-                <i data-lucide="bar-chart-2" class="iconGrafico"></i>
-                <div>
-                  <strong>Grafico</strong>
-                  <p>
-                    Visualizza le sessioni di studio registrate in ogni mese.
-                    Nella home puoi modificare le ore di una sessione già
-                    registrata tenendo premuta la barra corrispondente oppure
-                    eliminare la sessione.
-                  </p>
-                </div>
-              </li>
-
-              <li>
-                <i data-lucide="clipboard" class="iconEsami"></i>
-                <div>
-                  <strong>Esami</strong>
-                  <p>
-                    Nella sezione Esami puoi modificare un esame tenendo premuta
-                    la card corrispondente.
-                  </p>
-                </div>
-              </li>
-            </ul>
-          </div>
-        </section>
-      </main>
-
-      <!-- Navbar -->
-      <nav class="mobile-nav">
-        <div class="nav-links">
-          <a href="#" data-target="registra" class="active">
-            <i data-lucide="book-open"></i>
-          </a>
-          <a href="#" data-target="grafici">
-            <i data-lucide="bar-chart-2"></i>
-          </a>
-          <a href="#" data-target="esami">
-            <i data-lucide="clipboard"></i>
-          </a>
-          <a href="#" data-target="account">
-            <i data-lucide="user"></i>
-          </a>
-          <a href="#" data-target="settings">
-            <i data-lucide="settings"></i>
-          </a>
-          <a href="#" data-target="info">
-            <i data-lucide="help-circle"></i>
-          </a>
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#192c29">
+  <title>StudyLog</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="libs/lucide.js" defer></script>
+  <script src="libs/echarts.min.js" defer></script>
+  <script src="main.js" type="module"></script>
+</head>
+<body>
+  <main id="app">
+    <section id="registra" class="page registra" aria-labelledby="registra-title">
+      <h1 id="registra-title">Registra</h1>
+      <form id="study-form" class="panel">
+        <div class="controls">
+          <label class="field">Categoria <select id="category" required></select></label>
+          <label class="field duration">Minuti <input id="minutes" type="number" min="0" max="180" step="1" value="0" required></label>
         </div>
-      </nav>
+        <input id="minutes-slider" type="range" min="0" max="180" value="0" aria-label="Durata in minuti">
+        <div class="actions study-actions">
+          <button type="submit" id="start">Avvia cronometro</button>
+          <button type="button" id="add-log" class="secondary">Aggiungi sessione</button>
+        </div>
+      </form>
+      <div id="timer" class="panel timer" hidden>
+        <strong id="timer-category"></strong>
+        <time id="timer-display" role="timer">00:00:00</time>
+        <button type="button" id="stop">Interrompi</button>
+      </div>
+      <div class="panel day-panel">
+        <div class="section-heading">
+          <h2>Studio del giorno</h2>
+          <input type="date" id="day-select" aria-label="Giorno delle sessioni" required>
+        </div>
+        <p id="day-empty" class="empty">Nessuna sessione registrata.</p>
+        <div id="day-chart" class="day-chart" hidden></div>
+        <div class="actions day-actions" id="day-actions" hidden>
+          <label class="field">Sessione <select id="day-category"></select></label>
+          <button type="button" id="edit-log" class="secondary">Modifica</button>
+        </div>
+      </div>
+    </section>
 
-      <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-      <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-      <script src="./auth.js"></script>
-      <script type="module" src="main.js"></script>
-    </body>
-  </html>
-</DOCTYPE>
+    <section id="grafici" class="page" hidden>
+      <h1>Grafici</h1>
+      <div class="panel">
+        <div class="controls">
+          <label class="field">Vista
+            <select id="chart-view">
+              <option value="daily">Studio per giorno</option>
+              <option value="categories">Tempo per categoria</option>
+              <option value="grades">Media ponderata nel tempo</option>
+            </select>
+          </label>
+          <label class="field" id="month-field">Mese
+            <input type="month" id="month-select" required>
+          </label>
+        </div>
+        <h2 id="chart-title"></h2>
+        <p id="chart-description" class="muted"></p>
+        <p id="chart-empty" class="empty" hidden></p>
+        <div id="overview-chart" class="overview-chart" hidden></div>
+        <details id="chart-details" hidden>
+          <summary>Dati del grafico</summary>
+          <table><thead id="chart-head"></thead><tbody id="chart-rows"></tbody></table>
+        </details>
+      </div>
+    </section>
+
+    <section id="esami" class="page" hidden>
+      <div class="section-heading"><h1>Esami</h1><button id="add-exam">Aggiungi esame</button></div>
+      <dl id="exam-summary" class="metrics"></dl>
+      <p id="exam-empty" class="empty">Nessun esame inserito.</p>
+      <ul id="exam-list" class="item-list"></ul>
+    </section>
+
+    <section id="categorie" class="page" hidden>
+      <div class="section-heading"><h1>Categorie</h1><button id="add-category">Nuova categoria</button></div>
+      <p id="category-empty" class="empty">Crea una categoria per iniziare a registrare lo studio.</p>
+      <ul id="category-list" class="item-list"></ul>
+    </section>
+
+    <section id="settings" class="page" hidden>
+      <h1>Impostazioni</h1>
+      <form id="settings-form" class="panel settings">
+        <h2>Timer</h2>
+        <label class="field">Limite massimo (minuti)
+          <input id="timer-limit" type="number" min="1" max="1440" step="1" required aria-describedby="limit-help">
+        </label>
+        <p id="limit-help" class="muted">Da 1 minuto a 24 ore.</p>
+        <label class="check"><input id="timer-sound" type="checkbox"> Suono a fine timer</label>
+        <button type="submit">Salva impostazioni</button>
+      </form>
+      <div class="panel settings">
+        <h2>Gestione dati</h2>
+        <button id="btnExportDB" class="secondary">Esporta dati</button>
+        <label class="field">File di backup <input id="fileImport" type="file" accept=".json,application/json"></label>
+        <p class="muted">L’importazione sostituisce i dati locali con quelli del backup.</p>
+        <button id="btnImportDB" class="secondary" disabled>Importa dati</button>
+        <button id="clear-data" class="danger">Cancella tutti i dati</button>
+      </div>
+    </section>
+
+    <section id="info" class="page" hidden>
+      <h1>Info</h1>
+      <div class="panel guide">
+        <h2>Dati e privacy</h2>
+        <p>Sessioni, categorie, esami e impostazioni sono salvati nel browser. In Impostazioni puoi esportarli, ripristinarli da un backup o cancellarli.</p>
+        <h2>Registra e timer</h2>
+        <p>Scegli una categoria e imposta i minuti con il cursore o digitando il valore. Con zero avvii il cronometro. Il timer salva la durata prevista alla scadenza, oppure il tempo trascorso se premi Interrompi.</p>
+        <p>Il cronometro e il conto alla rovescia salvano tutto il tempo nel giorno in cui li avvii, anche se stai visualizzando un’altra data o la sessione termina dopo mezzanotte. Per registrare il tempo a mano, scegli la data desiderata e premi Aggiungi sessione. Usa Modifica sotto il grafico per aggiornare o eliminare il totale giornaliero di una categoria.</p>
+        <h2>Limite e suono</h2>
+        <p>In Impostazioni puoi portare il limite del conto alla rovescia fino a 24 ore e scegliere se riprodurre un suono a scadenza. Durante il timer tieni aperta l’app. Il sistema può sospenderla in background.</p>
+        <h2>Categorie e grafici</h2>
+        <p>In Categorie puoi creare, rinominare ed eliminare le voci e scegliere il colore usato nei grafici. Quando elimini una categoria puoi spostare le sessioni associate. In Grafici trovi i riepiloghi mensili e l’andamento della media ponderata a partire dal primo esame.</p>
+        <h2>Esami</h2>
+        <p>Inserisci nome, data, voto e crediti. Puoi modificare o eliminare ogni esame dalla sua scheda. Il riepilogo mostra i crediti, la media ponderata e la stima in centodecimi.</p>
+      </div>
+    </section>
+  </main>
+
+  <nav class="navigation" aria-label="Sezioni">
+    <a href="#registra" aria-current="page"><i data-lucide="timer" aria-hidden="true"></i>Registra</a>
+    <a href="#grafici"><i data-lucide="bar-chart-3" aria-hidden="true"></i>Grafici</a>
+    <a href="#esami"><i data-lucide="graduation-cap" aria-hidden="true"></i>Esami</a>
+    <a href="#categorie"><i data-lucide="tags" aria-hidden="true"></i>Categorie</a>
+    <a href="#settings"><i data-lucide="settings" aria-hidden="true"></i>Impostazioni</a>
+    <a href="#info"><i data-lucide="info" aria-hidden="true"></i>Info</a>
+  </nav>
+
+  <dialog id="editor" aria-labelledby="editor-title">
+    <form id="editor-form">
+      <h2 id="editor-title"></h2>
+      <div id="editor-fields"></div>
+      <p id="editor-error" role="alert" hidden></p>
+      <div class="actions">
+        <button type="button" id="close-editor" class="secondary">Annulla</button>
+        <button type="submit" id="save-editor">Salva</button>
+      </div>
+    </form>
+  </dialog>
+  <p id="status" role="status" class="toast" hidden></p>
+</body>
+</html>

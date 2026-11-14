@@ -1,410 +1,139 @@
 import Dexie from './libs/dexie.mjs';
-import { capitalizeFirstLetter } from "./main.js";
 
-const DB_NAME = "StudyDB";
-const DB_VERSION = 1;
-const STORE_NAME = "studyLogs";
-const MATERIE = "materie";
-const ESAMI = "esami";
+const db = new Dexie('StudyDB');
+db.version(1).stores({
+  studyLogs: '++id, materia, data, [materia+data]',
+  materie: 'nome',
+  esami: '++id, materia, voto, crediti, data',
+});
+db.version(2).stores({ settings: 'id' }).upgrade(async transaction => {
+  const categories = transaction.table('materie');
+  const names = await transaction.table('studyLogs').orderBy('materia').uniqueKeys();
+  const existing = new Set(await categories.toCollection().primaryKeys());
+  await categories.bulkAdd(names.filter(name => !existing.has(name)).map(nome => ({ nome })));
+});
 
-let db; // variabile globale per il database
+export const defaultSettings = { limit: 180, sound: true };
+export const getAllMaterie = () => db.materie.toArray();
+export const getAllEsami = () => db.esami.toArray();
+export const getStudyLogsByDay = day => db.studyLogs.where('data').equals(day).toArray();
+export const getStudyLogsByMonth = month => db.studyLogs.where('data').startsWith(month + '-').toArray();
 
-// Inizializza il DB con Dexie
-export function openDB() {
-  db = new Dexie(DB_NAME);
+export async function getSettings() {
+  const settings = await db.settings.get('timer');
+  return settings ?? { ...defaultSettings };
+}
 
-  // Definizione versioni e store
-  db.version(DB_VERSION).stores({
-    [STORE_NAME]: '++id, materia, data, [materia+data]',
-    [MATERIE]: 'nome',
-    [ESAMI]: '++id, materia, voto, crediti, data'
+export function saveSettings(settings) {
+  return db.settings.put({ ...settings, id: 'timer' });
+}
+
+function matchingLogs(materia, data) {
+  return db.studyLogs.where('[materia+data]').equals([materia, data]);
+}
+
+export function saveSession(materia, data, hours, replace = false) {
+  return db.transaction('rw', db.materie, db.studyLogs, async () => {
+    if (!await db.materie.get(materia)) throw new Error('La categoria non è più disponibile.');
+    const matches = matchingLogs(materia, data);
+    const logs = await matches.toArray();
+    const ore = replace ? hours : hours + logs.reduce((sum, log) => sum + log.ore, 0);
+    await matches.delete();
+    await db.studyLogs.add({ materia, data, ore });
   });
-
-  return db.open()
-    .then(() => db)
-    .catch((err) => {
-      console.error("Errore apertura DB:", err);
-      throw err;
-    });
 }
 
-
-export async function saveStudyLog(log) {
-  try {
-    const db = await openDB();
-    await db.studyLogs.add(log);
-    return true;
-  } catch (err) {
-    showErrorToast("Errore salvataggio","error")
-    console.error("Errore salvataggio StudyLog:", err);
-    throw err;
-  }
+export function deleteSession(materia, data) {
+  return matchingLogs(materia, data).delete();
 }
 
-export async function saveEsame(esame) {
-  try {
-    const db = await openDB();
-    await db.esami.add(esame);
-    return true;
-  } catch (err) {
-    showErrorToast("Errore salvataggio","error")
-    console.error("Errore salvataggio StudyLog:", err);
-    throw err;
-  }
+export function saveCategory(previous, nome, colore) {
+  return db.transaction('rw', db.materie, db.studyLogs, async () => {
+    const categories = await db.materie.toArray();
+    if (categories.some(category => category.nome !== previous && category.nome.toLowerCase() === nome.toLowerCase())) {
+      throw new Error('Esiste già una categoria con questo nome.');
+    }
+    if (previous && !categories.some(category => category.nome === previous)) {
+      throw new Error('La categoria non è più disponibile.');
+    }
+    if (previous && previous !== nome) {
+      await db.studyLogs.where('materia').equals(previous).modify({ materia: nome });
+      await db.materie.delete(previous);
+    }
+    await db.materie.put({ nome, colore });
+  });
 }
 
-
-// Salva un oggetto
-export async function saveMateria(materia) {
-  try {
-    const db = await openDB();
-    await db.materie.add(materia);
-    return true;
-  } catch (err) {
-    showErrorToast("Errore salvataggio","error")
-    console.error("Errore salvataggio Materia:", err);
-    throw err;
-  }
-}
-
-
-
-export async function deleteDatabase() {
-  try {
-    await db.delete();
-    db = null;
-    const esiste = await Dexie.exists(DB_NAME);
-
-    if (!esiste) {
-      showToast("Database eliminato con successo!");
+export function deleteCategory(nome, destination) {
+  return db.transaction('rw', db.materie, db.studyLogs, async () => {
+    const matches = db.studyLogs.where('materia').equals(nome);
+    if (destination) {
+      if (destination === nome || !await db.materie.get(destination)) {
+        throw new Error('Scegli un’altra categoria disponibile.');
+      }
+      await matches.modify({ materia: destination });
     } else {
-      showErrorToast("Attenzione: il database non è stato eliminato correttamente!", "error");
+      await matches.delete();
     }
-  } catch (error) {
-    showErrorToast("Errore durante l'eliminazione del database", "error");
+    await db.materie.delete(nome);
+  });
+}
+
+export function saveExam(exam) {
+  return exam.id === undefined ? db.esami.add(exam) : db.esami.put(exam);
+}
+
+export function deleteExam(id) {
+  return db.esami.delete(id);
+}
+
+export function clearData() {
+  return db.transaction('rw', db.tables, async () => {
+    for (const table of db.tables) await table.clear();
+  });
+}
+
+export function exportData() {
+  return db.transaction('r', db.tables, async () => ({
+    studyLogs: await db.studyLogs.toArray(),
+    materie: await db.materie.toArray(),
+    esami: await db.esami.toArray(),
+    settings: await getSettings(),
+    exportDate: new Date().toISOString(),
+  }));
+}
+
+function validDate(value) {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(value);
+  return !Number.isNaN(date.valueOf()) && date.toISOString().slice(0, 10) === value;
+}
+
+export function importData(data) {
+  const { studyLogs, materie, esami, settings = defaultSettings } = data ?? {};
+  if (!Array.isArray(studyLogs) || !Array.isArray(materie) || !Array.isArray(esami)
+    || !materie.every(item => typeof item?.nome === 'string' && item.nome.trim())
+    || !studyLogs.every(item => typeof item?.materia === 'string' && item.materia.trim()
+      && validDate(item.data) && Number.isFinite(item.ore) && item.ore >= 0)
+    || !esami.every(item => typeof item?.materia === 'string' && item.materia.trim() && validDate(item.data)
+      && item.voto !== '' && +item.voto >= 18 && +item.voto <= 30
+      && item.crediti !== '' && +item.crediti >= 0 && +item.crediti <= 30)
+    || !Number.isInteger(settings?.limit) || settings.limit < 1 || settings.limit > 1440
+    || typeof settings.sound !== 'boolean') {
+    throw new Error('Il file non contiene un backup StudyLog valido.');
   }
-}
 
-
-// Legge tutti i log
-export async function getAllStudyLogs() {
-  try {
-    const db = await openDB();
-    return await db.studyLogs.toArray();
-  } catch (err) {
-    console.error("Errore lettura StudyLogs:", err);
-    throw err;
+  // Some older backups can contain sessions whose category is missing.
+  const categories = new Map(materie.map(category => [category.nome, category]));
+  for (const log of studyLogs) {
+    if (!categories.has(log.materia)) categories.set(log.materia, { nome: log.materia });
   }
-}
 
-export async function getAllEsami() {
-  try {
-    const db = await openDB();
-    return await db.esami.toArray();
-  } catch (err) {
-    console.error("Errore lettura StudyLogs:", err);
-    throw err;
-  }
-}
-
-async function getLogsByMateria(nomeValue) {
-  try {
-    const db = await openDB();
-    const logs = await db.studyLogs
-      .where('materia')
-      .equals(nomeValue)
-      .toArray();
-    return logs;
-  } catch (err) {
-    console.error("Errore recupero logs per nome:", err);
-    throw err;
-  }
-}
-
-async function getLogsByMateriaData(nomeValue, dataValue) {
-  try {
-    const db = await openDB();
-    const logs = await db.studyLogs
-      .where('[materia+data]')
-      .equals([nomeValue, dataValue])
-      .toArray();
-    return logs;
-  } catch (err) {
-    console.error("Errore recupero logs per materia e data:", err);
-    throw err;
-  }
-}
-
-
-export async function getStudyLogsByMonth(month) {
-  try {
-    const db = await openDB();
-    const allLogs = await db.studyLogs.toArray();
-    return allLogs.filter(log => log.data.startsWith(month));
-  } catch (err) {
-    console.error("Errore lettura StudyLogs per mese:", err);
-    throw err;
-  }
-}
-export async function getStudyLogsByDay(day) {
-  try {
-    const db = await openDB();
-    const allLogs = await db.studyLogs.toArray();
-    return allLogs.filter(log => log.data === day);
-  } catch (err) {
-    console.error("Errore lettura StudyLogs per giorno:", err);
-    throw err;
-  }
-}
-
-export async function getAllMaterie() {
-  try {
-    const db = await openDB();
-    return await db.materie.toArray();
-  } catch (err) {
-    console.error("Errore lettura Materie:", err);
-    throw err;
-  }
-}
-
-export async function updateMateria(oldMat, newMat) {
-    try{
-        const record = await db.materie.get(oldMat);
-        let recordNew;
-        if(isValid(newMat)){
-            recordNew = await db.materie.get(newMat);
-            newMat = capitalizeFirstLetter(newMat);
-        }
-
-        if (oldMat === newMat) return;
-        if (!isValid(record)) return;
-        await db.materie.delete(oldMat);
-        if (!isValid(recordNew)) await db.materie.put({ ...record, nome: newMat});
-        updateMatInLogs(oldMat, newMat);
-
-    }catch(err){
-        showErrorToast("Errore durante l'update","error")
-    }
-}
-
-export function isValid(value) {
-    return value != null && !Number.isNaN(value) && value !== "" && value != undefined;
-}
-
-async function updateMatInLogs(oldMat, newMat){
-    const logs = await getLogsByMateria(oldMat)
-    if(logs.length !== 0){
-        for(const log of logs){
-            log.materia = newMat;
-            await updateLogs(log);
-        }
-    }
-}
-
-export async function updateOreInLogs(ore,data, materia){
-    const logs = await getLogsByMateriaData(materia,data)
-    if(logs.length !== 0){
-        for(const log of logs){
-            log.ore += ore;
-            await updateLogs(log);
-        }
-        return true;
-    }else{
-        return false;
-    }
-}
-
-export async function deleteEsame(id) {
-  try {
-    const db = await openDB();
-    await db.esami.delete(id);
-    return true;
-  } catch (err) {
-    showErrorToast("Errore eliminazione", "error");
-    console.error("Errore eliminazione esame:", err);
-    throw err;
-  }
-}
-
-
-export async function deleteMaterie(materia) {
-    await db.materie
-        .where('nome')
-        .anyOfIgnoreCase(materia)
-        .delete();
-
-    deleteLogsByMateria(materia);
-    return;
-}
-
-export async function deleteLogsByMateria(materia) {
-    await db.studyLogs
-        .where('materia')
-        .anyOfIgnoreCase(materia)
-        .delete();
-    return;
-}
-
-async function deleteLog(log) {
-  try {
-    const db = await openDB();
-    await db.studyLogs.delete(log.id);
-    return true;
-  } catch (err) {
-    showErrorToast("Errore eliminazione", "error");
-    console.error("Errore eliminazione esame:", err);
-    throw err;
-  }
-}
-
-export async function deleteLogByMateriaData(data, materia){
-    const logs = await getLogsByMateriaData(materia,data)
-    if(logs.length !== 0){
-        for(const log of logs){
-            await deleteLog(log);
-        }
-        return true;
-    }else{
-        return false;
-    }
-}
-
-async function updateLogs(log) {
-  try {
-    const db = await openDB();
-    const data = {
-          data: log.data,
-          materia: log.materia,
-          ore: log.ore,
-          id: log.id
-        };
-    const count = await db.studyLogs.put(data);
-    return count;
-  } catch (err) {
-    console.error("Errore aggiornamento logs per nome:", err);
-    throw err;
-  }
-}
-
-export async function updateEsami(esame) {
-  try {
-    const db = await openDB();
-    const data = {
-          materia: esame.materia,
-          data: esame.data,
-          voto: esame.voto,
-          crediti: esame.crediti,
-          id: esame.id
-        };
-    const count = await db.esami.put(data);
-    return count;
-  } catch (err) {
-    console.error("Errore aggiornamento logs per nome:", err);
-    throw err;
-  }
-}
-
-export function showToast(message, type = "success") {
-  const toast = document.createElement("div");
-  toast.className = `toast ${type}`;
-  toast.textContent = message;
-  document.body.appendChild(toast);
-
-  setTimeout(() => toast.classList.add("show"), 100);
-  setTimeout(() => {
-    toast.classList.remove("show");
-    setTimeout(() => toast.remove(), 400);
-  }, 3000);
-}
-
-export function showErrorToast(message,type = "error") {
-  const toast = document.createElement("div");
-  toast.className = `toast ${type}`;
-  toast.textContent = message;
-  document.body.appendChild(toast);
-
-  setTimeout(() => toast.classList.add("show"), 100);
-  setTimeout(() => {
-    toast.classList.remove("show");
-    setTimeout(() => toast.remove(), 400);
-  }, 3000);
-}
-
-document.getElementById('btnExportDB').addEventListener('click', esportaDB);
-
-async function esportaDB() {
-  const overlaySpinner = document.getElementById('spinnerOverlay');
-  try {
-    overlaySpinner.style.display = 'flex';
-    const db = await openDB();
-    const studyLogs = await db.studyLogs.toArray();
-    const materie = await db.materie.toArray();
-    const esami = await db.esami.toArray();
-
-    const result = {
-      studyLogs: studyLogs,
-      materie: materie,
-      esami: esami,
-      exportDate: new Date().toISOString()
-    };
-
-    const blob = new Blob([JSON.stringify(result, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "studylog_export.json";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    showToast("Esportazione completata con successo", "success");
-  } catch (err) {
-    console.error("Errore esportazione DB:", err);
-    showErrorToast("Errore nell'esportazione dei dati", "error");
-  } finally {
-    overlaySpinner.style.display = 'none';
-  }
-}
-
-
-
-const fileInput = document.getElementById('fileImport');
-const btnImport = document.getElementById('btnImportDB');
-
-fileInput.addEventListener('change', () => {
-  btnImport.disabled = fileInput.files.length === 0;
-});
-
-btnImport.addEventListener('click', () => {
-  const file = fileInput.files[0];
-  if (file) {
-    importaDB(file);
-    fileInput.value = "";
-  }
-});
-
-async function importaDB(file) {
-  const overlaySpinner = document.getElementById('spinnerOverlay');
-  try {
-    overlaySpinner.style.display = 'flex';
-
-    const text = await file.text();
-    const data = JSON.parse(text);
-    const db = await openDB();
-    await db.studyLogs.clear();
-    await db.materie.clear();
-    await db.esami.clear();
-
-    if (data.studyLogs) await db.studyLogs.bulkAdd(data.studyLogs);
-    if (data.materie) await db.materie.bulkAdd(data.materie);
-    if (data.esami) await db.esami.bulkAdd(data.esami);
-
-    showToast("Importazione completata con successo", "success");
-  } catch (err) {
-    console.error("Errore importazione DB:", err);
-    showErrorToast("Errore nell'importazione dei dati", "error");
-  } finally {
-    overlaySpinner.style.display = 'none';
-  }
+  return db.transaction('rw', db.tables, async () => {
+    for (const table of db.tables) await table.clear();
+    await db.studyLogs.bulkAdd(studyLogs);
+    await db.materie.bulkAdd([...categories.values()]);
+    await db.esami.bulkAdd(esami);
+    await saveSettings({ limit: settings.limit, sound: settings.sound });
+  });
 }

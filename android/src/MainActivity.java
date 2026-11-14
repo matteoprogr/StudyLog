@@ -56,7 +56,7 @@ public final class MainActivity extends Activity {
         message.setTextSize(16);
         int padding = (int) (24 * getResources().getDisplayMetrics().density);
         message.setPadding(padding, padding, padding, padding);
-        message.setText("StudyLog · v.1.0.4\n\n[AVVIO_" + stage + "]\n"
+        message.setText("StudyLog · v.1.0.5\n\n[AVVIO_" + stage + "]\n"
             + error.getClass().getSimpleName() + "\n"
             + (error.getMessage() == null ? "" : error.getMessage()));
         ScrollView screen = new ScrollView(this);

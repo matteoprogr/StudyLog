@@ -42,7 +42,6 @@ Invoke-BuildTool "$tools\aapt2.exe" @('link','-I',$platform,'--manifest',"$PSScr
 Invoke-BuildTool "$Jdk\bin\javac.exe" (@('--release','8','-encoding','UTF-8','-classpath',$platform,'-d',$classes) + $sources)
 Invoke-BuildTool "$Jdk\bin\jar.exe" @('cf',"$build\classes.jar",'-C',$classes,'.')
 Invoke-BuildTool "$tools\d8.bat" @('--min-api','26','--lib',$platform,'--output',$build,"$build\classes.jar")
-Invoke-BuildTool "$Jdk\bin\jar.exe" @('uf',$unsigned,'-C',$build,'classes.dex')
 # Some Windows SDK builds write backslashes in nested asset entries.
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 Add-Type -AssemblyName System.IO.Compression
@@ -60,6 +59,8 @@ try {
         $entry.Delete()
     }
 } finally { $archive.Dispose() }
+# Add DEX as a stored entry after the archive edits so ART can map it directly.
+Invoke-BuildTool "$Jdk\bin\jar.exe" @('u0f',$unsigned,'-C',$build,'classes.dex')
 Invoke-BuildTool "$tools\zipalign.exe" @('-f','4',$unsigned,$aligned)
 
 if (!(Test-Path -LiteralPath $key)) {
@@ -67,4 +68,21 @@ if (!(Test-Path -LiteralPath $key)) {
 }
 Invoke-BuildTool "$tools\apksigner.bat" @('sign','--ks',$key,'--ks-pass','pass:android','--key-pass','pass:android','--out',$apk,$aligned)
 Invoke-BuildTool "$tools\apksigner.bat" @('verify','--verbose',$apk)
+Invoke-BuildTool "$tools\zipalign.exe" @('-c','4',$apk)
+$signed = [IO.Compression.ZipFile]::OpenRead($apk)
+try {
+    $dex = $signed.GetEntry('classes.dex')
+    if ($null -eq $dex -or $dex.Length -ne $dex.CompressedLength) {
+        throw 'APK must contain an uncompressed classes.dex.'
+    }
+    $verifiedDex = "$build\verified-classes.dex"
+    [IO.Compression.ZipFileExtensions]::ExtractToFile($dex, $verifiedDex, $true)
+    if ((Get-FileHash $verifiedDex).Hash -ne (Get-FileHash "$build\classes.dex").Hash) {
+        throw 'Packaged classes.dex differs from the D8 output.'
+    }
+    $dexDump = Invoke-BuildTool "$tools\dexdump.exe" @($verifiedDex)
+    if (!($dexDump | Select-String "Class descriptor.*Lit/studylog/app/MainActivity;")) {
+        throw 'MainActivity is missing from the packaged DEX.'
+    }
+} finally { $signed.Dispose() }
 Write-Output $apk

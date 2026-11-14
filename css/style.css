@@ -101,7 +101,6 @@ button:disabled { opacity: .52; cursor: default; }
 .study-actions > button { flex: 1 1 auto; }
 .timer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem; }
 .timer strong { overflow-wrap: anywhere; }
-#alarm-status { flex-basis: 100%; font-size: .85rem; }
 .timer time { font-size: clamp(1.65rem, 6vw, 2.7rem); font-weight: 750; font-variant-numeric: tabular-nums; }
 
 .day-panel {

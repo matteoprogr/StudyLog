@@ -32,6 +32,20 @@ function matchingLogs(materia, data) {
   return db.studyLogs.where('[materia+data]').equals([materia, data]);
 }
 
+export const getActiveTimer = () => db.settings.get('active-timer');
+export const saveActiveTimer = timer => db.settings.put({ ...timer, id: 'active-timer' });
+
+export function finishActiveTimer(timer) {
+  return db.transaction('rw', db.settings, db.materie, db.studyLogs, async () => {
+    const current = await getActiveTimer();
+    if (current?.start !== timer.start) return;
+    if (timer.savedDuration > 0) {
+      await saveSession(timer.category, timer.day, timer.savedDuration / 3600000);
+    }
+    await db.settings.delete('active-timer');
+  });
+}
+
 export function saveSession(materia, data, hours, replace = false) {
   return db.transaction('rw', db.materie, db.studyLogs, async () => {
     if (!await db.materie.get(materia)) throw new Error('La categoria non è più disponibile.');

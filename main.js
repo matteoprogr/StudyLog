@@ -13,10 +13,7 @@ const slider = byId('minutes-slider');
 const studyForm = byId('study-form');
 const dateSelect = byId('day-select');
 const audio = new Audio('assets/sounds/alarm.mp3');
-const alarmButton = byId('set-alarm');
-const alarmStatus = byId('alarm-status');
-const alarmFallback = '#registra-sveglia-non-disponibile';
-let alarmCheck;
+const androidTimer = window.StudyLogAndroid;
 
 let categories = [];
 let settings = data.defaultSettings;
@@ -59,15 +56,6 @@ async function refresh() {
 }
 
 async function navigate() {
-  if (location.hash.startsWith(alarmFallback + '=')) {
-    const time = location.hash.slice(alarmFallback.length + 1);
-    history.replaceState(history.state, '', '#registra');
-    clearTimeout(alarmCheck);
-    const manual = /^\d{2}:\d{2}$/.test(time)
-      ? ' Imposta manualmente la sveglia per le ' + time + ' in Orologio.'
-      : ' Imposta la sveglia manualmente in Orologio.';
-    showAlarmStatus('Orologio non raggiungibile dal browser [INTENT_NON_DISPONIBILE].' + manual);
-  }
   const pages = [...document.querySelectorAll('#app > section')];
   const requested = location.hash.slice(1);
   const page = pages.find(section => section.id === requested) ?? pages[0];
@@ -121,12 +109,15 @@ async function finishTimer(expired) {
   busy = true;
   byId('stop').disabled = true;
   clearInterval(timerInterval);
-  if (timer.expired && settings.sound && !timer.alerted) {
+  if (!timer.expired && timer.duration) androidTimer?.cancel(timer.start);
+  if (timer.expired && settings.sound && !timer.alerted && !timer.nativeScheduled) {
     timer.alerted = true;
     audio.play().catch(() => notify('Timer terminato. Il browser ha bloccato il suono.'));
   }
   try {
-    if (timer.savedDuration > 0) {
+    if (androidTimer && timer.duration) {
+      await data.finishActiveTimer(timer);
+    } else if (timer.savedDuration > 0) {
       await data.saveSession(timer.category, timer.day, timer.savedDuration / 3600000);
     }
   } catch (error) {
@@ -137,7 +128,6 @@ async function finishTimer(expired) {
     return;
   }
   activeTimer = undefined;
-  clearTimeout(alarmCheck);
   busy = false;
   byId('stop').disabled = false;
   byId('stop').textContent = 'Interrompi';
@@ -152,75 +142,63 @@ async function finishTimer(expired) {
   await refresh().catch(report);
 }
 
-studyForm.addEventListener('submit', event => {
+function showTimer() {
+  byId('timer-category').textContent = activeTimer.category;
+  studyForm.hidden = true;
+  byId('timer').hidden = false;
+  editors.renderCategories(categories, true);
+  timerInterval = setInterval(tick, 250);
+  tick();
+}
+
+studyForm.addEventListener('submit', async event => {
   event.preventDefault();
   if (activeTimer || busy) return;
-  activeTimer = {
+  const timer = {
     category: categorySelect.value,
     day: today(),
     start: Date.now(),
     duration: minutes.valueAsNumber * 60000,
   };
-  byId('timer-category').textContent = activeTimer.category;
-  studyForm.hidden = true;
-  byId('timer').hidden = false;
-  alarmButton.hidden = activeTimer.duration === 0;
-  alarmStatus.hidden = true;
-  editors.renderCategories(categories, true);
-  tick();
-  timerInterval = setInterval(tick, 250);
+  if (androidTimer && timer.duration) {
+    busy = true;
+    syncDuration();
+    try {
+      await data.saveActiveTimer(timer);
+      const result = androidTimer.schedule(timer.start, timer.duration, settings.sound);
+      timer.nativeScheduled = result === 'scheduled';
+      if (timer.nativeScheduled) await data.saveActiveTimer(timer);
+      else notify(androidNotificationMessage(result));
+    } catch (error) {
+      report(error);
+    } finally {
+      busy = false;
+    }
+  }
+  activeTimer = timer;
+  showTimer();
 });
 
 byId('stop').addEventListener('click', () => finishTimer(false));
 
-function showAlarmStatus(message) {
-  alarmStatus.textContent = message;
-  alarmStatus.hidden = false;
-  if (byId('timer').hidden) notify(message);
+function androidNotificationMessage(status) {
+  if (status === 'notifications') return 'Abilita le notifiche di StudyLog in Impostazioni.';
+  if (status === 'exact') return 'Consenti gli avvisi esatti nelle impostazioni Android.';
+  if (status === 'scheduled') return 'Notifiche di fine timer disponibili.';
+  return 'Avviso Android non programmato.';
 }
 
-alarmButton.addEventListener('click', () => {
-  clearTimeout(alarmCheck);
-  if (!/Android/i.test(navigator.userAgent)) {
-    showAlarmStatus('Dispositivo non supportato [ANDROID_RICHIESTO]. Prova da Chrome su Android.');
-    return;
-  }
-  const deadline = activeTimer?.start + activeTimer?.duration;
-  const now = new Date();
-  if (!activeTimer?.duration || busy || deadline <= now.getTime()) {
-    showAlarmStatus('Conto alla rovescia terminato [TIMER_SCADUTO]. Avvia un nuovo timer.');
-    return;
-  }
-  const alarm = new Date(Math.ceil(deadline / 60000) * 60000);
-  const next = new Date(now);
-  next.setHours(alarm.getHours(), alarm.getMinutes(), 0, 0);
-  if (next <= now) next.setDate(next.getDate() + 1);
-  if (next.getTime() !== alarm.getTime()) {
-    showAlarmStatus('Data della sveglia non univoca [ORARIO_NON_DISPONIBILE]. Impostala manualmente in Orologio.');
-    return;
-  }
-  const time = alarm.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
-  const fallback = encodeURIComponent(new URL(alarmFallback + '=' + time, location.href).href);
-  const intent = 'intent:#Intent;action=android.intent.action.SET_ALARM;'
-    + 'category=android.intent.category.BROWSABLE;'
-    + 'i.android.intent.extra.alarm.HOUR=' + alarm.getHours() + ';'
-    + 'i.android.intent.extra.alarm.MINUTES=' + alarm.getMinutes() + ';'
-    + 'S.android.intent.extra.alarm.MESSAGE=' + encodeURIComponent('StudyLog · Timer scaduto') + ';'
-    + 'S.browser_fallback_url=' + fallback + ';end';
-  showAlarmStatus('Richiesta per le ' + time + '. Verifica in Orologio che la sveglia sia attiva.');
-  alarmCheck = setTimeout(() => {
-    if (!document.hidden) {
-      showAlarmStatus('Apertura non rilevata [NESSUNA_CONFERMA]. Verifica in Orologio la sveglia delle ' + time + '.');
-    }
-  }, 2500);
-  try {
-    location.href = intent;
-  } catch (error) {
-    clearTimeout(alarmCheck);
-    console.warn('Android alarm intent failed', error);
-    showAlarmStatus('Impossibile aprire Orologio [ERRORE_COLLEGAMENTO]. Prova da Chrome su Android.');
-  }
-});
+function refreshAndroidNotificationStatus() {
+  if (!androidTimer) return;
+  byId('android-notification-status').textContent = androidNotificationMessage(androidTimer.status());
+}
+
+if (androidTimer) {
+  byId('android-notifications').hidden = false;
+  byId('enable-android-notifications').onclick = () => androidTimer.configure();
+  window.addEventListener('android-notification-status', refreshAndroidNotificationStatus);
+  refreshAndroidNotificationStatus();
+}
 
 byId('add-log').addEventListener('click', async () => {
   if (busy) return;
@@ -288,6 +266,10 @@ byId('settings-form').addEventListener('submit', async event => {
 byId('btnExportDB').addEventListener('click', async () => {
   try {
     const backup = await data.exportData();
+    if (androidTimer) {
+      androidTimer.exportBackup(JSON.stringify(backup, null, 2));
+      return;
+    }
     const url = URL.createObjectURL(new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' }));
     const link = document.createElement('a');
     link.href = url;
@@ -339,13 +321,18 @@ dateSelect.value = today();
 byId('month-select').value = today().slice(0, 7);
 window.addEventListener('hashchange', () => navigate().catch(report));
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) clearTimeout(alarmCheck);
   if (!document.hidden && activeTimer && timerInterval) tick();
 });
 
 window.lucide?.createIcons();
-refreshSettings().then(navigate).catch(report);
+refreshSettings().then(async () => {
+  if (androidTimer) {
+    activeTimer = await data.getActiveTimer();
+    if (activeTimer) showTimer();
+  }
+  await navigate();
+}).catch(report);
 
-if ('serviceWorker' in navigator) {
+if (!androidTimer && 'serviceWorker' in navigator) {
   navigator.serviceWorker.register('./OneSignalSDKWorker.js').catch(error => console.warn(error));
 }

@@ -30,11 +30,7 @@
       <div id="timer" class="panel timer" hidden>
         <strong id="timer-category"></strong>
         <time id="timer-display" role="timer">00:00:00</time>
-        <div class="actions">
-          <button type="button" id="stop">Interrompi</button>
-          <button type="button" id="set-alarm" class="secondary" hidden>Imposta sveglia Android</button>
-        </div>
-        <p id="alarm-status" role="status" hidden></p>
+        <button type="button" id="stop">Interrompi</button>
       </div>
       <div class="panel day-panel">
         <div class="section-heading">
@@ -100,6 +96,11 @@
         <label class="check"><input id="timer-sound" type="checkbox"> Suono a fine timer</label>
         <button type="submit">Salva impostazioni</button>
       </form>
+      <div id="android-notifications" class="panel settings" hidden>
+        <h2>Notifiche Android</h2>
+        <p id="android-notification-status" role="status"></p>
+        <button id="enable-android-notifications" class="secondary">Configura notifiche Android</button>
+      </div>
       <div class="panel settings">
         <h2>Gestione dati</h2>
         <button id="btnExportDB" class="secondary">Esporta dati</button>
@@ -120,8 +121,8 @@
         <p>Il cronometro e il conto alla rovescia salvano tutto il tempo nel giorno in cui li avvii, anche se stai visualizzando un’altra data o la sessione termina dopo mezzanotte. Per registrare il tempo a mano, scegli la data desiderata e premi Aggiungi sessione. Usa Modifica sotto il grafico per aggiornare o eliminare il totale giornaliero di una categoria.</p>
         <h2>Limite e suono</h2>
         <p>In Impostazioni puoi portare il limite del conto alla rovescia fino a 24 ore e scegliere se riprodurre un suono a scadenza. Durante il timer tieni aperta l’app. Il sistema può sospenderla in background.</p>
-        <h2>Sveglia Android</h2>
-        <p>Durante il conto alla rovescia, Imposta sveglia Android prova a passare l’orario di scadenza a Orologio. L’ora viene arrotondata al minuto successivo se contiene secondi. Controlla in Orologio che la sveglia sia attiva. Se interrompi il timer in anticipo, disattiva la sveglia in Orologio.</p>
+        <h2>Notifiche Android</h2>
+        <p>Nella versione Android, apri Impostazioni e configura le notifiche e gli avvisi esatti. Il conto alla rovescia può quindi avvisarti anche a schermo bloccato e offline. Interrompi annulla l’avviso. Il browser mostra l’avviso quando StudyLog torna in esecuzione.</p>
         <h2>Categorie e grafici</h2>
         <p>In Categorie puoi creare, rinominare ed eliminare le voci e scegliere il colore usato nei grafici. Quando elimini una categoria puoi spostare le sessioni associate. In Grafici trovi i riepiloghi mensili e l’andamento della media ponderata a partire dal primo esame.</p>
         <h2>Esami</h2>

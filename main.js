@@ -200,7 +200,8 @@ function refreshAndroidNotificationStatus() {
 }
 
 if (androidTimer) {
-  byId('android-download').hidden = true;
+  const downloadPanel = byId('android-download');
+  if (downloadPanel) downloadPanel.hidden = true;
   byId('android-notifications').hidden = false;
   byId('enable-android-notifications').onclick = () => androidTimer.configure();
   byId('refresh-android-diagnostic').onclick = refreshAndroidNotificationStatus;

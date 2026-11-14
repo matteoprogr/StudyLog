@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.util.Log;
 import android.webkit.JavascriptInterface;
 import android.webkit.MimeTypeMap;
 import android.webkit.ValueCallback;
@@ -18,6 +19,8 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.ScrollView;
+import android.widget.TextView;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -34,14 +37,58 @@ public final class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
-        TimerNotification.createChannels(getSystemService(NotificationManager.class));
         backup = state == null ? null : state.getString("backup");
+        String stage = "NOTIFICHE";
+        try {
+            TimerNotification.createChannels(getSystemService(NotificationManager.class));
+            stage = "WEBVIEW";
+            openStudyLog();
+        } catch (RuntimeException | LinkageError error) {
+            web = null;
+            showStartupError(stage, error);
+        }
+    }
+
+    private void showStartupError(String stage, Throwable error) {
+        Log.e("StudyLogStartup", "Startup failed at " + stage, error);
+        TextView message = new TextView(this);
+        message.setTextIsSelectable(true);
+        message.setTextSize(16);
+        int padding = (int) (24 * getResources().getDisplayMetrics().density);
+        message.setPadding(padding, padding, padding, padding);
+        message.setText("StudyLog · v.1.0.4\n\n[AVVIO_" + stage + "]\n"
+            + error.getClass().getSimpleName() + "\n"
+            + (error.getMessage() == null ? "" : error.getMessage()));
+        ScrollView screen = new ScrollView(this);
+        screen.addView(message);
+        setContentView(screen);
+    }
+
+    private void openStudyLog() {
         web = new WebView(this);
         web.getSettings().setJavaScriptEnabled(true);
+        web.getSettings().setDomStorageEnabled(true);
         web.getSettings().setAllowFileAccess(false);
         web.getSettings().setAllowContentAccess(false);
         web.addJavascriptInterface(new TimerBridge(), "StudyLogAndroid");
         web.setWebViewClient(new WebViewClient() {
+            @Override public void onReceivedError(WebView view, WebResourceRequest request,
+                    android.webkit.WebResourceError error) {
+                if (request.isForMainFrame()) {
+                    showStartupError("PAGINA", new IllegalStateException(
+                        error.getErrorCode() + " " + error.getDescription()));
+                }
+            }
+
+            @Override public boolean onRenderProcessGone(WebView view,
+                    android.webkit.RenderProcessGoneDetail detail) {
+                web = null;
+                showStartupError("RENDERER", new IllegalStateException(
+                    detail.didCrash() ? "Il processo WebView si è arrestato." : "Android ha interrotto il processo WebView."));
+                view.destroy();
+                return true;
+            }
+
             @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 return !local(request.getUrl());
             }

@@ -13,6 +13,10 @@ const slider = byId('minutes-slider');
 const studyForm = byId('study-form');
 const dateSelect = byId('day-select');
 const audio = new Audio('assets/sounds/alarm.mp3');
+const alarmButton = byId('set-alarm');
+const alarmStatus = byId('alarm-status');
+const alarmFallback = '#registra-sveglia-non-disponibile';
+let alarmCheck;
 
 let categories = [];
 let settings = data.defaultSettings;
@@ -55,6 +59,11 @@ async function refresh() {
 }
 
 async function navigate() {
+  if (location.hash === alarmFallback) {
+    history.replaceState(history.state, '', '#registra');
+    clearTimeout(alarmCheck);
+    showAlarmStatus('Collegamento rifiutato o non supportato [INTENT_NON_DISPONIBILE]. Il browser o l’app Orologio non ha aperto la richiesta di sveglia.');
+  }
   const pages = [...document.querySelectorAll('#app > section')];
   const requested = location.hash.slice(1);
   const page = pages.find(section => section.id === requested) ?? pages[0];
@@ -124,6 +133,7 @@ async function finishTimer(expired) {
     return;
   }
   activeTimer = undefined;
+  clearTimeout(alarmCheck);
   busy = false;
   byId('stop').disabled = false;
   byId('stop').textContent = 'Interrompi';
@@ -150,12 +160,63 @@ studyForm.addEventListener('submit', event => {
   byId('timer-category').textContent = activeTimer.category;
   studyForm.hidden = true;
   byId('timer').hidden = false;
+  alarmButton.hidden = activeTimer.duration === 0;
+  alarmStatus.hidden = true;
   editors.renderCategories(categories, true);
   tick();
   timerInterval = setInterval(tick, 250);
 });
 
 byId('stop').addEventListener('click', () => finishTimer(false));
+
+function showAlarmStatus(message) {
+  alarmStatus.textContent = message;
+  alarmStatus.hidden = false;
+  if (byId('timer').hidden) notify(message);
+}
+
+alarmButton.addEventListener('click', () => {
+  clearTimeout(alarmCheck);
+  if (!/Android/i.test(navigator.userAgent)) {
+    showAlarmStatus('Dispositivo non supportato [ANDROID_RICHIESTO]. Prova da Chrome su Android.');
+    return;
+  }
+  const deadline = activeTimer?.start + activeTimer?.duration;
+  const now = new Date();
+  if (!activeTimer?.duration || busy || deadline <= now.getTime()) {
+    showAlarmStatus('Conto alla rovescia terminato [TIMER_SCADUTO]. Avvia un nuovo timer.');
+    return;
+  }
+  const alarm = new Date(Math.ceil(deadline / 60000) * 60000);
+  const next = new Date(now);
+  next.setHours(alarm.getHours(), alarm.getMinutes(), 0, 0);
+  if (next <= now) next.setDate(next.getDate() + 1);
+  if (next.getTime() !== alarm.getTime()) {
+    showAlarmStatus('Data della sveglia non univoca [ORARIO_NON_DISPONIBILE]. Impostala manualmente in Orologio.');
+    return;
+  }
+  const time = alarm.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+  const fallback = encodeURIComponent(new URL(alarmFallback, location.href).href);
+  const intent = 'intent:#Intent;action=android.intent.action.SET_ALARM;'
+    + 'category=android.intent.category.BROWSABLE;'
+    + 'i.android.intent.extra.alarm.HOUR=' + alarm.getHours() + ';'
+    + 'i.android.intent.extra.alarm.MINUTES=' + alarm.getMinutes() + ';'
+    + 'S.android.intent.extra.alarm.MESSAGE=' + encodeURIComponent('StudyLog · Timer scaduto') + ';'
+    + 'S.browser_fallback_url=' + fallback + ';end';
+  showAlarmStatus('Richiesta per le ' + time + '. Verifica in Orologio che la sveglia sia attiva.');
+  alarmCheck = setTimeout(() => {
+    if (!document.hidden) {
+      showAlarmStatus('Apertura non rilevata [NESSUNA_CONFERMA]. Verifica in Orologio la sveglia delle ' + time + '.');
+    }
+  }, 2500);
+  try {
+    location.href = intent;
+  } catch (error) {
+    clearTimeout(alarmCheck);
+    console.warn('Android alarm intent failed', error);
+    showAlarmStatus('Impossibile aprire Orologio [ERRORE_COLLEGAMENTO]. Prova da Chrome su Android.');
+  }
+});
 
 byId('add-log').addEventListener('click', async () => {
   if (busy) return;
@@ -274,6 +335,7 @@ dateSelect.value = today();
 byId('month-select').value = today().slice(0, 7);
 window.addEventListener('hashchange', () => navigate().catch(report));
 document.addEventListener('visibilitychange', () => {
+  if (document.hidden) clearTimeout(alarmCheck);
   if (!document.hidden && activeTimer && timerInterval) tick();
 });
 
